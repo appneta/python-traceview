@@ -1,0 +1,5 @@
+oboe.hpp
+oboe_wrap.cxx
+oboe_ext.py
+*.pyc
+*.so
