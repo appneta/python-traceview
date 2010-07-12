@@ -4,6 +4,6 @@ from distutils.core import setup
 
 setup(name = 'oboeware',
       version = '0.1.0',
-      author = 'Spiridon Eliopoulos'
+      author = 'Spiridon Eliopoulos',
       description  = 'Oboe middleware for WSGI'
       )
