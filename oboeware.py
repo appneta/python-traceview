@@ -18,7 +18,7 @@ class OboeMiddleware:
         xtr_hdr = environ.get("HTTP_X-Trace")
         evt, endEvt = None, None
 
-        tracing_mode = self.oboe_config.get('tracing_mode')
+        tracing_mode = self.oboe_config.get('oboe.tracing_mode')
 
         if xtr_hdr and tracing_mode in ['always', 'through']:
             oboe.Context.fromString(xtr_hdr)
@@ -32,7 +32,7 @@ class OboeMiddleware:
             evt.addInfo("Agent", "wsgi")
             evt.addInfo("Label", "entry")
 
-            reporter = oboe.UdpReporter(self.oboe_config.get('reporter_host'))
+            reporter = oboe.UdpReporter(self.oboe_config.get('oboe.reporter_host'))
             reporter.sendReport(evt)
 
             endEvt = oboe.Context.createEvent()
@@ -47,7 +47,7 @@ class OboeMiddleware:
             evt.addInfo("Agent", "wsgi")
             evt.addInfo("Label", "exit")
 
-            reporter = oboe.UdpReporter(self.oboe_config.get('reporter_host'))
+            reporter = oboe.UdpReporter(self.oboe_config.get('oboe.reporter_host'))
             reporter.sendReport(evt)
             
             environ["HTTP_X-Trace"] = oboe.Context.toString()
