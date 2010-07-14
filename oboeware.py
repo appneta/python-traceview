@@ -47,6 +47,9 @@ class OboeMiddleware:
             evt.addInfo("Agent", "wsgi")
             evt.addInfo("Label", "exit")
 
+            #for k, v in  environ.get('routes.route').routelist[1].items():
+            #    evt.addInfo(str(k).capitalize(), str(v))
+
             reporter = oboe.UdpReporter(self.oboe_config.get('oboe.reporter_host'))
             reporter.sendReport(evt)
             
