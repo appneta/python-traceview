@@ -15,7 +15,7 @@ class OboeMiddleware:
         self.oboe_config = oboe_config
 
     def __call__(self, environ, start_response):
-        xtr_hdr = environ.get("HTTP_X-Trace")
+        xtr_hdr = environ.get("HTTP_X-Trace", environ.get("HTTP_X_TRACE"))
         evt, endEvt = None, None
 
         tracing_mode = self.oboe_config.get('oboe.tracing_mode')
