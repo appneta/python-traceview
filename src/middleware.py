@@ -37,7 +37,15 @@ class OboeMiddleware:
 
             endEvt = oboe.Context.createEvent()
 
-        result = self.wrapped_app(environ, start_response)
+            response_headers = [("X-Trace", oboe.Context.toString())]
+        else:
+            response_headers = []
+
+        
+        def wrapped_start_response(status, headers):
+            start_response(status, headers + response_headers)
+
+        result = self.wrapped_app(environ, wrapped_start_response)
 
         # TODO: Should we handle starting a trace here?
         if oboe.Context.isValid() and tracing_mode != 'never' and endEvt:
@@ -53,7 +61,6 @@ class OboeMiddleware:
             reporter = oboe.UdpReporter(self.oboe_config.get('oboe.reporter_host'))
             reporter.sendReport(evt)
             
-            environ["HTTP_X-Trace"] = oboe.Context.toString()
             endEvt = None
 
         return result
