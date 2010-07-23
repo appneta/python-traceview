@@ -43,7 +43,7 @@ class OboeMiddleware:
 
         
         def wrapped_start_response(status, headers):
-            if add_header: headers.append(("X-Trace", oboe.Context.toString()))
+            if add_header: headers.append(("X-Trace", endEvt.metadataString()))
             start_response(status, headers)
 
         result = self.wrapped_app(environ, wrapped_start_response)
