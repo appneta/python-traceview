@@ -29,7 +29,7 @@ class OboeMiddleware:
             evt = oboe.Context.createEvent()
 
         if oboe.Context.isValid() and tracing_mode != 'never':
-            evt.addInfo("Agent", "wsgi")
+            evt.addInfo("Agent", "python")
             evt.addInfo("Label", "entry")
 
             reporter = oboe.UdpReporter(self.oboe_config.get('oboe.reporter_host'))
@@ -53,7 +53,7 @@ class OboeMiddleware:
             evt = endEvt
 
             evt.addEdge(oboe.Context.get())
-            evt.addInfo("Agent", "wsgi")
+            evt.addInfo("Agent", "python")
             evt.addInfo("Label", "exit")
 
             for k, v in  environ.get('wsgiorg.routing_args')[1].items():
