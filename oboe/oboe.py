@@ -9,6 +9,7 @@ config = dict()
 config['tracing_mode'] = 'through'
 config['reporter_host'] = '127.0.0.1'
 
+Context.init()
 
 def log(cls, agent, label, **kwargs):
     evt = Context.createEvent()
@@ -23,3 +24,5 @@ def log(cls, agent, label, **kwargs):
     return reporter.sendReport(evt)
 
 setattr(Context, log.__name__, types.MethodType(log, Context))
+
+
