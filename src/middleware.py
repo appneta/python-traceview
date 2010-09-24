@@ -1,5 +1,11 @@
 # WSGI middleware for Oboe support
 import oboe
+MEM_TRACE = False
+try:
+    import muppy
+    MEM_TRACE = True
+except ImportError:
+    pass
 
 class OboeMiddleware:
     def __init__(self, app, oboe_config):
@@ -17,7 +23,8 @@ class OboeMiddleware:
     def __call__(self, environ, start_response):
         xtr_hdr = environ.get("HTTP_X-Trace", environ.get("HTTP_X_TRACE"))
         evt, endEvt = None, None
-
+        mem_tracker = None
+        
         tracing_mode = self.oboe_config.get('oboe.tracing_mode')
 
         if xtr_hdr and tracing_mode in ['always', 'through']:
@@ -31,13 +38,13 @@ class OboeMiddleware:
         if oboe.Context.isValid() and tracing_mode != 'never':
             evt.addInfo("Agent", "wsgi")
             evt.addInfo("Label", "entry")
-
             reporter = oboe.UdpReporter(self.oboe_config.get('oboe.reporter_host'))
             reporter.sendReport(evt)
 
             endEvt = oboe.Context.createEvent()
 
             add_header = True
+            mem_tracker = muppy.tracker.SummaryTracker() if MEM_TRACE else None
         else:
             add_header = False
 
@@ -50,12 +57,15 @@ class OboeMiddleware:
 
         # TODO: Should we handle starting a trace here?
         if oboe.Context.isValid() and tracing_mode != 'never' and endEvt:
+            mem_diff = mem_tracker.diff() if mem_tracker else None
             evt = endEvt
 
             evt.addEdge(oboe.Context.get())
             evt.addInfo("Agent", "wsgi")
             evt.addInfo("Label", "exit")
+            evt.addInfo("Memory-Diff", mem_diff)
 
+            # gets controller, agent
             for k, v in  environ.get('wsgiorg.routing_args')[1].items():
                 evt.addInfo(str(k).capitalize(), str(v))
 
