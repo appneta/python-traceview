@@ -1,9 +1,6 @@
 # WSGI middleware for Oboe support
 import oboe
 
-from guppy import hpy
-import json
-
 class OboeMiddleware:
     def __init__(self, app, oboe_config):
         """
@@ -20,7 +17,6 @@ class OboeMiddleware:
     def __call__(self, environ, start_response):
         xtr_hdr = environ.get("HTTP_X-Trace", environ.get("HTTP_X_TRACE"))
         evt, endEvt = None, None
-        mem_tracker = None
         
         tracing_mode = self.oboe_config.get('oboe.tracing_mode')
 
@@ -41,7 +37,6 @@ class OboeMiddleware:
             endEvt = oboe.Context.createEvent()
 
             add_header = True
-            h1 = hpy().heap()
         else:
             add_header = False
 
@@ -51,7 +46,6 @@ class OboeMiddleware:
             start_response(status, headers)
 
         result = self.wrapped_app(environ, wrapped_start_response)
-        h2 = hpy().heap()
 
         # TODO: Should we handle starting a trace here?
         if oboe.Context.isValid() and tracing_mode != 'never' and endEvt:
@@ -60,15 +54,6 @@ class OboeMiddleware:
             evt.addEdge(oboe.Context.get())
             evt.addInfo("Agent", "wsgi")
             evt.addInfo("Label", "exit")
-            def encstatrow(o):
-                from guppy.heapy.Part import StatRow
-                if type(o) == StatRow:
-                    d = dict((k, o.__getattribute__(k)) for k in o.__slots__)
-                    print d
-                    return d
-            print "ret diff"
-            evt.addInfo("Mem-Diff", json.dumps(list(h2.diff(h1).get_rows()), default=encstatrow))
-            print "done"
 
             # gets controller, agent
             for k, v in  environ.get('wsgiorg.routing_args')[1].items():
