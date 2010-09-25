@@ -1,49 +1,8 @@
 # WSGI middleware for Oboe support
 import oboe
 
-# taken from PyVM http://desk.stinkpot.org:8080/downloads/PyVM.py
-#
-# PyVM is linux-only, but this would be slightly more portable:
-#   http://www.pixelbeat.org/scripts/ps_mem.py
-#
-import os
-_proc_status = '/proc/%d/status' % os.getpid()
-_scale = {'kB': 1024.0, 'mB': 1024.0*1024.0,
-          'KB': 1024.0, 'MB': 1024.0*1024.0}
-_total_memory = 0.0
-_last_memory = 0.0
-
-def _VmB(VmKey):
-    '''private method'''
-    global _proc_status, _scale
-    # get pseudo file  /proc/<pid>/status
-    try:
-        t = open(_proc_status)
-        v = t.read()
-        t.close()
-    except:
-        return 0.0  # non-Linux?
-    # get VmKey line e.g. 'VmRSS:  9999  kB\n ...'
-    i = v.index(VmKey)
-    v = v[i:].split(None, 3)  # whitespace
-    if len(v) < 3:
-        return 0.0  # invalid format?
-    # convert Vm value to bytes
-    return (float(v[1]) * _scale[v[2]])
-
-def MemoryDiff():
-    ''' print memory usage stats in bytes.
-        returns a tuple each time executed: (current size, delta since last call)
-    '''
-    global _total_memory, _last_memory
-
-    _last_memory = _total_memory
-    from pympler.muppy import muppy
-    _total_memory = muppy.get_size(muppy.get_objects())
-#    _total_memory = _VmB('VmSize:')
-
-    mem_diff = _total_memory - _last_memory
-    return _total_memory, mem_diff
+from guppy import hpy
+import json
 
 class OboeMiddleware:
     def __init__(self, app, oboe_config):
@@ -82,7 +41,7 @@ class OboeMiddleware:
             endEvt = oboe.Context.createEvent()
 
             add_header = True
-            MemoryDiff()
+            h1 = hpy().heap()
         else:
             add_header = False
 
@@ -92,21 +51,23 @@ class OboeMiddleware:
             start_response(status, headers)
 
         result = self.wrapped_app(environ, wrapped_start_response)
+        h2 = hpy().heap()
 
         # TODO: Should we handle starting a trace here?
         if oboe.Context.isValid() and tracing_mode != 'never' and endEvt:
-            print "taking t2"
-            mem_diff = MemoryDiff() 
-            print "done"
             evt = endEvt
 
             evt.addEdge(oboe.Context.get())
             evt.addInfo("Agent", "wsgi")
             evt.addInfo("Label", "exit")
-            print "adding delta"
-#            if mem_diff:
-#                import json
-#                evt.addInfo("Memory-Diff", json.dumps(mem_diff))
+            def encstatrow(o):
+                from guppy.heapy.Part import StatRow
+                if type(o) == StatRow:
+                    d = dict((k, o.__getattribute__(k)) for k in o.__slots__)
+                    print d
+                    return d
+            print "ret diff"
+            evt.addInfo("Mem-Diff", json.dumps(list(h2.diff(h1).get_rows()), default=encstatrow))
             print "done"
 
             # gets controller, agent
@@ -118,4 +79,5 @@ class OboeMiddleware:
             
             endEvt = None
 
+        print "DONE TRACING"
         return result
