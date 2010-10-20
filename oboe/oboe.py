@@ -8,8 +8,11 @@ __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 config = dict()
 config['tracing_mode'] = 'through'
 config['reporter_host'] = '127.0.0.1'
+config['reporter_port'] = 7831
 
 Context.init()
+
+reporter_instance = None
 
 def log(cls, agent, label, **kwargs):
     evt = Context.createEvent()
@@ -20,8 +23,14 @@ def log(cls, agent, label, **kwargs):
     for k, v in kwargs.items():
         evt.addInfo(str(k), str(v))
 
-    reporter = UdpReporter(config['reporter_host'])
-    return reporter.sendReport(evt)
+    rep = reporter()
+    return rep.sendReport(evt)
+
+def reporter():
+    if not reporter_instance:
+        reporter_instance = UdpReporter(config['reporter_host'], config['reporter_port'])
+
+    return reporter_instance
 
 setattr(Context, log.__name__, types.MethodType(log, Context))
 
