@@ -15,13 +15,13 @@ class OboeMiddleware:
         self.oboe_config = oboe_config
 
         if self.oboe_config.get('oboe.tracing_mode'):
-            oboe.config['tracing_mode'] = self.oboe_conf['oboe.tracing_mode']
+            oboe.config['tracing_mode'] = self.oboe_config['oboe.tracing_mode']
 
         if self.oboe_config.get('oboe.reporter_host'):
-            oboe.config['tracing_mode'] = self.oboe_conf['oboe.reporter_host']
+            oboe.config['tracing_mode'] = self.oboe_config['oboe.reporter_host']
 
         if self.oboe_config.get('oboe.reporter_port'):
-            oboe.config['tracing_mode'] = self.oboe_conf['oboe.reporter_port']
+            oboe.config['tracing_mode'] = self.oboe_config['oboe.reporter_port']
 
     def __call__(self, environ, start_response):
         xtr_hdr = environ.get("HTTP_X-Trace", environ.get("HTTP_X_TRACE"))
