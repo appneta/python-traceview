@@ -27,8 +27,10 @@ def log(cls, agent, label, **kwargs):
     return rep.sendReport(evt)
 
 def reporter():
+    global reporter_instance
+
     if not reporter_instance:
-        reporter_instance = UdpReporter(config['reporter_host'], config['reporter_port'])
+        reporter_instance = UdpReporter(config['reporter_host'], str(config['reporter_port']))
 
     return reporter_instance
 
