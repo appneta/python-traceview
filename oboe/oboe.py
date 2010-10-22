@@ -26,6 +26,19 @@ def log(cls, agent, label, **kwargs):
     rep = reporter()
     return rep.sendReport(evt)
 
+def log_method(agent, **kwargs):
+    if agent == None:
+        agent = 'Python'
+    def decorate(func):
+        def methodcall(self, *f_args, **f_kwargs):
+            Context.log(agent, 'entry', **kwargs)
+            res = func(self, *f_args, **f_kwargs)
+            kwargs['Return-Value'] = res
+            Context.log(agent, 'exit', **kwargs)
+            return res
+        return methodcall
+    return decorate
+
 def reporter():
     global reporter_instance
 
@@ -35,5 +48,6 @@ def reporter():
     return reporter_instance
 
 setattr(Context, log.__name__, types.MethodType(log, Context))
+setattr(Context, log_method.__name__, types.MethodType(log_method, Context))
 
 
