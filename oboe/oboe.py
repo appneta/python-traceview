@@ -26,15 +26,19 @@ def log(cls, agent, label, **kwargs):
     rep = reporter()
     return rep.sendReport(evt)
 
-def log_method(agent, **kwargs):
+def log_method(cls, agent=None, store_return=False, **kwargs):
     if agent == None:
         agent = 'Python'
     def decorate(func):
         def methodcall(self, *f_args, **f_kwargs):
+            kwargs.update(f_kwargs)
+            kwargs.update({'args' : f_args})
             Context.log(agent, 'entry', **kwargs)
             res = func(self, *f_args, **f_kwargs)
-            kwargs['Return-Value'] = res
-            Context.log(agent, 'exit', **kwargs)
+            if store_return:
+                Context.log(agent, 'exit', ReturnValue=str(res))
+            else:
+                Context.log(agent, 'exit')
             return res
         return methodcall
     return decorate
