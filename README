@@ -2,10 +2,10 @@ How to install into a pylons(/django?) app
 ===============================================
 
 1. Install middleware to env/venv
-python setup.py install
+# python setup.py install
 
 2. Enable middleware in web app:
-vim ./config/middleware.py
+# vim ./config/middleware.py
 
 from oboeware import OboeMiddleware
 
@@ -18,3 +18,9 @@ from oboeware import OboeMiddleware
     app = make_gzip_middleware(app, config)
 
     app = SessionMiddleware(app, config)
+
+3. Add config
+# vim ./development.ini
+
+oboe.tracing_mode = always
+oboe.reporter_host = 127.0.0.1
