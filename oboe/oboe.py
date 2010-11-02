@@ -3,7 +3,7 @@ from oboe_ext import *
 import types
 import traceback as tb
 
-__all__ = ['config', 'Context', 'UdpReporter', 'Event']
+__all__ = ['config', 'Context', 'UdpReporter', 'MQReporter', 'Event']
 
 config = dict()
 config['tracing_mode'] = 'through'
