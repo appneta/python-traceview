@@ -1,5 +1,7 @@
 # WSGI middleware for Oboe support
 import oboe
+import sys
+from pylons import response as response
 
 class OboeMiddleware:
     def __init__(self, app, oboe_config):
@@ -29,7 +31,10 @@ class OboeMiddleware:
         
         tracing_mode = self.oboe_config.get('oboe.tracing_mode')
 
-        if xtr_hdr and tracing_mode in ['always', 'through']:
+        # Check for existing context: pylons errors with debug=false result in
+        # a second wsgi entry.  Using the existing context is favorable in
+        # that case.
+        if not oboe.Context.isValid() and xtr_hdr and tracing_mode in ['always', 'through']:
             oboe.Context.fromString(xtr_hdr)
 
         if not oboe.Context.isValid() and tracing_mode == "always":
@@ -48,26 +53,43 @@ class OboeMiddleware:
         else:
             add_header = False
         
-        def wrapped_start_response(status, headers):
-            if add_header: headers.append(("X-Trace", endEvt.metadataString()))
+        def wrapped_start_response(status, headers, exc_info=None):
+            if add_header:
+                headers.append(("X-Trace", endEvt.metadataString()))
+                if exc_info:
+                    import traceback as tb
+                    (t, exc, trace) = exc_info
+                    endEvt.addInfo("Error", repr(exc))
+                    endEvt.addInfo("Backtrace", "".join(tb.format_list(tb.extract_tb(trace))))
             start_response(status, headers)
 
-        result = self.wrapped_app(environ, wrapped_start_response)
+        try:
+            result = self.wrapped_app(environ, wrapped_start_response)
+        except Exception, e:
+            self.send_end(tracing_mode, endEvt, environ, True)
+            raise
 
-        # TODO: Should we handle starting a trace here?
+        self.send_end(tracing_mode, endEvt, environ)
+        oboe.Context.clear()
+
+        return result
+
+    @classmethod
+    def send_end(cls, tracing_mode, endEvt, environ, threw_error=None):
         if oboe.Context.isValid() and tracing_mode != 'never' and endEvt:
             evt = endEvt
 
             evt.addEdge(oboe.Context.get())
             evt.addInfo("Agent", "wsgi")
             evt.addInfo("Label", "exit")
+            if threw_error:
+                import traceback as tb
+                (t, exc, trace) = sys.exc_info()
+                evt.addInfo("Error", repr(exc))
+                evt.addInfo("Backtrace", "".join(tb.format_list(tb.extract_tb(trace))))
 
             # gets controller, agent
-            for k, v in  environ.get('wsgiorg.routing_args')[1].items():
+            for k, v in  environ.get('wsgiorg.routing_args', [{},{}])[1].items():
                 evt.addInfo(str(k).capitalize(), str(v))
 
             reporter = oboe.reporter().sendReport(evt)
-            
-            endEvt = None
-
-        return result
