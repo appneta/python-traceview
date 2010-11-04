@@ -13,11 +13,17 @@ from oboeware import OboeMiddleware
 
     # Routing/Session/Cache Middleware
     app = RoutesMiddleware(app, config['routes.map'], singleton=False)
->>> app = OboeMiddleware(app, config)
+>>> if not asbool(config['debug']):
+>>>     app = OboeMiddleware(app, config)
 
     app = make_gzip_middleware(app, config)
 
     app = SessionMiddleware(app, config)
+
+    ...
+    # AFTER error-handling middleware, right before RegistryManager
+>>> if asbool(config['debug']):
+>>>     app = OboeMiddleware(app, config)
 
 3. Add config
 # vim ./development.ini
