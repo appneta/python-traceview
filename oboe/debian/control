@@ -8,6 +8,6 @@ Homepage: http://tracelytics.com
 
 Package: oboe-python
 Architecture: any
-Depends: python, liboboe, ${shlibs:Depends}, ${misc:Depends}
+Depends: python, liboboe0, ${shlibs:Depends}, ${misc:Depends}
 Description: oboe python API
  Allows you to use oboe with Python.
