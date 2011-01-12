@@ -1,7 +1,6 @@
 # WSGI middleware for Oboe support
 import oboe
 import sys
-from pylons import response as response
 
 class OboeMiddleware:
     def __init__(self, app, oboe_config):
