@@ -1,3 +1,3 @@
 from oboeware.middleware import OboeMiddleware
 
-__all__ = ['OboeMiddleware']
+__all__ = ('OboeMiddleware', 'django')
