@@ -15,6 +15,7 @@ Context.init()
 reporter_instance = None
 
 def log(cls, agent, label, **kwargs):
+    if not Context.isValid(): return
     evt = Context.createEvent()
     evt.addInfo('Agent', agent)
     evt.addInfo('Label', label)
@@ -26,15 +27,16 @@ def log(cls, agent, label, **kwargs):
     rep = reporter()
     return rep.sendReport(evt)
 
-def log_method(cls, agent=None, store_return=False, **kwargs):
-    if agent == None:
-        agent = 'Python'
+def log_method(cls, agent='Python', store_return=False, **kwargs):
+    from functools import wraps
     def decorate(func):
-        def methodcall(self, *f_args, **f_kwargs):
+        @wraps(func)
+        def methodcall(*f_args, **f_kwargs):
+            if not Context.isValid(): return func(*f_args, **f_kwargs)
             kwargs.update(f_kwargs)
             kwargs.update({'args' : f_args})
             Context.log(agent, 'entry', **kwargs)
-            res = func(self, *f_args, **f_kwargs)
+            res = func(*f_args, **f_kwargs)
             if store_return:
                 Context.log(agent, 'exit', ReturnValue=str(res))
             else:
@@ -53,5 +55,3 @@ def reporter():
 
 setattr(Context, log.__name__, types.MethodType(log, Context))
 setattr(Context, log_method.__name__, types.MethodType(log_method, Context))
-
-
