@@ -1,5 +1,5 @@
 # django middleware for passing values to oboe
-__all__ = ("OboeDjangoMiddleware", )
+__all__ = ("OboeDjangoMiddleware", "wrap_middleware_classes")
 
 import oboe
 
@@ -14,9 +14,8 @@ class OboeDjangoMiddleware(object):
         if not oboe.Context.isValid(): return
         try:
             evt = oboe.Context.createEvent()
-            evt.addInfo('Agent', 'wsgi')
+            evt.addInfo('Agent', 'django')
             evt.addInfo('Label', 'process_request')
-            evt.addInfo('Framework', 'Django')
             reporter = oboe.reporter().sendReport(evt)
         except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", _singleline(e)
@@ -25,9 +24,8 @@ class OboeDjangoMiddleware(object):
         if not oboe.Context.isValid(): return
         try:
             evt = oboe.Context.createEvent()
-            evt.addInfo('Agent', 'wsgi')
+            evt.addInfo('Agent', 'django')
             evt.addInfo('Label', 'process_view')
-            evt.addInfo('Framework', 'Django')
             evt.addInfo('Controller', 'view')
             evt.addInfo('Action', view_func.__name__)
             evt.addInfo('View-args', str(view_args))
@@ -40,9 +38,8 @@ class OboeDjangoMiddleware(object):
         if not oboe.Context.isValid(): return
         try:
             evt = oboe.Context.createEvent()
-            evt.addInfo('Agent', 'wsgi')
+            evt.addInfo('Agent', 'django')
             evt.addInfo('Label', 'error')
-            evt.addInfo('Framework', 'Django')
             evt.addInfo('Message', str(exception))
             reporter = oboe.reporter().sendReport(evt)
         except Exception, e:
@@ -73,6 +70,7 @@ def wrap_middleware_classes(mw_classes):
     """ wrap Django middleware from a list """
     import functools, imports
     for i in mw_classes:
+        if i.startswith('oboe'): continue
         dot = i.rfind('.')
         if dot < 0 or dot+1 == len(i): continue
         objname = i[dot+1:]

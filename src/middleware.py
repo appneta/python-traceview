@@ -3,7 +3,7 @@ import oboe
 import sys
 
 class OboeMiddleware:
-    def __init__(self, app, oboe_config):
+    def __init__(self, app, oboe_config, agent="wsgi"):
         """
         Takes the app that we're wrapping, as well as a dictionary with oboe
         configuration parameters:
@@ -14,6 +14,7 @@ class OboeMiddleware:
 
         self.wrapped_app = app
         self.oboe_config = oboe_config
+        self.agent = agent
 
         if self.oboe_config.get('oboe.tracing_mode'):
             oboe.config['tracing_mode'] = self.oboe_config['oboe.tracing_mode']
@@ -42,7 +43,7 @@ class OboeMiddleware:
             evt = oboe.Context.createEvent()
 
         if oboe.Context.isValid() and tracing_mode != 'never':
-            evt.addInfo("Agent", "wsgi")
+            evt.addInfo("Agent", self.agent)
             evt.addInfo("Label", "entry")
             reporter = oboe.reporter().sendReport(evt)
 
@@ -65,21 +66,21 @@ class OboeMiddleware:
         try:
             result = self.wrapped_app(environ, wrapped_start_response)
         except Exception, e:
-            self.send_end(tracing_mode, endEvt, environ, True)
+            self.send_end(tracing_mode, endEvt, environ, True, agent=self.agent)
             raise
 
-        self.send_end(tracing_mode, endEvt, environ)
+        self.send_end(tracing_mode, endEvt, environ, agent=self.agent)
         oboe.Context.clear()
 
         return result
 
     @classmethod
-    def send_end(cls, tracing_mode, endEvt, environ, threw_error=None):
+    def send_end(cls, tracing_mode, endEvt, environ, threw_error=None, agent="wsgi"):
         if oboe.Context.isValid() and tracing_mode != 'never' and endEvt:
             evt = endEvt
 
             evt.addEdge(oboe.Context.get())
-            evt.addInfo("Agent", "wsgi")
+            evt.addInfo("Agent", agent)
             evt.addInfo("Label", "exit")
             if threw_error:
                 import traceback as tb
