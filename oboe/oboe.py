@@ -14,12 +14,13 @@ Context.init()
 
 reporter_instance = None
 
-def log(cls, agent, label, **kwargs):
+def log(cls, agent, label, backtrace=False, **kwargs):
     if not Context.isValid(): return
     evt = Context.createEvent()
     evt.addInfo('Agent', agent)
     evt.addInfo('Label', label)
-    evt.addInfo('Backtrace', "".join(tb.format_list(tb.extract_stack()[:-1])))
+    if backtrace:
+        evt.addInfo('Backtrace', "".join(tb.format_list(tb.extract_stack()[:-1])))
 
     for k, v in kwargs.items():
         evt.addInfo(str(k), str(v))
@@ -31,7 +32,7 @@ def log_method(cls, agent='Python', store_return=False, **kwargs):
     from functools import wraps
     def decorate(func):
         @wraps(func)
-        def methodcall(*f_args, **f_kwargs):
+        def wrap_method(*f_args, **f_kwargs):
             if not Context.isValid(): return func(*f_args, **f_kwargs)
             kwargs.update(f_kwargs)
             kwargs.update({'args' : f_args})
@@ -42,7 +43,7 @@ def log_method(cls, agent='Python', store_return=False, **kwargs):
             else:
                 Context.log(agent, 'exit')
             return res
-        return methodcall
+        return wrap_method
     return decorate
 
 def reporter():
