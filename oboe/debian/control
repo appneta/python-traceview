@@ -1,7 +1,7 @@
 Source: oboe-python
-Section: unknown
+Section: web
 Priority: extra
-Maintainer: Paul McCann <polm@tracelytics.com>
+Maintainer: Tracelytics <contact@tracelytics.com>
 Build-Depends: debhelper (>= 7)
 Standards-Version: 3.8.3
 Homepage: http://tracelytics.com
@@ -9,5 +9,5 @@ Homepage: http://tracelytics.com
 Package: oboe-python
 Architecture: any
 Depends: python, liboboe0, ${shlibs:Depends}, ${misc:Depends}
-Description: oboe python API
- Allows you to use oboe with Python.
+Description: Python API for liboboe
+ Allows you to use the Tracelytics Oboe instrumentation library with Python.
