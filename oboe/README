@@ -1,3 +1,7 @@
 Q: why doesn't this install?  Something about a .cxx file
 
 A: read the readme in /swig
+
+Q: how to publish?
+
+A: python setup.py register -r tracelytics sdist upload -r tracelytics
