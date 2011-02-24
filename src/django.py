@@ -46,7 +46,7 @@ class OboeDjangoMiddleware(object):
             evt = oboe.Context.createEvent()
             evt.addInfo('Agent', 'django')
             evt.addInfo('Label', 'process_view')
-            evt.addInfo('Controller', 'view')
+            evt.addInfo('Controller', view_func.__module__)
             evt.addInfo('Action', view_func.__name__)
             evt.addInfo('View-args', str(view_args))
             evt.addInfo('View-kwargs', str(view_kwargs))
