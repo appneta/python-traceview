@@ -48,10 +48,6 @@ class OboeDjangoMiddleware(object):
             evt.addInfo('Label', 'process_view')
             evt.addInfo('Controller', view_func.__module__)
             evt.addInfo('Action', view_func.__name__)
-            evt.addInfo('View-args', str(view_args))
-            evt.addInfo('View-kwargs', str(view_kwargs))
-
-            evt.addInfo('View-func', view_func.__name__)
             reporter = oboe.reporter().sendReport(evt)
         except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
