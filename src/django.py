@@ -15,46 +15,59 @@ class OboeDjangoMiddleware(object):
             from django.core.exceptions import MiddlewareNotUsed
             raise MiddlewareNotUsed
 
-    def _singleline(self, s): # some logs like single-line errors better
+    def _singleline(self, e): # some logs like single-line errors better
         return str(e).replace('\n', ' ').replace('\r', ' ')
     
     def process_request(self, request):
         import oboe
+        xtr_hdr = request.META.get("HTTP_X-Trace", request.META.get("HTTP_X_TRACE"))
+        tracing_mode = oboe.config.get('tracing_mode')
+
+        if not oboe.Context.isValid() and xtr_hdr and tracing_mode in ['always', 'through']:
+            oboe.Context.fromString(xtr_hdr)
+
+        if not oboe.Context.isValid() and tracing_mode == "always":
+            evt = oboe.Context.startTrace()
+        elif oboe.Context.isValid() and tracing_mode != 'never':
+            evt = oboe.Context.createEvent()
+
         if not oboe.Context.isValid(): return
         try:
-            evt = oboe.Context.createEvent()
             evt.addInfo('Agent', 'django')
-            evt.addInfo('Label', 'process_request')
+            evt.addInfo('Label', 'entry')
             reporter = oboe.reporter().sendReport(evt)
         except Exception, e:
-            print >> sys.stderr, "Oboe middleware error:", _singleline(e)
+            print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         import oboe
         if not oboe.Context.isValid(): return
         try:
             evt = oboe.Context.createEvent()
-            evt.addInfo('Agent', 'django:view')
-            evt.addInfo('Label', 'entry')
+            evt.addInfo('Agent', 'django')
+            evt.addInfo('Label', 'process_view')
             evt.addInfo('Controller', 'view')
             evt.addInfo('Action', view_func.__name__)
             evt.addInfo('View-args', str(view_args))
             evt.addInfo('View-kwargs', str(view_kwargs))
+
+            evt.addInfo('View-func', view_func.__name__)
             reporter = oboe.reporter().sendReport(evt)
-            request._oboe_log_view = True
         except Exception, e:
-            print >> sys.stderr, "Oboe middleware error:", _singleline(e)
+            print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
 
     def process_response(self, request, response):
         import oboe
-        if not oboe.Context.isValid() or not getattr(request, '_oboe_log_view', False): return response
+        if not oboe.Context.isValid(): return response
         try:
             evt = oboe.Context.createEvent()
-            evt.addInfo('Agent', 'django:view')
+            evt.addInfo('Agent', 'django')
             evt.addInfo('Label', 'exit')
             reporter = oboe.reporter().sendReport(evt)
+            response['X-Trace'] = oboe.Context.toString()
+            oboe.Context.clear()
         except Exception, e:
-            print >> sys.stderr, "Oboe middleware error:", _singleline(e)
+            print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
         return response
 
     def process_exception(self, request, exception):
@@ -64,10 +77,11 @@ class OboeDjangoMiddleware(object):
             evt = oboe.Context.createEvent()
             evt.addInfo('Agent', 'django')
             evt.addInfo('Label', 'error')
-            evt.addInfo('Message', str(exception))
+            evt.addInfo('ErrorMsg', str(exception))
+            evt.addInfo('ErrorClass', exception.__class__.__name__)
             reporter = oboe.reporter().sendReport(evt)
         except Exception, e:
-            print >> sys.stderr, "Oboe middleware error:", _singleline(e)
+            print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
 
 def middleware_hooks(module, objname):
     import oboe
@@ -102,4 +116,4 @@ def wrap_middleware_classes(mw_classes):
         imports.whenImported(i[:dot],
                              functools.partial(middleware_hooks, objname=objname))
 
-    return mw_classes + ('oboeware.django.OboeDjangoMiddleware',)
+    return ('oboeware.django.OboeDjangoMiddleware',) + mw_classes 
