@@ -91,6 +91,7 @@ def middleware_hooks(module, objname):
         if not cls: return
         for method in ['process_request',
                        'process_view',
+                       'process_response',
                        'process_template_response',
                        'process_exception']:
             fn = getattr(cls, method, None)
