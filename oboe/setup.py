@@ -6,8 +6,8 @@ oboe_module = Extension('_oboe_ext', sources=['oboe_wrap.cxx'], libraries=['oboe
 
 setup(name = 'oboe',
       version = '0.1.2',
-      author = 'Dan Kuebrich',
-      author_email = 'dan@tracelytics.com',
+      author = 'Tracelytics',
+      author_email = 'contact@tracelytics.com',
       url = 'http://www.tracelytics.com',
       description = 'Oboe API for Python',
       ext_modules = [oboe_module],
