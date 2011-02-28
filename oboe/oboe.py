@@ -28,13 +28,13 @@ def log(cls, agent, label, backtrace=False, **kwargs):
     rep = reporter()
     return rep.sendReport(evt)
 
-def log_method(cls, agent='Python', store_return=False, args_return=False, **kwargs):
+def log_method(cls, agent='Python', store_return=False, store_args=False, **kwargs):
     from functools import wraps
     def decorate(func):
         @wraps(func)
         def wrap_method(*f_args, **f_kwargs):
             if not Context.isValid(): return func(*f_args, **f_kwargs)
-            if args_return:
+            if store_args:
                 kwargs.update(f_kwargs)
                 kwargs.update({'args' : f_args})
             Context.log(agent, 'entry', **kwargs)
