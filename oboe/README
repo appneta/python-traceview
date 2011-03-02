@@ -4,4 +4,4 @@ A: read the readme in /swig
 
 Q: how to publish?
 
-A: python setup.py register -r tracelytics sdist upload -r tracelytics
+A: python setup.py register -r tracelytics bdist_egg upload -r tracelytics
