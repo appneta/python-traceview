@@ -101,28 +101,6 @@ def middleware_hooks(module, objname):
     except Exception, e:
         print >> sys.stderr, "Oboe error:", str(e)
 
-def memcache_hooks(module):
-    import oboe
-    mc_methods = { 'get' : ['key'],
-                  'set' : ['key'] }
-    try:
-        # wrap middleware callables we want to wrap
-        cls = getattr(module, 'Client', None)
-        if not cls: return
-        for method in mc_methods.keys():
-            fn = getattr(cls, method, None)
-            if not fn:
-                raise Exception('method %s not found in %s' % (method, module))
-            args = { 'agent': 'memcache', # XXX ?
-                     'store_return': False,
-                     'Class': module.__name__ + '.Client',
-                     'Function': method,
-                     }
-            setattr(cls, method, oboe.log_method(cls, **args)(fn))
-            print >> sys.stderr, "Setting: ", method
-    except Exception, e:
-        print >> sys.stderr, "Oboe error:", str(e)
-
 OBOEWARE_HAS_BEEN_RUN=False
 
 def install_oboe_instrumentation(mw_classes):
@@ -143,95 +121,14 @@ def install_oboe_instrumentation(mw_classes):
                              functools.partial(middleware_hooks, objname=objname))
 
     # ORM
-    imports.whenImported('django.db.backends', db_module_wrap)
+    import inst_django_orm
+    imports.whenImported('django.db.backends', inst_django_orm.wrap)
 
     # memcache
-    print >> sys.stderr, "oboe init"
-    imports.whenImported('memcache', functools.partial(memcache_hooks))
+    import inst_memcache
+    imports.whenImported('memcache', inst_memcache.wrap)
 
     mw_classes = ('oboeware.django.OboeDjangoMiddleware',) + mw_classes 
-    OBOEWARE_HAS_BENN_RUN = True
+    OBOEWARE_HAS_BEEN_RUN = True
 
     return mw_classes
-
-
-class CursorOboeWrapper(object):
-    def __init__(self, cursor, db):
-        self.cursor = cursor
-        self.db = db
-
-    def execute(self, sql, params=()):
-        import oboe
-        import re
-        kwargs = { 'Query' : sql }
-        if 'NAME' in self.db.settings_dict:
-            kwargs['Database'] = self.db.settings_dict['NAME']
-        if 'HOST' in self.db.settings_dict:
-            kwargs['RemoteHost'] = self.db.settings_dict['HOST']
-        if 'ENGINE' in self.db.settings_dict:
-            if re.search('postgresql', self.db.settings_dict['ENGINE']):
-                kwargs['Flavor'] = 'postgresql'
-
-        oboe.Context.log('djangoORM', 'entry', backtrace=True, **kwargs)
-        try:
-            return self.cursor.execute(sql, params)
-        finally:
-            oboe.Context.log('djangoORM', 'exit')
-            
-    def executemany(self, sql, param_list):
-        import oboe
-        import re
-        kwargs = { 'Query' : sql }
-        if 'NAME' in self.db.settings_dict:
-            kwargs['Database'] = self.db.settings_dict['NAME']
-        if 'HOST' in self.db.settings_dict:
-            kwargs['RemoteHost'] = self.db.settings_dict['HOST']
-        if 'ENGINE' in self.db.settings_dict:
-            if re.search('postgresql', self.db.settings_dict['ENGINE']):
-                kwargs['Flavor'] = 'postgresql'
-
-        oboe.Context.log('djangoORM', 'entry', backtrace=True, **kwargs)
-        try:
-            return self.cursor.executemany(sql, param_list)
-        finally:
-            oboe.Context.log('djangoORM', 'exit')
-
-    def __getattr__(self, attr):
-        if attr in self.__dict__:
-            return self.__dict__[attr]
-        else:
-            return getattr(self.cursor, attr)
-
-    def __iter__(self):
-        return iter(self.cursor)
-
-import sys
-
-def db_module_wrap(module):
-    try:
-        cursor_method = module.BaseDatabaseWrapper.cursor
-
-        def cursor_wrap(self):
-            try:
-                return CursorOboeWrapper(cursor_method(self), self)
-            except Exception, e:
-                print >> sys.stderr, "[oboe] Error in cursor_wrap", e
-
-        setattr(module.BaseDatabaseWrapper, 'cursor', cursor_wrap)
-    except Exception, e:
-        print >> sys.stderr, "[oboe] Error in module_wrap", e
-
-def cache_module_wrap(module):
-    try:
-        bc = module.BaseCache
-
-        def cursor_wrap(self):
-            try:
-                return CursorOboeWrapper(cursor_method(self), self)
-            except Exception, e:
-                print >> sys.stderr, "[oboe] Error in cursor_wrap", e
-
-        setattr(module.BaseCursorWrapper, 'cursor', cursor_wrap)
-    except Exception, e:
-        print >> sys.stderr, "[oboe] Error in module_wrap", e
-
