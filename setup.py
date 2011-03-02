@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+from setuptools import setup
 
 # TODO: Require oboe as a dependency. This may requrie switching to setuptools
 setup(name = 'oboeware',
@@ -8,6 +8,7 @@ setup(name = 'oboeware',
       author = 'Tracelytics',
       author_email = 'contact@tracelytics.com',
       url = 'http://www.tracelytics.com',
+      download_url = 'http://pypi.tracelytics.com/oboeware',
       description  = 'Oboe middleware for WSGI',
       packages = ['oboeware'],
       package_dir = {'oboeware' : 'src'}
