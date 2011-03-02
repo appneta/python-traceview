@@ -97,8 +97,29 @@ def middleware_hooks(module, objname):
                      'Class': module.__name__ + '.' + objname,
                      'Function': method,
                      }
-            #setattr(cls, method, wraphey(fn))
             setattr(cls, method, oboe.log_method(cls, **args)(fn))
+    except Exception, e:
+        print >> sys.stderr, "Oboe error:", str(e)
+
+def memcache_hooks(module):
+    import oboe
+    mc_methods = { 'get' : ['key'],
+                  'set' : ['key'] }
+    try:
+        # wrap middleware callables we want to wrap
+        cls = getattr(module, 'Client', None)
+        if not cls: return
+        for method in mc_methods.keys():
+            fn = getattr(cls, method, None)
+            if not fn:
+                raise Exception('method %s not found in %s' % (method, module))
+            args = { 'agent': 'memcache', # XXX ?
+                     'store_return': False,
+                     'Class': module.__name__ + '.Client',
+                     'Function': method,
+                     }
+            setattr(cls, method, oboe.log_method(cls, **args)(fn))
+            print >> sys.stderr, "Setting: ", method
     except Exception, e:
         print >> sys.stderr, "Oboe error:", str(e)
 
@@ -112,6 +133,7 @@ def install_oboe_instrumentation(mw_classes):
         return
 
     import functools, imports
+    # middleware hooks
     for i in mw_classes:
         if i.startswith('oboe'): continue
         dot = i.rfind('.')
@@ -120,7 +142,12 @@ def install_oboe_instrumentation(mw_classes):
         imports.whenImported(i[:dot],
                              functools.partial(middleware_hooks, objname=objname))
 
-    imports.whenImported('django.db.backends', module_wrap)
+    # ORM
+    imports.whenImported('django.db.backends', db_module_wrap)
+
+    # memcache
+    print >> sys.stderr, "oboe init"
+    imports.whenImported('memcache', functools.partial(memcache_hooks))
 
     mw_classes = ('oboeware.django.OboeDjangoMiddleware',) + mw_classes 
     OBOEWARE_HAS_BENN_RUN = True
@@ -180,7 +207,7 @@ class CursorOboeWrapper(object):
 
 import sys
 
-def module_wrap(module):
+def db_module_wrap(module):
     try:
         cursor_method = module.BaseDatabaseWrapper.cursor
 
@@ -191,6 +218,20 @@ def module_wrap(module):
                 print >> sys.stderr, "[oboe] Error in cursor_wrap", e
 
         setattr(module.BaseDatabaseWrapper, 'cursor', cursor_wrap)
+    except Exception, e:
+        print >> sys.stderr, "[oboe] Error in module_wrap", e
+
+def cache_module_wrap(module):
+    try:
+        bc = module.BaseCache
+
+        def cursor_wrap(self):
+            try:
+                return CursorOboeWrapper(cursor_method(self), self)
+            except Exception, e:
+                print >> sys.stderr, "[oboe] Error in cursor_wrap", e
+
+        setattr(module.BaseCursorWrapper, 'cursor', cursor_wrap)
     except Exception, e:
         print >> sys.stderr, "[oboe] Error in module_wrap", e
 
