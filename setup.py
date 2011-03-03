@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+# Copyright (C) 2011 by Tracelytics, Inc.
+# All rights reserved.
+
+
 from setuptools import setup
 
 # TODO: Require oboe as a dependency. This may requrie switching to setuptools
@@ -11,5 +15,6 @@ setup(name = 'oboeware',
       download_url = 'http://pypi.tracelytics.com/oboeware',
       description  = 'Oboe middleware for WSGI',
       packages = ['oboeware'],
+      license = 'Tracelytics Alpha Agreement'
       package_dir = {'oboeware' : 'src'}
       )

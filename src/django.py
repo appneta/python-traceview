@@ -1,3 +1,7 @@
+# Copyright (C) 2011 by Tracelytics, Inc.
+# All rights reserved.
+
+
 # django middleware for passing values to oboe
 __all__ = ("OboeDjangoMiddleware", "install_oboe_instrumentation")
 

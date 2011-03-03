@@ -1,3 +1,7 @@
+# Copyright (C) 2011 by Tracelytics, Inc.
+# All rights reserved.
+
+
 # WSGI middleware for Oboe support
 import oboe
 import sys, os
