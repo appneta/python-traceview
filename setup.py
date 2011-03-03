@@ -15,6 +15,6 @@ setup(name = 'oboeware',
       download_url = 'http://pypi.tracelytics.com/oboeware',
       description  = 'Oboe middleware for WSGI',
       packages = ['oboeware'],
-      license = 'Tracelytics Alpha Agreement'
+      license = 'Tracelytics Alpha Agreement',
       package_dir = {'oboeware' : 'src'}
       )
