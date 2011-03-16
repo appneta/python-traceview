@@ -1,32 +1,11 @@
 How to install into a pylons(/django?) app
 ===============================================
 
-1. Install middleware to env/venv
-# python setup.py install
+-- see tender!
 
-2. Enable middleware in web app:
-# vim ./config/middleware.py
+Q: how to publish?
 
-from oboeware import OboeMiddleware
+A: for testing: python setup.py register -r internal bdist_egg upload -r internal
+A: for release: python setup.py register -r tracelytics bdist_egg upload -r tracelytics
 
-...
-
-    # Routing/Session/Cache Middleware
-    app = RoutesMiddleware(app, config['routes.map'], singleton=False)
->>> if not asbool(config['debug']):
->>>     app = OboeMiddleware(app, config)
-
-    app = make_gzip_middleware(app, config)
-
-    app = SessionMiddleware(app, config)
-
-    ...
-    # AFTER error-handling middleware, right before RegistryManager
->>> if asbool(config['debug']):
->>>     app = OboeMiddleware(app, config)
-
-3. Add config
-# vim ./development.ini
-
-oboe.tracing_mode = always
-oboe.reporter_host = 127.0.0.1
+Make sure your .pypirc is up to date--check /home/dan/.pypirc
