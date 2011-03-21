@@ -28,21 +28,47 @@ def log(cls, agent, label, backtrace=False, **kwargs):
     rep = reporter()
     return rep.sendReport(evt)
 
-def log_method(cls, agent='Python', store_return=False, store_args=False, **kwargs):
+def log_method(cls, agent='Python',
+               store_return=False, store_args=False, callback=None, **kwargs):
+    """ wrap a method for tracing with the Tracelytics Oboe library.
+          agent: the agent to use when reporting
+
+          store_return: report the return value
+
+          store_args: report the arguments to this function
+
+          callback: if set, calls this function after the wrapped
+          function returns, which examines the function, arguments,
+          and return value, and may add more K/V pairs to the
+          dictionary to be reported
+    """
     from functools import wraps
     def decorate(func):
         @wraps(func)
         def wrap_method(*f_args, **f_kwargs):
             if not Context.isValid(): return func(*f_args, **f_kwargs)
             if store_args:
-                kwargs.update(f_kwargs)
-                kwargs.update({'args' : f_args})
+                kwargs.update( {'args' : f_args, 'kwargs': f_kwargs} )
+            # log entry event
             Context.log(agent, 'entry', **kwargs)
+
+            # call wrapped method
             res = func(*f_args, **f_kwargs)
+
+            # call the callback function, if set, and merge its return
+            # values with the exit event's reporting data
+            exit_kvs = {}
+            if callback and callable(callback):
+                cb_ret = callback(func, f_args, f_kwargs, res)
+                if cb_ret:
+                    exit_kvs.update(cb_ret)
+
+            # (optionally) report return value
             if store_return:
-                Context.log(agent, 'exit', ReturnValue=str(res))
-            else:
-                Context.log(agent, 'exit')
+                exit_kvs['ReturnValue'] = str(res)
+
+            # log exit event
+            Context.log(agent, 'exit', **exit_kvs)
             return res
         return wrap_method
     return decorate
