@@ -8,7 +8,7 @@ from setuptools import setup
 
 # TODO: Require oboe as a dependency. This may requrie switching to setuptools
 setup(name = 'oboeware',
-      version = '0.1.0',
+      version = '0.1.1',
       author = 'Tracelytics',
       author_email = 'contact@tracelytics.com',
       url = 'http://www.tracelytics.com',
