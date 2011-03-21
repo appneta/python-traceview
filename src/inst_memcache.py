@@ -13,22 +13,22 @@ from functools import partial
 # Mutate: append, cas, prepend
 
 # memcache.Client setup
-MC_SERVER_COMMANDS = set('__init__', 'set_servers')
+MC_SERVER_COMMANDS = set(('__init__', 'set_servers'))
 
 # these methods also have the same names as Memcached commands/ops
-MC_COMMANDS = set('get', 'get_multi',
-                  'set', 'add', 'replace', 'set_multi',
-                  'incr', 'decr',
-                  'delete', 'delete_multi',
-                  'append', 'cas', 'prepend')
+MC_COMMANDS = set(('get', 'get_multi',
+                   'set', 'add', 'replace', 'set_multi',
+                   'incr', 'decr',
+                   'delete', 'delete_multi',
+                   'append', 'cas', 'prepend'))
 
-def wrap_mc_method(funcname, func, f_args, f_kwargs, return_val):
+def wrap_mc_method(func, f_args, f_kwargs, return_val, funcname=None):
     kvs = {}
     if funcname in MC_COMMANDS:
         kvs['KVOp'] = funcname
     # could examine f_args for key(s) here
     if funcname == 'get':
-        kvs['KVHit'] = (return_val != None)
+        kvs['KVHit'] = int(return_val != None)
     return kvs
 
 def wrap(module):
