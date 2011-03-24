@@ -6,7 +6,6 @@
 
 from setuptools import setup
 
-# TODO: Require oboe as a dependency. This may requrie switching to setuptools
 setup(name = 'oboeware',
       version = '0.1.1',
       author = 'Tracelytics',
@@ -16,5 +15,6 @@ setup(name = 'oboeware',
       description  = 'Oboe middleware for WSGI',
       packages = ['oboeware'],
       license = 'Tracelytics Alpha Agreement',
-      package_dir = {'oboeware' : 'src'}
+      package_dir = {'oboeware' : 'src'},
+      install_requires = ['oboe>=0.1.3']
       )
