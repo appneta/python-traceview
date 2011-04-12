@@ -153,7 +153,7 @@ def install_oboe_middleware(module):
 
 try:
     import sys
-    import oboeware.imports as imports, functools
+    import imports as imports, functools
     imports.whenImported('django.core.handlers.base', install_oboe_middleware)
 except ImportError, e:
     print >> sys.stderr, "[oboe] Unable to instrument app and middleware: %s" % e
