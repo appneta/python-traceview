@@ -105,18 +105,13 @@ def middleware_hooks(module, objname):
     except Exception, e:
         print >> sys.stderr, "Oboe error:", str(e)
 
-OBOEWARE_HAS_BEEN_RUN=False
-
-def install_oboe_instrumentation(mw_classes):
+def on_load_middleware():
     """ wrap Django middleware from a list """
-    global OBOEWARE_HAS_BEEN_RUN
-    
-    if OBOEWARE_HAS_BEEN_RUN:
-        return
+    from django.conf import settings
 
     import functools, imports
     # middleware hooks
-    for i in mw_classes:
+    for i in settings.MIDDLEWARE_CLASSES:
         if i.startswith('oboe'): continue
         dot = i.rfind('.')
         if dot < 0 or dot+1 == len(i): continue
@@ -132,7 +127,34 @@ def install_oboe_instrumentation(mw_classes):
     import inst_memcache
     imports.whenImported('memcache', inst_memcache.wrap)
 
-    mw_classes = ('oboeware.django.OboeDjangoMiddleware',) + mw_classes 
-    OBOEWARE_HAS_BEEN_RUN = True
+    settings.MIDDLEWARE_CLASSES = ('oboeware.djangoware.OboeDjangoMiddleware',) + settings.MIDDLEWARE_CLASSES 
 
-    return mw_classes
+def install_oboe_middleware(module):
+    
+    from functools import wraps
+    def base_handler_wrapper(func):
+        @wraps(func)
+        def wrap_method(*f_args, **f_kwargs):
+            on_load_middleware()
+            return func(*f_args, **f_kwargs)
+        return wrap_method
+
+    try:
+        cls = getattr(module, 'BaseHandler', None)
+        try:
+            if cls.OBOE_MIDDLEWARE_LOADER:
+                return
+        except Exception, e:
+            cls.OBOE_MIDDLEWARE_LOADER = True
+        fn = getattr(cls, 'load_middleware', None)
+        setattr(cls, 'load_middleware', base_handler_wrapper(fn))
+    except Exception, e:
+        print >> sys.stderr, "Oboe error:", str(e)
+
+try:
+    import sys
+    import oboeware.imports as imports, functools
+    imports.whenImported('django.core.handlers.base', install_oboe_middleware)
+except ImportError, e:
+    print >> sys.stderr, "[oboe] Unable to instrument app and middleware: %s" % e
+    pass # gracefully disable tracing if Tracelytics oboeware not present
