@@ -24,6 +24,9 @@ class CursorOboeWrapper(object):
         oboe.Context.log('djangoORM', 'entry', backtrace=True, **kwargs)
         try:
             return self.cursor.execute(sql, params)
+        except Exception, e:
+            oboe.Context.log('djangoORM', 'error', ErrorClass=e.__class__.__name__, Message=str(e))
+            raise # reraise; finally still fires below
         finally:
             oboe.Context.log('djangoORM', 'exit')
             
@@ -42,6 +45,9 @@ class CursorOboeWrapper(object):
         oboe.Context.log('djangoORM', 'entry', backtrace=True, **kwargs)
         try:
             return self.cursor.executemany(sql, param_list)
+        except Exception, e:
+            oboe.Context.log('djangoORM', 'error', ErrorClass=e.__class__.__name__, Message=str(e))
+            raise # reraise; finally still fires below
         finally:
             oboe.Context.log('djangoORM', 'exit')
 
