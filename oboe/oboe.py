@@ -41,6 +41,9 @@ def log_method(cls, agent='Python',
           function returns, which examines the function, arguments,
           and return value, and may add more K/V pairs to the
           dictionary to be reported
+
+          Reports an error event between entry and exit if an
+          exception is thrown, then reraises.
     """
     from functools import wraps
     def decorate(func):
@@ -52,24 +55,28 @@ def log_method(cls, agent='Python',
             # log entry event
             Context.log(agent, 'entry', **kwargs)
 
-            # call wrapped method
-            res = func(*f_args, **f_kwargs)
+            try:
+                # call wrapped method
+                res = func(*f_args, **f_kwargs)
+            except Exception, e:
+                oboe.Context.log('djangoORM', 'error', ErrorClass=e.__class__.__name__, Message=str(e))
+                raise # reraise; finally still fires below
+            finally:
+                # call the callback function, if set, and merge its return
+                # values with the exit event's reporting data
+                exit_kvs = {}
+                if callback and callable(callback):
+                    cb_ret = callback(func, f_args, f_kwargs, res)
+                    if cb_ret:
+                        exit_kvs.update(cb_ret)
 
-            # call the callback function, if set, and merge its return
-            # values with the exit event's reporting data
-            exit_kvs = {}
-            if callback and callable(callback):
-                cb_ret = callback(func, f_args, f_kwargs, res)
-                if cb_ret:
-                    exit_kvs.update(cb_ret)
+                # (optionally) report return value
+                if store_return:
+                    exit_kvs['ReturnValue'] = str(res)
 
-            # (optionally) report return value
-            if store_return:
-                exit_kvs['ReturnValue'] = str(res)
-
-            # log exit event
-            Context.log(agent, 'exit', **exit_kvs)
-            return res
+                # log exit event
+                Context.log(agent, 'exit', **exit_kvs)
+                return res
         return wrap_method
     return decorate
 
