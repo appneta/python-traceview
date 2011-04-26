@@ -71,7 +71,8 @@ class OboeMiddleware:
                 if exc_info:
                     import traceback as tb
                     (t, exc, trace) = exc_info
-                    endEvt.addInfo("Error", repr(exc))
+                    endEvt.addInfo("ErrorMsg", str(exc))
+                    endEvt.addInfo("ErrorClass", exc.__class__.__name__)
                     endEvt.addInfo("Backtrace", "".join(tb.format_list(tb.extract_tb(trace))))
             start_response(status, headers)
             if self.profile: return response_body.append
