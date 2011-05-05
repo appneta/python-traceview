@@ -29,7 +29,7 @@ def log(cls, agent, label, backtrace=False, **kwargs):
     return rep.sendReport(evt)
 
 def log_method(cls, agent='Python',
-               store_return=False, store_args=False, callback=None, **kwargs):
+               store_return=False, store_args=False, callback=None, profile=False, **kwargs):
     """ wrap a method for tracing with the Tracelytics Oboe library.
           agent: the agent to use when reporting
 
@@ -57,7 +57,26 @@ def log_method(cls, agent='Python',
 
             try:
                 # call wrapped method
-                res = func(*f_args, **f_kwargs)
+                res = None
+                got_stats = False
+                if profile:
+                    try:
+                        import cStringIO, cProfile, pstats # XXX test cProfile and pstats exist
+                    except ImportError:
+                        res = func(*f_args, **f_kwargs)
+
+                    p = cProfile.Profile()
+                    res = p.runcall(func, *f_args, **f_kwargs)
+
+                    sio = cStringIO.StringIO()
+                    s = pstats.Stats(p, stream=sio)
+                    s.sort_stats('time')
+                    s.print_stats(15)
+                    stats = sio.getvalue()
+                    sio.close()
+                    got_stats = True
+                else:
+                    res = func(*f_args, **f_kwargs)
             except Exception, e:
                 oboe.Context.log('djangoORM', 'error', ErrorClass=e.__class__.__name__, Message=str(e))
                 raise # reraise; finally still fires below
@@ -73,6 +92,10 @@ def log_method(cls, agent='Python',
                 # (optionally) report return value
                 if store_return:
                     exit_kvs['ReturnValue'] = str(res)
+
+                # (optionally) store profiler results
+                if got_stats:
+                    exit_kvs['Profile'] = stats
 
                 # log exit event
                 Context.log(agent, 'exit', **exit_kvs)
