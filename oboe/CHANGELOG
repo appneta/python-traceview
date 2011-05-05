@@ -1,0 +1,3 @@
+0.1.5:
+ - added profile option to log_method
+ - fixed error reporting from log_method
