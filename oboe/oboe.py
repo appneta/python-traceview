@@ -78,7 +78,7 @@ def log_method(cls, agent='Python',
                 else:
                     res = func(*f_args, **f_kwargs)
             except Exception, e:
-                oboe.Context.log('djangoORM', 'error', ErrorClass=e.__class__.__name__, Message=str(e))
+                Context.log(agent, 'error', ErrorClass=e.__class__.__name__, Message=str(e))
                 raise # reraise; finally still fires below
             finally:
                 # call the callback function, if set, and merge its return
