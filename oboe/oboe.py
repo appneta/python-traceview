@@ -99,7 +99,7 @@ def log_method(cls, agent='Python',
 
                 # log exit event
                 Context.log(agent, 'exit', **exit_kvs)
-                return res
+            return res
         return wrap_method
     return decorate
 
