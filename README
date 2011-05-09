@@ -5,7 +5,7 @@ How to install into a pylons(/django?) app
 
 Q: how to publish?
 
-A: for testing: python setup.py register -r internal bdist_egg sdist upload -r internal
-A: for release: python setup.py register -r tracelytics bdist_egg sdist upload -r tracelytics
+A: for testing: python setup.py register -r internal sdist upload -r internal
+A: for release: python setup.py register -r tracelytics sdist upload -r tracelytics
 
 Make sure your .pypirc is up to date--check /home/dan/.pypirc
