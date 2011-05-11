@@ -152,7 +152,6 @@ def install_oboe_middleware(module):
         print >> sys.stderr, "Oboe error:", str(e)
 
 try:
-    import sys
     import imports as imports, functools
     imports.whenImported('django.core.handlers.base', install_oboe_middleware)
 except ImportError, e:
