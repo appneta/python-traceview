@@ -2,6 +2,7 @@
 # All rights reserved.
 
 import sys
+import oboe
 from functools import partial
 
 # memcache.Client methods (from docstring)
@@ -22,6 +23,8 @@ MC_COMMANDS = set(('get', 'get_multi',
                    'delete', 'delete_multi',
                    'append', 'cas', 'prepend'))
 
+MC_AGENT = 'memcache'
+
 def wrap_mc_method(func, f_args, f_kwargs, return_val, funcname=None):
     kvs = {}
     if funcname in MC_COMMANDS:
@@ -31,8 +34,22 @@ def wrap_mc_method(func, f_args, f_kwargs, return_val, funcname=None):
         kvs['KVHit'] = int(return_val != None)
     return kvs
 
+# peeks into internals
+def wrap_get_server(func):
+    from functools import wraps
+    @wraps(func)
+    def wrapper(*f_args, **f_kwargs):
+        ret = func(*f_args, **f_kwargs)
+        try:
+            host = ret[0].ip if (ret[0] != None) else None
+            oboe.Context.log(MC_AGENT, 'info', remote_host=host, KVKey=f_args[1])
+        except Exception, e:
+            print >> sys.stderr, "Oboe error: %s" % e
+        finally:
+            return ret
+    return wrapper
+
 def wrap(module):
-    import oboe
     try:
         # wrap middleware callables we want to wrap
         cls = getattr(module, 'Client', None)
@@ -41,12 +58,16 @@ def wrap(module):
             fn = getattr(cls, method, None)
             if not fn:
                 raise Exception('method %s not found in %s' % (method, module))
-            args = { 'agent': 'memcache', # XXX ?
+            args = { 'agent': MC_AGENT,
                      'store_return': False,
                      'callback': partial(wrap_mc_method, funcname=method),
                      'Class': module.__name__ + '.Client',
                      'Function': method,
                      }
             setattr(cls, method, oboe.log_method(cls, **args)(fn))
+
+        # per-key memcache host hook
+        fn = getattr(cls, '_get_server', None)
+        setattr(cls, '_get_server', wrap_get_server(fn))
     except Exception, e:
         print >> sys.stderr, "Oboe error:", str(e)

@@ -7,7 +7,7 @@
 from setuptools import setup
 
 setup(name = 'oboeware',
-      version = '0.1.4',
+      version = '0.1.5',
       author = 'Tracelytics',
       author_email = 'contact@tracelytics.com',
       url = 'http://www.tracelytics.com',
@@ -16,5 +16,5 @@ setup(name = 'oboeware',
       packages = ['oboeware'],
       license = 'Tracelytics Alpha Agreement',
       package_dir = {'oboeware' : 'src'},
-      install_requires = ['oboe>=0.1.3']
+      install_requires = ['oboe>=0.1.5']
       )
