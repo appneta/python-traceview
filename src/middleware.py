@@ -124,7 +124,8 @@ class OboeMiddleware:
             if threw_error:
                 import traceback as tb
                 (t, exc, trace) = sys.exc_info()
-                evt.addInfo("Error", repr(exc))
+                endEvt.addInfo("ErrorMsg", str(exc))
+                endEvt.addInfo("ErrorClass", exc.__class__.__name__)
                 evt.addInfo("Backtrace", "".join(tb.format_list(tb.extract_tb(trace))))
 
             # gets controller, agent
