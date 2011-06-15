@@ -2,6 +2,7 @@ from oboe_ext import *
 
 import types
 import traceback as tb
+import inspect
 
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 
@@ -27,6 +28,92 @@ def log(cls, agent, label, backtrace=False, **kwargs):
 
     rep = reporter()
     return rep.sendReport(evt)
+
+def function_signature(func):
+    name = func.__name__
+    (args, varargs, keywords, defaults) = inspect.getargspec(func)
+    argstrings = []
+    if defaults:
+        first = len(args)-len(defaults)
+        argstrings = args[:first]
+        for i in range(first, len(args)):
+            d = defaults[i-first]
+            d = "'"+d+"'" if isinstance(d, str) else str(d)
+            argstrings.append(args[i]+'='+d)
+    else:
+        argstrings = args
+    if varargs:
+        argstrings.append('*'+varargs)
+    if keywords:
+        argstrings.append('**'+keywords)
+    return name+'('+', '.join(argstrings)+')'
+
+def profile_method(cls, profile_name, 
+                   store_return=False, store_args=False, profile=False, callback=None, **kwargs):
+    from functools import wraps
+    def decorate(func):
+        @wraps(func)
+        def wrapper(*f_args, **f_kwargs):
+            if not Context.isValid(): return func(*f_args, **f_kwargs)
+
+            if store_args:
+                kwargs.update({'Args': f_args, 'kwargs': f_kwargs })
+
+            if 'im_class' in dir(func):
+                kwargs.update({'Class': func.im_class.__name__})
+
+            kwargs.update({'Language': 'python',
+                           'ProfileName': profile_name,
+                           'File': inspect.getsourcefile(func),
+                           'LineNumber': inspect.getsourcelines(func)[1],
+                           'Module': inspect.getmodule(func).__name__,
+                           'FunctionName': func.__name__,
+                           'Signature': function_signature(func),
+                           'Backtrace' : "".join(tb.format_stack()[:-1])})
+
+            Context.log(None, 'profile_entry', **kwargs)
+
+            try:
+                res = None
+                if profile:
+                    try:
+                        import cStringIO, cProfile, pstats
+                    except ImportError:
+                        res = func(*f_args, **f_kwargs)
+                    
+                    p = cProfile.Profile()
+                    res = p.runcall(func, *f_args, **f_kwargs)
+
+                    sio = cStringIO.StringIO()
+                    s = pstats.Stats(p, stream=sio)
+                    s.sort_stats('time')
+                    s.print_stats(15)
+                    stats = sio.getvalue()
+                    sio.close()
+                else:
+                    res = func(*f_args, **f_kwargs)
+            except Exception, e:
+                Context.log(None, 'error', ErrorClass=e.__class__.__name__, Message=str(e))
+                raise
+            finally:
+                exit_kvs = {}
+                if callback and callable(callback):
+                    cb_kvs = callback(func, f_args, f_kwargs, res)
+                    if cb_kvs:
+                        exit_kvs.update(cb_kvs)
+
+                if store_return:
+                    exit_kvs['ReturnValue'] = res
+                if profile and stats:
+                    exit_kvs['ProfileStats'] = stats
+               
+                exit_kvs['ProfileName'] = profile_name
+
+                Context.log(None, 'profile_exit', **exit_kvs)
+
+            return res
+        return wrapper
+    return decorate
 
 def log_method(cls, agent='Python',
                store_return=False, store_args=False, callback=None, profile=False, **kwargs):
@@ -113,3 +200,4 @@ def reporter():
 
 setattr(Context, log.__name__, types.MethodType(log, Context))
 setattr(Context, log_method.__name__, types.MethodType(log_method, Context))
+setattr(Context, profile_method.__name__, types.MethodType(profile_method, Context))
