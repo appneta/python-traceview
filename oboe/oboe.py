@@ -50,6 +50,24 @@ def function_signature(func):
 
 def profile_method(cls, profile_name, 
                    store_return=False, store_args=False, profile=False, callback=None, **kwargs):
+    """ wrap a method for tracing and profiling with the Tracelytics Oboe library.
+          profile_name: the profile name to use when reporting.
+          this should be unique to the profiled method.
+
+          store_return: report the return value of this function
+
+          store_args: report the arguments to this function
+
+          profile: profile this function with cProfile and report the result
+
+          callback: if set, calls this function after the wrapped
+          function returns, which examines the function, arguments,
+          and return value, and may add more K/V pairs to the
+          dictionary to be reported
+
+          Reports an error event between entry and exit if an
+          exception is thrown, then reraises.
+    """
     from functools import wraps
     def decorate(func):
         @wraps(func)
@@ -118,6 +136,8 @@ def profile_method(cls, profile_name,
 def log_method(cls, agent='Python',
                store_return=False, store_args=False, callback=None, profile=False, **kwargs):
     """ wrap a method for tracing with the Tracelytics Oboe library.
+        as opposed to profile_method above, this decorator gives the method its own agent
+
           agent: the agent to use when reporting
 
           store_return: report the return value
