@@ -5,7 +5,7 @@ from setuptools import setup, Extension
 oboe_module = Extension('_oboe_ext', sources=['oboe_wrap.cxx'], libraries=['oboe'])
 
 setup(name = 'oboe',
-      version = '0.1.5',
+      version = '0.1.6',
       author = 'Tracelytics',
       author_email = 'contact@tracelytics.com',
       url = 'http://www.tracelytics.com',
