@@ -125,6 +125,7 @@ def profile_method(cls, profile_name,
                 if profile and stats:
                     exit_kvs['ProfileStats'] = stats
                
+                exit_kvs['Language'] = 'python'
                 exit_kvs['ProfileName'] = profile_name
 
                 Context.log(None, 'profile_exit', **exit_kvs)
