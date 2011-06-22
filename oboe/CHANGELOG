@@ -1,3 +1,6 @@
+0.1.6.1
+ - bugfix in profiling instrumentation for python
+
 0.1.6
  - added profiling instrumentation for python
 
