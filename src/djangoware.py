@@ -101,7 +101,7 @@ def middleware_hooks(module, objname):
                      'Class': module.__name__ + '.' + objname,
                      'Function': method,
                      }
-            setattr(cls, method, oboe.log_method(cls, **args)(fn))
+            setattr(cls, method, oboe.Context.log_method(**args)(fn))
     except Exception, e:
         print >> sys.stderr, "Oboe error:", str(e)
 
