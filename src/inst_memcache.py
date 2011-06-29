@@ -64,7 +64,7 @@ def wrap(module):
                      'Class': module.__name__ + '.Client',
                      'Function': method,
                      }
-            setattr(cls, method, oboe.Context.log_method(**args)(fn))
+            setattr(cls, method, oboe.log_method(cls, **args)(fn))
 
         # per-key memcache host hook
         fn = getattr(cls, '_get_server', None)
