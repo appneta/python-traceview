@@ -122,18 +122,16 @@ def on_load_middleware():
     # ORM
     import inst_django_orm
     imports.whenImported('django.db.backends', inst_django_orm.wrap)
-
     # memcache
     import inst_memcache
     imports.whenImported('memcache', inst_memcache.wrap)
+    
+    import inst_httplib2
+    imports.whenImported('httplib2', inst_httplib2.wrap)
 
     # it's usually a tuple, but sometimes it's a list
     if type(settings.MIDDLEWARE_CLASSES) is tuple:
         settings.MIDDLEWARE_CLASSES = ('oboeware.djangoware.OboeDjangoMiddleware',) + settings.MIDDLEWARE_CLASSES
-    elif type(settings.MIDDLEWARE_CLASSES) is list:
-        settings.MIDDLEWARE_CLASSES = ['oboeware.djangoware.OboeDjangoMiddleware'] + settings.MIDDLEWARE_CLASSES
-    else:
-        print >> sys.stderr, "Oboe error: thought MIDDLEWARE_CLASSES would be either a tuple or a list, got " + str(type(settings.MIDDLEWARE_CLASSES))
 
 def install_oboe_middleware(module):
     
