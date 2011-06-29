@@ -4,7 +4,7 @@
 import sys
 import oboe
 
-HTTPLIB2_AGENT = 'remote_request'
+HTTPLIB2_AGENT = 'httplib2'
 
 def wrap(module):
     try:
