@@ -111,7 +111,7 @@ def profile_method(cls, profile_name,
                 else:
                     res = func(*f_args, **f_kwargs)
             except Exception, e:
-                Context.log(None, 'error', ErrorClass=e.__class__.__name__, Message=str(e))
+                Context.log(None, 'error', ErrorClass=e.__class__.__name__, ErrorMsg=str(e))
                 raise
             finally:
                 exit_kvs = {}
