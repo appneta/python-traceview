@@ -22,11 +22,11 @@ def wrap(module):
                 evt.addInfo('RemoteHost', info.netloc)
                 evt.addInfo('IsService', True)
 
-                path = split_url.path
+                path = info.path
                 if path == '':
                     path = '/'
-                if split_url.query != '':
-                    path += '?' + split_url.query
+                if info.query != '':
+                    path += '?' + info.query
                 evt.addInfo('ServiceArg', path)
                  
                 evt.addInfo('Agent', HTTPLIB2_AGENT)
