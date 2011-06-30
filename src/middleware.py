@@ -46,7 +46,7 @@ class OboeMiddleware:
         xtr_hdr = environ.get("HTTP_X-Trace", environ.get("HTTP_X_TRACE"))
         evt, endEvt = None, None
         
-        tracing_mode = oboe.config.get('oboe.tracing_mode')
+        tracing_mode = oboe.config.get('tracing_mode')
 
         # Check for existing context: pylons errors with debug=false result in
         # a second wsgi entry.  Using the existing context is favorable in
