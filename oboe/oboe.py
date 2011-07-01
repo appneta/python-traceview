@@ -39,6 +39,32 @@ def log(cls, agent, label, backtrace=False, **kwargs):
     rep = reporter()
     return rep.sendReport(evt)
 
+
+def log_error(cls, exception=None, err_class=None, err_msg=None, backtrace=True):
+    """Report an error from python exception or from specified message.
+
+        requires either exception to be set to a python Exception object,
+        or err_class and err_msg to be set to strings describing the
+        class of the error and the message for this particular instance of it.
+
+    """
+    if not Context.isValid(): return
+    if not exception and not err_class: return
+    evt = Context.createEvent()
+    evt.addInfo('Label', 'error')
+    if backtrace:
+        evt.addInfo('Backtrace', "".join(tb.format_list(tb.extract_stack()[:-1])))
+
+    if exception:
+        evt.addInfo('ErrorClass', exception.__class__.__name__)
+        evt.addInfo('ErrorMsg', str(e))
+    else:
+        evt.addInfo('ErrorClass', err_class)
+        evt.addInfo('ErrorMsg', err_msg)
+
+    rep = reporter()
+    return rep.sendReport(evt)
+
 def _function_signature(func):
     name = func.__name__
     (args, varargs, keywords, defaults) = inspect.getargspec(func)
