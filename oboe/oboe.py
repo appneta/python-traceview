@@ -59,7 +59,7 @@ def log_error(cls, exception=None, err_class=None, err_msg=None, backtrace=True)
 
     if exception:
         evt.addInfo('ErrorClass', exception.__class__.__name__)
-        evt.addInfo('ErrorMsg', str(e))
+        evt.addInfo('ErrorMsg', str(exception))
     else:
         evt.addInfo('ErrorClass', err_class)
         evt.addInfo('ErrorMsg', err_msg)
@@ -262,5 +262,6 @@ def reporter():
     return reporter_instance
 
 setattr(Context, log.__name__, types.MethodType(log, Context))
+setattr(Context, log_error.__name__, types.MethodType(log_error, Context))
 setattr(Context, log_method.__name__, types.MethodType(log_method, Context))
 setattr(Context, profile_method.__name__, types.MethodType(profile_method, Context))
