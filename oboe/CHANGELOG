@@ -1,3 +1,7 @@
+0.1.7
+ - added log_error method
+ - improved docstrings
+
 0.1.6.1
  - bugfix in profiling instrumentation for python
 
