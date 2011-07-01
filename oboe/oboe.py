@@ -15,8 +15,9 @@ Context.init()
 
 reporter_instance = None
 
+
 def log(cls, agent, label, backtrace=False, **kwargs):
-    """ report an individual tracing event
+    """Report an individual tracing event.
 
         agent: agent name, None for "same as current"
 
@@ -25,6 +26,7 @@ def log(cls, agent, label, backtrace=False, **kwargs):
         backtrace: gather a backtrace?
 
         kwargs: extra key/value pairs to add to event
+
     """
     if not Context.isValid(): return
     evt = Context.createEvent()
@@ -86,7 +88,8 @@ def _function_signature(func):
 
 def profile_method(cls, profile_name, 
                    store_return=False, store_args=False, profile=False, callback=None, **kwargs):
-    """ wrap a method for tracing and profiling with the Tracelytics Oboe library.
+    """Wrap a method for tracing and profiling with the Tracelytics Oboe library.
+
           profile_name: the profile name to use when reporting.
           this should be unique to the profiled method.
 
@@ -103,6 +106,7 @@ def profile_method(cls, profile_name,
 
           Reports an error event between entry and exit if an
           exception is thrown, then reraises.
+
     """
     from functools import wraps
     def decorate(func):
@@ -172,8 +176,9 @@ def profile_method(cls, profile_name,
 
 def log_method(cls, agent='Python',
                store_return=False, store_args=False, callback=None, profile=False, **kwargs):
-    """ wrap a method for tracing with the Tracelytics Oboe library.
-        as opposed to profile_method above, this decorator gives the method its own agent
+    """Wrap a method for tracing with the Tracelytics Oboe library.
+
+        as opposed to profile_method, this decorator gives the method its own agent
 
           agent: the agent to use when reporting
 
@@ -188,6 +193,7 @@ def log_method(cls, agent='Python',
 
           Reports an error event between entry and exit if an
           exception is thrown, then reraises.
+
     """
     from functools import wraps
     def decorate(func):
