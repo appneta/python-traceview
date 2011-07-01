@@ -16,5 +16,5 @@ setup(name = 'oboeware',
       packages = ['oboeware'],
       license = 'Tracelytics Alpha Agreement',
       package_dir = {'oboeware' : 'src'},
-      install_requires = ['oboe>=0.1.9']
+      install_requires = ['oboe>=0.1.7']
       )
