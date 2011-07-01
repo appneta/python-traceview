@@ -16,6 +16,16 @@ Context.init()
 reporter_instance = None
 
 def log(cls, agent, label, backtrace=False, **kwargs):
+    """ report an individual tracing event
+
+        agent: agent name, None for "same as current"
+
+        label: label of event
+
+        backtrace: gather a backtrace?
+
+        kwargs: extra key/value pairs to add to event
+    """
     if not Context.isValid(): return
     evt = Context.createEvent()
     evt.addInfo('Agent', agent)
