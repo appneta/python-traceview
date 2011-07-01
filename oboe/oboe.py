@@ -39,7 +39,7 @@ def log(cls, agent, label, backtrace=False, **kwargs):
     rep = reporter()
     return rep.sendReport(evt)
 
-def function_signature(func):
+def _function_signature(func):
     name = func.__name__
     (args, varargs, keywords, defaults) = inspect.getargspec(func)
     argstrings = []
@@ -96,7 +96,7 @@ def profile_method(cls, profile_name,
                            'LineNumber': inspect.getsourcelines(func)[1],
                            'Module': inspect.getmodule(func).__name__,
                            'FunctionName': func.__name__,
-                           'Signature': function_signature(func),
+                           'Signature': _function_signature(func),
                            'Backtrace' : "".join(tb.format_stack()[:-1])})
 
             Context.log(None, 'profile_entry', **kwargs)
