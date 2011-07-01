@@ -105,6 +105,7 @@ def middleware_hooks(module, objname):
     except Exception, e:
         print >> sys.stderr, "Oboe error:", str(e)
 
+        
 def on_load_middleware():
     """ wrap Django middleware from a list """
     from django.conf import settings
@@ -125,8 +126,7 @@ def on_load_middleware():
     # memcache
     import inst_memcache
     imports.whenImported('memcache', inst_memcache.wrap)
-    
-    import inst_httplib2
+    import inst_httplib2 
     imports.whenImported('httplib2', inst_httplib2.wrap)
 
     # it's usually a tuple, but sometimes it's a list
@@ -138,7 +138,6 @@ def on_load_middleware():
         print >> sys.stderr, "Oboe error: thought MIDDLEWARE_CLASSES would be either a tuple or a list, got " + str(type(settings.MIDDLEWARE_CLASSES))
 
 def install_oboe_middleware(module):
-    
     from functools import wraps
     def base_handler_wrapper(func):
         @wraps(func)
