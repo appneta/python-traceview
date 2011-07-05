@@ -18,7 +18,8 @@ def wrap(module):
             if oboe.Context.isValid(): 
                 evt = oboe.Context.createEvent()
                 info = urlparse(uri)
-                evt.addInfo('RemoteProtocal', info.scheme if info.scheme != '' else 'http')
+                evt.addInfo('IsService', True)
+                evt.addInfo('RemoteProtocol', info.scheme if info.scheme != '' else 'http')
                 evt.addInfo('RemoteHost', info.netloc)
 
                 path = info.path
