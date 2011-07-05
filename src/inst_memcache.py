@@ -3,6 +3,7 @@
 
 import sys
 import oboe
+import socket
 from functools import partial
 
 # memcache.Client methods (from docstring)
@@ -41,8 +42,15 @@ def wrap_get_server(func):
     def wrapper(*f_args, **f_kwargs):
         ret = func(*f_args, **f_kwargs)
         try:
-            host = ret[0].ip if (ret[0] != None) else None
-            oboe.Context.log(MC_AGENT, 'info', remote_host=host, KVKey=f_args[1])
+            args = {'KVKey' : f_args[1]}
+            (host, _) = ret
+            if host:
+                if host.family == socket.AF_INET:
+                    args['RemoteHost'] = host.ip
+                elif host.family == socket.AF_UNIX:
+                    args['RemoteHost'] = 'localhost'
+
+            oboe.Context.log(MC_AGENT, 'info', **args)
         except Exception, e:
             print >> sys.stderr, "Oboe error: %s" % e
         finally:
@@ -63,6 +71,7 @@ def wrap(module):
                      'callback': partial(wrap_mc_method, funcname=method),
                      'Class': module.__name__ + '.Client',
                      'Function': method,
+                     'backtrace': True,
                      }
             setattr(cls, method, oboe.log_method(cls, **args)(fn))
 
