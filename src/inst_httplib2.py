@@ -20,7 +20,6 @@ def wrap(module):
                 info = urlparse(uri)
                 evt.addInfo('RemoteProtocal', info.scheme if info.scheme != '' else 'http')
                 evt.addInfo('RemoteHost', info.netloc)
-                evt.addInfo('IsService', True)
 
                 path = info.path
                 if path == '':
@@ -32,18 +31,19 @@ def wrap(module):
                 evt.addInfo('Agent', HTTPLIB2_AGENT)
                 evt.addInfo('Label', 'entry')
                 reporter = oboe.reporter().sendReport(evt)
+                response = None
                 try:
                     if not 'X-Trace' in headers:
                         headers['X-Trace'] = oboe.Context.toString()
                     response = real_request(self, uri, method=method, body=body,
                                             headers=headers, redirections=redirections,
                                             connection_type=connection_type)
-                except e:
+                except Exception, exc:
                     evt = oboe.Context.createEvent()
                     evt.addInfo('Agent', HTTPLIB2_AGENT)
                     evt.addInfo('Label', 'error')
-                    evt.addInfo('ErrorMsg', str(e))
-                    evt.addInfo('ErrorClass', e.__class__.__name__)
+                    evt.addInfo('ErrorMsg', str(exc))
+                    evt.addInfo('ErrorClass', exc.__class__.__name__)
                     reporter = oboe.reporter().sendReport(evt)
                 finally:
                     evt = oboe.Context.createEvent()
