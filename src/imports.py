@@ -77,6 +77,8 @@ if not overriden:
     __do_import__ = __import__
 
     def new_import(*p, **params):
+        if type(p[0]) != str:
+            p = p[1:]
         name = p[0]
         ret = __do_import__(*p, **params)
         if len(p) > 3 and p[3]:
