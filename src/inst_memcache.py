@@ -71,3 +71,10 @@ def wrap(module):
         setattr(cls, '_get_server', wrap_get_server(fn))
     except Exception, e:
         print >> sys.stderr, "Oboe error:", str(e)
+
+try:
+    import memcache
+    wrap(memcache)
+except ImportError, e:
+    print >> sys.stderr, "Oboe: didn't add instrumentation for memcache as module could not be found"
+    pass

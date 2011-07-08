@@ -62,3 +62,10 @@ def wrap(module):
     except Exception, e:
         print >> sys.stderr, "Oboe error:", str(e)
 
+try:
+    import httplib2
+    wrap(httplib2)
+except ImportError, e:
+    print >> sys.stderr, "Oboe: didn't add instrumentation for httplib2 as module could not be found"
+    pass
+
