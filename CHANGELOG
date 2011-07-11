@@ -1,3 +1,5 @@
+0.2.0 New-style instrumentation-wrapping imports for ease-of-use and no confusing exceptions.
+0.1.8 Added support for handling httplib2 requests
 0.1.7 support lists of MIDDLEWARE_CLASSES in addition to tuples
 0.1.6 fix error reporting in wsgi wrapper
 0.1.4 log ORM errors

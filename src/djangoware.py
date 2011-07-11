@@ -101,10 +101,11 @@ def middleware_hooks(module, objname):
                      'Class': module.__name__ + '.' + objname,
                      'Function': method,
                      }
-            setattr(cls, method, oboe.log_method(cls, **args)(fn))
+            setattr(cls, method, oboe.Context.log_method(**args)(fn))
     except Exception, e:
         print >> sys.stderr, "Oboe error:", str(e)
 
+        
 def on_load_middleware():
     """ wrap Django middleware from a list """
     from django.conf import settings
@@ -123,20 +124,18 @@ def on_load_middleware():
     import inst_django_orm
     imports.whenImported('django.db.backends', inst_django_orm.wrap)
 
-    # memcache
     import inst_memcache
-    imports.whenImported('memcache', inst_memcache.wrap)
+    import inst_httplib2 
 
     # it's usually a tuple, but sometimes it's a list
     if type(settings.MIDDLEWARE_CLASSES) is tuple:
         settings.MIDDLEWARE_CLASSES = ('oboeware.djangoware.OboeDjangoMiddleware',) + settings.MIDDLEWARE_CLASSES
-    elif type(settings.MIDDLEWARE_CLASSES) is list:
+    elif type(settings.MIDDLEWARE_CLASSES) is list:     
         settings.MIDDLEWARE_CLASSES = ['oboeware.djangoware.OboeDjangoMiddleware'] + settings.MIDDLEWARE_CLASSES
     else:
         print >> sys.stderr, "Oboe error: thought MIDDLEWARE_CLASSES would be either a tuple or a list, got " + str(type(settings.MIDDLEWARE_CLASSES))
 
 def install_oboe_middleware(module):
-    
     from functools import wraps
     def base_handler_wrapper(func):
         @wraps(func)

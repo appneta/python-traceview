@@ -35,12 +35,15 @@ class OboeMiddleware:
 
         if self.oboe_config.get('oboe.reporter_port'):
             oboe.config['reporter_port'] = self.oboe_config['oboe.reporter_port']
+        
+        import inst_memcache
+        import inst_httplib2
 
     def __call__(self, environ, start_response):
         xtr_hdr = environ.get("HTTP_X-Trace", environ.get("HTTP_X_TRACE"))
         evt, endEvt = None, None
         
-        tracing_mode = self.oboe_config.get('oboe.tracing_mode')
+        tracing_mode = oboe.config.get('tracing_mode')
 
         # Check for existing context: pylons errors with debug=false result in
         # a second wsgi entry.  Using the existing context is favorable in

@@ -73,10 +73,17 @@ def wrap(module):
                      'Function': method,
                      'backtrace': True,
                      }
-            setattr(cls, method, oboe.log_method(cls, **args)(fn))
+            setattr(cls, method, oboe.Context.log_method(**args)(fn))
 
         # per-key memcache host hook
         fn = getattr(cls, '_get_server', None)
         setattr(cls, '_get_server', wrap_get_server(fn))
     except Exception, e:
         print >> sys.stderr, "Oboe error:", str(e)
+
+try:
+    import memcache
+    wrap(memcache)
+except ImportError, e:
+    print >> sys.stderr, "Oboe: didn't add instrumentation for memcache as module could not be found"
+    pass
