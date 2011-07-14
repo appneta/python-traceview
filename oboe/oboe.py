@@ -16,10 +16,10 @@ Context.init()
 reporter_instance = None
 
 
-def log(cls, agent, label, backtrace=False, **kwargs):
+def log(cls, layer, label, backtrace=False, **kwargs):
     """Report an individual tracing event.
 
-        agent: agent name, None for "same as current"
+        layer: layer name, None for "same as current"
 
         label: label of event
 
@@ -30,7 +30,7 @@ def log(cls, agent, label, backtrace=False, **kwargs):
     """
     if not Context.isValid(): return
     evt = Context.createEvent()
-    evt.addInfo('Agent', agent)
+    evt.addInfo('Layer', layer)
     evt.addInfo('Label', label)
     if backtrace:
         evt.addInfo('Backtrace', "".join(tb.format_list(tb.extract_stack()[:-1])))
@@ -174,13 +174,13 @@ def profile_method(cls, profile_name,
         return wrapper
     return decorate
 
-def log_method(cls, agent='Python',
+def log_method(cls, layer='Python',
                store_return=False, store_args=False, callback=None, profile=False, **kwargs):
     """Wrap a method for tracing with the Tracelytics Oboe library.
 
-        as opposed to profile_method, this decorator gives the method its own agent
+        as opposed to profile_method, this decorator gives the method its own layer
 
-          agent: the agent to use when reporting
+          layer: the layer to use when reporting
 
           store_return: report the return value
 
@@ -203,7 +203,7 @@ def log_method(cls, agent='Python',
             if store_args:
                 kwargs.update( {'args' : f_args, 'kwargs': f_kwargs} )
             # log entry event
-            Context.log(agent, 'entry', **kwargs)
+            Context.log(layer, 'entry', **kwargs)
 
             try:
                 # call wrapped method
@@ -228,7 +228,7 @@ def log_method(cls, agent='Python',
                 else:
                     res = func(*f_args, **f_kwargs)
             except Exception, e:
-                Context.log(agent, 'error', ErrorClass=e.__class__.__name__, Message=str(e))
+                Context.log(layer, 'error', ErrorClass=e.__class__.__name__, Message=str(e))
                 raise # reraise; finally still fires below
             finally:
                 # call the callback function, if set, and merge its return
@@ -248,7 +248,7 @@ def log_method(cls, agent='Python',
                     exit_kvs['Profile'] = stats
 
                 # log exit event
-                Context.log(agent, 'exit', **exit_kvs)
+                Context.log(layer, 'exit', **exit_kvs)
             return res
         return wrap_method
     return decorate
