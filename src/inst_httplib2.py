@@ -5,7 +5,7 @@ import sys
 import oboe
 from  urlparse import urlparse
 
-HTTPLIB2_AGENT = 'httplib2'
+HTTPLIB2_LAYER = 'httplib2'
 
 def wrap(module):
     try:
@@ -29,7 +29,7 @@ def wrap(module):
                     path += '?' + info.query
                 evt.addInfo('ServiceArg', path)
                  
-                evt.addInfo('Agent', HTTPLIB2_AGENT)
+                evt.addInfo('Layer', HTTPLIB2_LAYER)
                 evt.addInfo('Label', 'entry')
                 reporter = oboe.reporter().sendReport(evt)
                 response = None
@@ -41,14 +41,14 @@ def wrap(module):
                                             connection_type=connection_type)
                 except Exception, exc:
                     evt = oboe.Context.createEvent()
-                    evt.addInfo('Agent', HTTPLIB2_AGENT)
+                    evt.addInfo('Layer', HTTPLIB2_LAYER)
                     evt.addInfo('Label', 'error')
                     evt.addInfo('ErrorMsg', str(exc))
                     evt.addInfo('ErrorClass', exc.__class__.__name__)
                     reporter = oboe.reporter().sendReport(evt)
                 finally:
                     evt = oboe.Context.createEvent()
-                    evt.addInfo('Agent', HTTPLIB2_AGENT)
+                    evt.addInfo('Layer', HTTPLIB2_LAYER)
                     evt.addInfo('Label', 'exit')
                     reporter = oboe.reporter().sendReport(evt)
                 return response

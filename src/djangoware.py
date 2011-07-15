@@ -37,7 +37,7 @@ class OboeDjangoMiddleware(object):
 
         if not oboe.Context.isValid(): return
         try:
-            evt.addInfo('Agent', 'django')
+            evt.addInfo('Layer', 'django')
             evt.addInfo('Label', 'entry')
             reporter = oboe.reporter().sendReport(evt)
         except Exception, e:
@@ -48,7 +48,7 @@ class OboeDjangoMiddleware(object):
         if not oboe.Context.isValid(): return
         try:
             evt = oboe.Context.createEvent()
-            evt.addInfo('Agent', 'django')
+            evt.addInfo('Layer', 'django')
             evt.addInfo('Label', 'process_view')
             evt.addInfo('Controller', view_func.__module__)
             evt.addInfo('Action', view_func.__name__ if hasattr(view_func, '__name__') else None)
@@ -61,7 +61,7 @@ class OboeDjangoMiddleware(object):
         if not oboe.Context.isValid(): return response
         try:
             evt = oboe.Context.createEvent()
-            evt.addInfo('Agent', 'django')
+            evt.addInfo('Layer', 'django')
             evt.addInfo('Label', 'exit')
             reporter = oboe.reporter().sendReport(evt)
             response['X-Trace'] = oboe.Context.toString()
@@ -75,7 +75,7 @@ class OboeDjangoMiddleware(object):
         if not oboe.Context.isValid(): return
         try:
             evt = oboe.Context.createEvent()
-            evt.addInfo('Agent', 'django')
+            evt.addInfo('Layer', 'django')
             evt.addInfo('Label', 'error')
             evt.addInfo('ErrorMsg', str(exception))
             evt.addInfo('ErrorClass', exception.__class__.__name__)
@@ -96,7 +96,7 @@ def middleware_hooks(module, objname):
                        'process_exception']:
             fn = getattr(cls, method, None)
             if not fn: continue
-            args = { 'agent': objname, # XXX ?
+            args = { 'layer': objname, # XXX ?
                      'store_return': False,
                      'Class': module.__name__ + '.' + objname,
                      'Function': method,

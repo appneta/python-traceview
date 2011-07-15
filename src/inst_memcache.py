@@ -24,7 +24,7 @@ MC_COMMANDS = set(('get', 'get_multi',
                    'delete', 'delete_multi',
                    'append', 'cas', 'prepend'))
 
-MC_AGENT = 'memcache'
+MC_LAYER = 'memcache'
 
 def wrap_mc_method(func, f_args, f_kwargs, return_val, funcname=None):
     kvs = {}
@@ -50,7 +50,7 @@ def wrap_get_server(func):
                 elif host.family == socket.AF_UNIX:
                     args['RemoteHost'] = 'localhost'
 
-            oboe.Context.log(MC_AGENT, 'info', **args)
+            oboe.Context.log(MC_LAYER, 'info', **args)
         except Exception, e:
             print >> sys.stderr, "Oboe error: %s" % e
         finally:
@@ -66,7 +66,7 @@ def wrap(module):
             fn = getattr(cls, method, None)
             if not fn:
                 raise Exception('method %s not found in %s' % (method, module))
-            args = { 'agent': MC_AGENT,
+            args = { 'layer': MC_LAYER,
                      'store_return': False,
                      'callback': partial(wrap_mc_method, funcname=method),
                      'Class': module.__name__ + '.Client',
