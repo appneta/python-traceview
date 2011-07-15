@@ -7,7 +7,7 @@ import oboe
 import sys, os
 
 class OboeMiddleware:
-    def __init__(self, app, oboe_config, agent="wsgi", profile=False):
+    def __init__(self, app, oboe_config, layer="wsgi", profile=False):
         """
         Takes the app that we're wrapping, as well as a dictionary with oboe
         configuration parameters:
@@ -18,7 +18,7 @@ class OboeMiddleware:
 
         self.wrapped_app = app
         self.oboe_config = oboe_config
-        self.agent = agent
+        self.layer = layer
         self.profile = profile
 
         if self.profile:
@@ -57,7 +57,7 @@ class OboeMiddleware:
             evt = oboe.Context.createEvent()
 
         if oboe.Context.isValid() and tracing_mode != 'never':
-            evt.addInfo("Agent", self.agent)
+            evt.addInfo("Layer", self.layer)
             evt.addInfo("Label", "entry")
             reporter = oboe.reporter().sendReport(evt)
 
@@ -106,21 +106,21 @@ class OboeMiddleware:
                 result = self.wrapped_app(environ, wrapped_start_response)
 
         except Exception, e:
-            self.send_end(tracing_mode, endEvt, environ, True, agent=self.agent)
+            self.send_end(tracing_mode, endEvt, environ, True, layer=self.layer)
             raise
 
-        self.send_end(tracing_mode, endEvt, environ, agent=self.agent, stats=stats)
+        self.send_end(tracing_mode, endEvt, environ, layer=self.layer, stats=stats)
         oboe.Context.clear()
 
         return result
 
     @classmethod
-    def send_end(cls, tracing_mode, endEvt, environ, threw_error=None, agent="wsgi", stats=None):
+    def send_end(cls, tracing_mode, endEvt, environ, threw_error=None, layer="wsgi", stats=None):
         if oboe.Context.isValid() and tracing_mode != 'never' and endEvt:
             evt = endEvt
 
             evt.addEdge(oboe.Context.get())
-            evt.addInfo("Agent", agent)
+            evt.addInfo("Layer", layer)
             evt.addInfo("Label", "exit")
             if stats: 
                 evt.addInfo("Profile", stats)
@@ -131,7 +131,7 @@ class OboeMiddleware:
                 endEvt.addInfo("ErrorClass", exc.__class__.__name__)
                 evt.addInfo("Backtrace", "".join(tb.format_list(tb.extract_tb(trace))))
 
-            # gets controller, agent
+            # gets controller, layer
             for k, v in  environ.get('wsgiorg.routing_args', [{},{}])[1].items():
                 evt.addInfo(str(k).capitalize(), str(v))
 
