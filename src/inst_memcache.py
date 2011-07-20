@@ -85,5 +85,4 @@ try:
     import memcache
     wrap(memcache)
 except ImportError, e:
-    print >> sys.stderr, "Oboe: didn't add instrumentation for memcache as module could not be found"
     pass
