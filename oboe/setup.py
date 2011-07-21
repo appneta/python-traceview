@@ -2,7 +2,7 @@
 
 from setuptools import setup, Extension
 
-oboe_module = Extension('_oboe_ext', sources=['oboe_wrap.cxx', 'oboe.hpp'], libraries=['oboe'])
+oboe_module = Extension('_oboe_ext', sources=['oboe_wrap.cxx'], depends=['oboe.hpp'], libraries=['oboe'])
 
 setup(name = 'oboe',
       version = '0.1.8',
