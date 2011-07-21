@@ -76,7 +76,10 @@ def _function_signature(func):
         argstrings = args[:first]
         for i in range(first, len(args)):
             d = defaults[i-first]
-            d = "'"+d+"'" if isinstance(d, str) else str(d)
+            if isinstance(d, str):
+                d = "'"+d+"'"
+            else:
+                d = str(d)
             argstrings.append(args[i]+'='+d)
     else:
         argstrings = args
