@@ -1,3 +1,5 @@
+0.1.8.2
+ - one more renaming fix for consistency across languages
 0.1.8.1
  - switched reversed arguments for consistency
  - profile_method -> profile_function

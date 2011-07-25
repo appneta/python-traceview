@@ -89,7 +89,7 @@ def _function_signature(func):
         argstrings.append('**'+keywords)
     return name+'('+', '.join(argstrings)+')'
 
-def function_profile(cls, profile_name, 
+def profile_function(cls, profile_name, 
                    store_args=False, store_return=False, profile=False, callback=None, **kwargs):
     """Wrap a method for tracing and profiling with the Tracelytics Oboe library.
 
@@ -179,14 +179,8 @@ def function_profile(cls, profile_name,
 
 def log_method(cls, layer='Python',
                store_return=False, store_args=False, callback=None, profile=False, **kwargs):
-<<<<<<< HEAD
-    """ wrap a method for tracing with the Tracelytics Oboe library.
-        as opposed to function_profile above, this decorator gives the method its own agent
-=======
     """Wrap a method for tracing with the Tracelytics Oboe library.
-
-        as opposed to profile_method, this decorator gives the method its own layer
->>>>>>> 7e6a04b86249ed0c89b9b9d67a0cdd69bcee5cff
+        as opposed to profile_function, this decorator gives the method its own layer
 
           layer: the layer to use when reporting
 
@@ -272,4 +266,4 @@ def reporter():
 setattr(Context, log.__name__, types.MethodType(log, Context))
 setattr(Context, log_error.__name__, types.MethodType(log_error, Context))
 setattr(Context, log_method.__name__, types.MethodType(log_method, Context))
-setattr(Context, function_profile.__name__, types.MethodType(function_profile, Context))
+setattr(Context, profile_function.__name__, types.MethodType(profile_function, Context))
