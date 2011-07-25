@@ -49,7 +49,7 @@ def function_signature(func):
     return name+'('+', '.join(argstrings)+')'
 
 def profile_method(cls, profile_name, 
-                   store_return=False, store_args=False, profile=False, callback=None, **kwargs):
+                   store_args=False, store_return=False, profile=False, callback=None, **kwargs):
     """ wrap a method for tracing and profiling with the Tracelytics Oboe library.
           profile_name: the profile name to use when reporting.
           this should be unique to the profiled method.
