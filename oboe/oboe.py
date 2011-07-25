@@ -111,71 +111,69 @@ def profile_function(cls, profile_name,
           exception is thrown, then reraises.
 
     """
-    from functools import wraps
-    def decorate(func):
-        @wraps(func)
-        def wrapper(*f_args, **f_kwargs):
-            if not Context.isValid(): return func(*f_args, **f_kwargs)
+    from decorator import decorator
+    @decorator
+    def wrapper(func, *f_args, **f_kwargs):
+        if not Context.isValid(): return func(*f_args, **f_kwargs)
 
-            if store_args:
-                kwargs.update({'Args': f_args, 'kwargs': f_kwargs })
+        if store_args:
+            kwargs.update({'Args': f_args, 'kwargs': f_kwargs })
 
-            if 'im_class' in dir(func):
-                kwargs.update({'Class': func.im_class.__name__})
+        if 'im_class' in dir(func):
+            kwargs.update({'Class': func.im_class.__name__})
 
-            kwargs.update({'Language': 'python',
-                           'ProfileName': profile_name,
-                           'File': inspect.getsourcefile(func),
-                           'LineNumber': inspect.getsourcelines(func)[1],
-                           'Module': inspect.getmodule(func).__name__,
-                           'FunctionName': func.__name__,
-                           'Signature': _function_signature(func),
-                           'Backtrace' : "".join(tb.format_stack()[:-1])})
+        kwargs.update({'Language': 'python',
+                       'ProfileName': profile_name,
+                       'File': inspect.getsourcefile(func),
+                       'LineNumber': inspect.getsourcelines(func)[1],
+                       'Module': inspect.getmodule(func).__name__,
+                       'FunctionName': func.__name__,
+                       'Signature': _function_signature(func),
+                       'Backtrace' : "".join(tb.format_stack()[:-1])})
 
-            Context.log(None, 'profile_entry', **kwargs)
+        Context.log(None, 'profile_entry', **kwargs)
 
-            try:
-                res = None
-                if profile:
-                    try:
-                        import cStringIO, cProfile, pstats
-                    except ImportError:
-                        res = func(*f_args, **f_kwargs)
-                    
-                    p = cProfile.Profile()
-                    res = p.runcall(func, *f_args, **f_kwargs)
-
-                    sio = cStringIO.StringIO()
-                    s = pstats.Stats(p, stream=sio)
-                    s.sort_stats('time')
-                    s.print_stats(15)
-                    stats = sio.getvalue()
-                    sio.close()
-                else:
+        try:
+            res = None
+            if profile:
+                try:
+                    import cStringIO, cProfile, pstats
+                except ImportError:
                     res = func(*f_args, **f_kwargs)
-            except Exception, e:
-                Context.log(None, 'error', ErrorClass=e.__class__.__name__, ErrorMsg=str(e))
-                raise
-            finally:
-                exit_kvs = {}
-                if callback and callable(callback):
-                    cb_kvs = callback(func, f_args, f_kwargs, res)
-                    if cb_kvs:
-                        exit_kvs.update(cb_kvs)
 
-                if store_return:
-                    exit_kvs['ReturnValue'] = res
-                if profile and stats:
-                    exit_kvs['ProfileStats'] = stats
-               
-                exit_kvs['Language'] = 'python'
-                exit_kvs['ProfileName'] = profile_name
+                p = cProfile.Profile()
+                res = p.runcall(func, *f_args, **f_kwargs)
 
-                Context.log(None, 'profile_exit', **exit_kvs)
+                sio = cStringIO.StringIO()
+                s = pstats.Stats(p, stream=sio)
+                s.sort_stats('time')
+                s.print_stats(15)
+                stats = sio.getvalue()
+                sio.close()
+            else:
+                res = func(*f_args, **f_kwargs)
+        except Exception, e:
+            Context.log(None, 'error', ErrorClass=e.__class__.__name__, ErrorMsg=str(e))
+            raise
+        finally:
+            exit_kvs = {}
+            if callback and callable(callback):
+                cb_kvs = callback(func, f_args, f_kwargs, res)
+                if cb_kvs:
+                    exit_kvs.update(cb_kvs)
 
-            return res
-        return wrapper
-    return decorate
+            if store_return:
+                exit_kvs['ReturnValue'] = res
+            if profile and stats:
+                exit_kvs['ProfileStats'] = stats
+
+            exit_kvs['Language'] = 'python'
+            exit_kvs['ProfileName'] = profile_name
+
+            Context.log(None, 'profile_exit', **exit_kvs)
+
+        return res
+    return wrapper
 
 def log_method(cls, layer='Python',
                store_return=False, store_args=False, callback=None, profile=False, **kwargs):
@@ -197,63 +195,62 @@ def log_method(cls, layer='Python',
           exception is thrown, then reraises.
 
     """
-    from functools import wraps
-    def decorate(func):
-        @wraps(func)
-        def wrap_method(*f_args, **f_kwargs):
-            if not Context.isValid(): return func(*f_args, **f_kwargs)
-            if store_args:
-                kwargs.update( {'args' : f_args, 'kwargs': f_kwargs} )
-            # log entry event
-            Context.log(layer, 'entry', **kwargs)
+    from decorator import decorator
+    @decorator
+    def wrap_method(func, *f_args, **f_kwargs):
+        if not Context.isValid(): return func(*f_args, **f_kwargs)
+        if store_args:
+            kwargs.update( {'args' : f_args, 'kwargs': f_kwargs} )
+        # log entry event
+        Context.log(layer, 'entry', **kwargs)
 
-            try:
-                # call wrapped method
-                res = None
-                got_stats = False
-                if profile:
-                    try:
-                        import cStringIO, cProfile, pstats # XXX test cProfile and pstats exist
-                    except ImportError:
-                        res = func(*f_args, **f_kwargs)
-
-                    p = cProfile.Profile()
-                    res = p.runcall(func, *f_args, **f_kwargs)
-
-                    sio = cStringIO.StringIO()
-                    s = pstats.Stats(p, stream=sio)
-                    s.sort_stats('time')
-                    s.print_stats(15)
-                    stats = sio.getvalue()
-                    sio.close()
-                    got_stats = True
-                else:
+        try:
+            # call wrapped method
+            res = None
+            got_stats = False
+            if profile:
+                try:
+                    import cStringIO, cProfile, pstats # XXX test cProfile and pstats exist
+                except ImportError:
                     res = func(*f_args, **f_kwargs)
-            except Exception, e:
-                Context.log(layer, 'error', ErrorClass=e.__class__.__name__, Message=str(e))
-                raise # reraise; finally still fires below
-            finally:
-                # call the callback function, if set, and merge its return
-                # values with the exit event's reporting data
-                exit_kvs = {}
-                if callback and callable(callback):
-                    cb_ret = callback(func, f_args, f_kwargs, res)
-                    if cb_ret:
-                        exit_kvs.update(cb_ret)
 
-                # (optionally) report return value
-                if store_return:
-                    exit_kvs['ReturnValue'] = str(res)
+                p = cProfile.Profile()
+                res = p.runcall(func, *f_args, **f_kwargs)
 
-                # (optionally) store profiler results
-                if got_stats:
-                    exit_kvs['Profile'] = stats
+                sio = cStringIO.StringIO()
+                s = pstats.Stats(p, stream=sio)
+                s.sort_stats('time')
+                s.print_stats(15)
+                stats = sio.getvalue()
+                sio.close()
+                got_stats = True
+            else:
+                res = func(*f_args, **f_kwargs)
+        except Exception, e:
+            Context.log(layer, 'error', ErrorClass=e.__class__.__name__, Message=str(e))
+            raise # reraise; finally still fires below
+        finally:
+            # call the callback function, if set, and merge its return
+            # values with the exit event's reporting data
+            exit_kvs = {}
+            if callback and callable(callback):
+                cb_ret = callback(func, f_args, f_kwargs, res)
+                if cb_ret:
+                    exit_kvs.update(cb_ret)
 
-                # log exit event
-                Context.log(layer, 'exit', **exit_kvs)
-            return res
-        return wrap_method
-    return decorate
+            # (optionally) report return value
+            if store_return:
+                exit_kvs['ReturnValue'] = str(res)
+
+            # (optionally) store profiler results
+            if got_stats:
+                exit_kvs['Profile'] = stats
+
+            # log exit event
+            Context.log(layer, 'exit', **exit_kvs)
+        return res
+
+    return wrap_method
 
 def reporter():
     global reporter_instance
