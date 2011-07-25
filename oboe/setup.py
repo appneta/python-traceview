@@ -2,10 +2,10 @@
 
 from setuptools import setup, Extension
 
-oboe_module = Extension('_oboe_ext', sources=['oboe_wrap.cxx'], libraries=['oboe'])
+oboe_module = Extension('_oboe_ext', sources=['oboe_wrap.cxx'], depends=['oboe.hpp'], libraries=['oboe'])
 
 setup(name = 'oboe',
-      version = '0.1.6.2',
+      version = '0.1.8.1',
       author = 'Tracelytics',
       author_email = 'contact@tracelytics.com',
       url = 'http://www.tracelytics.com',

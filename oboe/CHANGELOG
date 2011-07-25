@@ -1,6 +1,10 @@
-0.1.6.2
+0.1.8.1
  - switched reversed arguments for consistency
  - profile_method -> profile_function
+
+0.1.7
+ - added log_error method
+ - improved docstrings
 
 0.1.6.1
  - bugfix in profiling instrumentation for python
