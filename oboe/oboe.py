@@ -48,7 +48,7 @@ def function_signature(func):
         argstrings.append('**'+keywords)
     return name+'('+', '.join(argstrings)+')'
 
-def profile_method(cls, profile_name, 
+def function_profile(cls, profile_name, 
                    store_args=False, store_return=False, profile=False, callback=None, **kwargs):
     """ wrap a method for tracing and profiling with the Tracelytics Oboe library.
           profile_name: the profile name to use when reporting.
@@ -137,7 +137,7 @@ def profile_method(cls, profile_name,
 def log_method(cls, agent='Python',
                store_return=False, store_args=False, callback=None, profile=False, **kwargs):
     """ wrap a method for tracing with the Tracelytics Oboe library.
-        as opposed to profile_method above, this decorator gives the method its own agent
+        as opposed to function_profile above, this decorator gives the method its own agent
 
           agent: the agent to use when reporting
 
@@ -221,4 +221,4 @@ def reporter():
 
 setattr(Context, log.__name__, types.MethodType(log, Context))
 setattr(Context, log_method.__name__, types.MethodType(log_method, Context))
-setattr(Context, profile_method.__name__, types.MethodType(profile_method, Context))
+setattr(Context, function_profile.__name__, types.MethodType(function_profile, Context))
