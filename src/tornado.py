@@ -73,5 +73,6 @@ class OboeContextWrapper(object):
             self._oboe_md = ctx
 
     def __call__(self, *args, **kwargs):
-        with oboeware.async.OboeContextManager(self):
+        import async
+        with async.OboeContextManager(self):
             return self.wrapped.__call__(*args, **kwargs)
