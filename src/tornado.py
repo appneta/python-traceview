@@ -46,6 +46,9 @@ def RequestHandler_finish(self):
         elif hasattr(self, '_status_code'): # older Tornado
             self.request._oboe_finish_ev.addInfo("Status", self._status_code)
 
+        if oboe.Context.isValid():
+            self.request._oboe_finish_ev.addEdge(oboe.Context.get())
+
         # XXX add edge from context/RequestHandler -> exit
         # self.request._oboe_finish_ev.addEdge(self.request._oboe_md)
         oboe.reporter().sendReport(self.request._oboe_finish_ev, self.request._oboe_md)
@@ -59,16 +62,40 @@ def AsyncHTTPClient_start(request):
     """ takes 'request' param, which is the outgoing HTTPRequest, not the request currently being handled """
     # this is called from AsyncHTTPClient.fetch(), which runs from the RequestHandler's context
     oboe.Context.log("cURL", "entry", True, cURL_URL=request.url, Async=True)
+    if hasattr(request, 'headers'):
+        if (hasattr(request.headers, '__setitem__')): # could be dict or tornado.httputil.HTTPHeaders
+            request.headers['X-Trace'] = oboe.Context.toString() # add X-Trace header to outgoing request
+
     request._oboe_md = oboe.Context.copy()
 
-def AsyncHTTPClient_finish(request):
-    if hasattr(request, '_oboe_md'):
-        ev = request._oboe_md.createEvent() # adds edge to md
-        ev.addInfo("Layer", "cURL")
-        ev.addInfo("Label", "exit")
-        # ev.addEdge(oboe.Context.get()) # this is not the right edge.
-        oboe.reporter().sendReport(ev, request._oboe_md)
-        # this branch of the trace graph is ending: do nothing with req._oboe_md?
+def AsyncHTTPClient_finish(request, callback=None, headers=None):
+    """
+    fires exit event for Async HTTP requests.
+
+    checks for wrapped metadata stored in user's callback function: if
+    it exists, that metadata is used & updated when reporting the
+    event, so that the callback will "happen after" the exit event.
+    """
+    if hasattr(callback, '_oboe_md'):        # wrapped callback contains md
+        ev = callback._oboe_md.createEvent() # adds edge to md
+        if hasattr(request, '_oboe_md'):     # add edge to entry event for this async HTTP call
+            ev.addEdge(request._oboe_md)
+        mdobj = callback
+
+    elif hasattr(request, '_oboe_md'):       # callback contains no metadata, but request obj does
+        ev = request._oboe_md.createEvent()
+        mdobj = request
+
+    else: # no metadata found
+        return
+
+    if headers and hasattr(headers, 'get') and headers.get('X-Trace', None):
+        response_md = oboe.Metadata.fromString(headers.get('X-Trace'))
+        ev.addEdge(response_md) # add response X-Trace header
+
+    ev.addInfo("Layer", "cURL")
+    ev.addInfo("Label", "exit")
+    oboe.reporter().sendReport(ev, mdobj._oboe_md) # increments metadata in mdobj
 
 # used for wrapping stack contexts in tornado.stack_context
 class OboeContextWrapper(object):
