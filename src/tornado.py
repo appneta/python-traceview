@@ -4,7 +4,11 @@ import oboe
 
 # instrumentation functions for tornado.web.RequestHandler
 def RequestHandler_start(self):
-    """ runs from the main HTTP server thread (doesn't set/get Context) """
+    """ runs from the main HTTP server thread (doesn't set/get Context)
+    
+        takes 'self' parameter, which is the current RequestHandler
+        instance (which holds current the HTTPRequest in self.request)
+    """
     xtr = self.request.headers.get("X-Trace", None)
     if xtr:
         md = oboe.Metadata.fromString(xtr)
@@ -37,9 +41,9 @@ def RequestHandler_finish(self):
     if self.request._oboe_finish_ev and self.request._oboe_md:
         self.request._oboe_finish_ev.addInfo("Layer", "tornado")
         self.request._oboe_finish_ev.addInfo("Label", "exit")
-        if hasattr(self, 'get_status'):
+        if hasattr(self, 'get_status'): # recent Tornado
             self.request._oboe_finish_ev.addInfo("Status", self.get_status())
-        elif hasattr(self, '_status_code'):
+        elif hasattr(self, '_status_code'): # older Tornado
             self.request._oboe_finish_ev.addInfo("Status", self._status_code)
 
         # XXX add edge from context/RequestHandler -> exit
@@ -52,7 +56,9 @@ def RequestHandler_finish(self):
 
 # instrumentation for tornado.httpclient.AsyncHTTPClient
 def AsyncHTTPClient_start(request):
-    oboe.Context.log("cURL", "entry", True, cURL_URL=request.url)
+    """ takes 'request' param, which is the outgoing HTTPRequest, not the request currently being handled """
+    # this is called from AsyncHTTPClient.fetch(), which runs from the RequestHandler's context
+    oboe.Context.log("cURL", "entry", True, cURL_URL=request.url, Async=True)
     request._oboe_md = oboe.Context.copy()
 
 def AsyncHTTPClient_finish(request):
@@ -68,11 +74,11 @@ def AsyncHTTPClient_finish(request):
 class OboeContextWrapper(object):
     def __init__(self, wrapped):
         self.wrapped = wrapped
-        if oboe.Context.isValid():
+        if oboe.Context.isValid(): # get current context at wrap time (e.g. when preparing "done" callback for an async call)
             ctx = oboe.Context.copy()
-            self._oboe_md = ctx
+            self._oboe_md = ctx    # store wrap-time context for use at call time
 
     def __call__(self, *args, **kwargs):
         import async
-        with async.OboeContextManager(self):
+        with async.OboeContextManager(self): # uses self._oboe_md as context
             return self.wrapped.__call__(*args, **kwargs)
