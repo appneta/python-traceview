@@ -77,7 +77,7 @@ if not overriden:
     __do_import__ = __import__
 
     def new_import(*p, **params):
-        if type(p[0]) != str:
+        if isinstance(p[0], basestring)
             p = p[1:]
         name = p[0]
         ret = __do_import__(*p, **params)
