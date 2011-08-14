@@ -73,7 +73,11 @@ def wrap(module):
                      'Function': method,
                      'backtrace': True,
                      }
-            setattr(cls, method, oboe.Context.log_method(**args)(fn))
+
+            wrapfn = fn
+            if hasattr(fn, 'im_func'): # wrap unbound instance method
+                wrapfn = fn.im_func
+            setattr(cls, method, oboe.Context.log_method(**args)(wrapfn))
 
         # per-key memcache host hook
         fn = getattr(cls, '_get_server', None)
