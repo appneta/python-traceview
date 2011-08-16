@@ -61,53 +61,6 @@ try:
 except ImportError:
     class AlreadyRead(Exception):pass
 
-#
-#
-# ADDED BY TRACELYTICS, 2011
-#
-# THE FOLLOWING OVERRIDES THE GLOBAL IMPORT STATEMENT UPON THE IMPORT OF THIS MODULE. IT ALLOWS CALLBACKS
-# TO BE REGISTERED FOR THE LOADING OF OTHER MODULES.
-#
-#
-
-overriden = False
-acquire_lock()
-if not overriden:
-    setattr(sys,'import_hooks', {})
-    __do_import__ = __import__
-
-    def new_import(*p, **params):
-        if not isinstance(p[0], basestring):
-            p = p[1:]
-        name = p[0]
-        ret = __do_import__(*p, **params)
-        if len(p) > 3 and p[3]:
-            mylist = p[3]
-        elif 'fromlist' in params:
-            mylist = params['fromlist']
-        else:
-            mylist = []
-
-        lst = ['']
-        for n in mylist:
-            lst.append(n)
-        for submod in lst:
-            nm = name if submod == '' else (name + '.' + submod)
-            if nm in sys.import_hooks:
-                if sys.import_hooks[nm]:
-                    if submod != '':
-                        sys.import_hooks[nm](getattr(ret,submod))
-                    else:
-                        sys.import_hooks[nm](ret)
-                del sys.import_hooks[nm] 
-        return ret
-
-
-    __builtins__['__import__'] = new_import
-    overriden = True
-
-release_lock()
-
 
 def importSuite(specs, globalDict=defaultGlobalDict):
     """Create a test suite from import specs"""
@@ -250,6 +203,8 @@ def importString(name, globalDict=defaultGlobalDict):
 
 
 
+
+
 def lazyModule(modname, relativePath=None):
 
     """Return module 'modname', but with its contents loaded "on demand"
@@ -336,6 +291,7 @@ def lazyModule(modname, relativePath=None):
         __slots__ = ()
         def __init__(self, name):
             ModuleType.__setattr__(self,'__name__',name)
+            #super(LazyModule,self).__init__(name)
 
         def __getattribute__(self,attr):
             _loadModule(self)
@@ -409,22 +365,47 @@ def _setModuleHook(moduleName, hook):
 
 
 
-def whenImported(moduleName, hook=None):
-    #
-    #
-    # METHOD ALTERED TO REGISTER CALLBACKS IN A SEPERATE GLOBAL DICTIONARY THAN THE NORMAL MODULES DIC.
-    #
-    #
 
-    acquire_lock()
-    try:
-        if not moduleName in modules:
-            sys.import_hooks[moduleName] = hook
-        elif hook:
-            hook(modules[moduleName])
-            
-    finally:
-        release_lock()        
+
+
+
+def whenImported(moduleName, hook=None):
+
+    """Call 'hook(module)' when module named 'moduleName' is first used
+
+    'hook' must accept one argument: the module object named by 'moduleName',
+    which must be a fully qualified (i.e. absolute) module name.  The hook
+    should not raise any exceptions, or it may prevent later hooks from
+    running.
+
+    If the module has already been imported normally, 'hook(module)' is
+    called immediately, and the module object is returned from this function.
+    If the module has not been imported, or has only been imported lazily,
+    then the hook is called when the module is first used, and a lazy import
+    of the module is returned from this function.  If the module was imported
+    lazily and used before calling this function, the hook is called
+    immediately, and the loaded module is returned from this function.
+
+    Note that using this function implies a possible lazy import of the
+    specified module, and lazy importing means that any 'ImportError' will be
+    deferred until the module is used.
+    """
+    if hook is None:
+        def decorate(func):
+            whenImported(moduleName, func)
+            return func
+        return decorate
+
+    if '.' in moduleName:
+        # If parent is not yet imported, delay hook installation until the
+        # parent is imported.
+        splitpos = moduleName.rindex('.')
+        whenImported(
+            moduleName[:splitpos], lambda m: _setModuleHook(moduleName,hook)
+        )
+    else:
+        return _setModuleHook(moduleName,hook)
+
 
 
 
