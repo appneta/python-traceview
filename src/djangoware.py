@@ -111,7 +111,8 @@ def on_load_middleware():
     """ wrap Django middleware from a list """
     from django.conf import settings
 
-    import functools, imports
+    import functools
+    from oboeware import imports
     # middleware hooks
     for i in settings.MIDDLEWARE_CLASSES:
         if i.startswith('oboe'): continue
@@ -122,11 +123,11 @@ def on_load_middleware():
                              functools.partial(middleware_hooks, objname=objname))
 
     # ORM
-    import inst_django_orm
+    from oboeware import inst_django_orm
     imports.whenImported('django.db.backends', inst_django_orm.wrap)
 
-    import inst_memcache
-    import inst_httplib2 
+    from oboeware import inst_memcache
+    from oboeware import inst_httplib2 
 
     # it's usually a tuple, but sometimes it's a list
     if type(settings.MIDDLEWARE_CLASSES) is tuple:
@@ -158,7 +159,8 @@ def install_oboe_middleware(module):
         print >> sys.stderr, "Oboe error:", str(e)
 
 try:
-    import imports as imports, functools
+    from oboeware import imports
+    import functools
     imports.whenImported('django.core.handlers.base', install_oboe_middleware)
 except ImportError, e:
     print >> sys.stderr, "[oboe] Unable to instrument app and middleware: %s" % e

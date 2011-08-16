@@ -106,6 +106,6 @@ class OboeContextWrapper(object):
             self._oboe_md = ctx    # store wrap-time context for use at call time
 
     def __call__(self, *args, **kwargs):
-        import async
+        from oboeware import async
         with async.OboeContextManager(self): # uses self._oboe_md as context
             return self.wrapped.__call__(*args, **kwargs)

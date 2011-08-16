@@ -36,8 +36,8 @@ class OboeMiddleware:
         if self.oboe_config.get('oboe.reporter_port'):
             oboe.config['reporter_port'] = self.oboe_config['oboe.reporter_port']
         
-        import inst_memcache
-        import inst_httplib2
+        from oboeware import inst_memcache
+        from oboeware import inst_httplib2
 
     def __call__(self, environ, start_response):
         xtr_hdr = environ.get("HTTP_X-Trace", environ.get("HTTP_X_TRACE"))
