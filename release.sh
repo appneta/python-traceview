@@ -3,7 +3,7 @@
 # for use only when you're ready to push from prod -> the public pypi
 #
 
-if [ $(git name-rev HEAD 2> /dev/null | awk "{ print \$2 }") != "prod" ]; then
+if [ $(git name-rev --name-only HEAD) != "prod" ]; then
   echo "You can only push from prod."
   exit
 fi
