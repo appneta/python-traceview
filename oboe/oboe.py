@@ -135,6 +135,7 @@ def profile_function(cls, profile_name,
 
         try:
             res = None
+            stats = None
             if profile:
                 try:
                     import cStringIO, cProfile, pstats
