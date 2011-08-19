@@ -1,6 +1,7 @@
 # useful methods for instrumenting Tornado
 # (c) 2011 Tracelytics, Inc.
 import oboe
+from oboeware import async
 
 # instrumentation functions for tornado.web.RequestHandler
 def RequestHandler_start(self):
@@ -106,6 +107,5 @@ class OboeContextWrapper(object):
             self._oboe_md = ctx    # store wrap-time context for use at call time
 
     def __call__(self, *args, **kwargs):
-        from oboeware import async
         with async.OboeContextManager(self): # uses self._oboe_md as context
             return self.wrapped.__call__(*args, **kwargs)

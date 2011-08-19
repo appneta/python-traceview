@@ -5,6 +5,7 @@
 # django middleware for passing values to oboe
 __all__ = ("OboeDjangoMiddleware", "install_oboe_instrumentation")
 
+from oboeware import imports
 import sys
 
 # Middleware hooks listed here: http://docs.djangoproject.com/en/dev/ref/middleware/
@@ -112,7 +113,6 @@ def on_load_middleware():
     from django.conf import settings
 
     import functools
-    from oboeware import imports
     # middleware hooks
     for i in settings.MIDDLEWARE_CLASSES:
         if i.startswith('oboe'): continue
@@ -159,7 +159,6 @@ def install_oboe_middleware(module):
         print >> sys.stderr, "Oboe error:", str(e)
 
 try:
-    from oboeware import imports
     import functools
     imports.whenImported('django.core.handlers.base', install_oboe_middleware)
 except ImportError, e:
