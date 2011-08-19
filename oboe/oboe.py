@@ -90,7 +90,7 @@ def _function_signature(func):
     return name+'('+', '.join(argstrings)+')'
 
 def profile_function(cls, profile_name, 
-                   store_args=False, store_return=False, profile=False, callback=None, **kwargs):
+                   store_args=False, store_return=False, store_backtrace=False, profile=False, callback=None, **kwargs):
     """Wrap a method for tracing and profiling with the Tracelytics Oboe library.
 
           profile_name: the profile name to use when reporting.
@@ -122,14 +122,25 @@ def profile_function(cls, profile_name,
         if 'im_class' in dir(func):
             kwargs.update({'Class': func.im_class.__name__})
 
+        if not hasattr(func, '_oboe_file'): 
+            setattr(func, '_oboe_file', inspect.getsourcefile(func))
+        if not hasattr(func, '_oboe_line_number'): 
+            setattr(func, '_oboe_line_number', inspect.getsourcelines(func)[1])
+        if not hasattr(func, '_oboe_module'): 
+            setattr(func, '_oboe_module', inspect.getmodule(func).__name__)
+        if not hasattr(func, '_oboe_signature'): 
+            setattr(func, '_oboe_signature', _function_signature(func))
+
         kwargs.update({'Language': 'python',
                        'ProfileName': profile_name,
-                       'File': inspect.getsourcefile(func),
-                       'LineNumber': inspect.getsourcelines(func)[1],
-                       'Module': inspect.getmodule(func).__name__,
+                       'File': getattr(func, '_oboe_file'),
+                       'LineNumber': getattr(func, '_oboe_line_number'),
+                       'Module': getattr(func, '_oboe_module'),
                        'FunctionName': func.__name__,
-                       'Signature': _function_signature(func),
-                       'Backtrace' : "".join(tb.format_stack()[:-1])})
+                       'Signature': getattr(func, '_oboe_signature')})
+
+        if store_backtrace:
+            kwargs['Backtrace'] = "".join(tb.format_stack()[:-1]) 
 
         Context.log(None, 'profile_entry', **kwargs)
 
