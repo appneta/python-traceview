@@ -97,7 +97,7 @@ def middleware_hooks(module, objname):
                        'process_exception']:
             fn = getattr(cls, method, None)
             if not fn: continue
-            args = { 'layer': objname, # XXX ?
+            args = { 'layer': objname,
                      'store_return': False,
                      'Class': module.__name__ + '.' + objname,
                      'Function': method,

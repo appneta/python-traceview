@@ -8,13 +8,14 @@ def RequestHandler_start(self):
     """ runs from the main HTTP server thread (doesn't set/get Context)
     
         takes 'self' parameter, which is the current RequestHandler
-        instance (which holds current the HTTPRequest in self.request)
+        instance (which holds the current HTTPRequest in self.request)
     """
+    # check for X-Trace header in HTTP request
     xtr = self.request.headers.get("X-Trace", None)
-    if xtr:
+    if xtr: # add edge to incoming X-Trace header
         md = oboe.Metadata.fromString(xtr)
-        ev = md.createEvent() # adds edge to X-Trace header
-    else:
+        ev = md.createEvent()
+    else:   # start a new trace
         md = oboe.Metadata.makeRandom()
         ev = oboe.Event.startTrace(md)
 
@@ -50,8 +51,6 @@ def RequestHandler_finish(self):
         if oboe.Context.isValid():
             self.request._oboe_finish_ev.addEdge(oboe.Context.get())
 
-        # XXX add edge from context/RequestHandler -> exit
-        # self.request._oboe_finish_ev.addEdge(self.request._oboe_md)
         oboe.reporter().sendReport(self.request._oboe_finish_ev, self.request._oboe_md)
 
         # clear the stored oboe event/metadata from the request object
@@ -98,13 +97,12 @@ def AsyncHTTPClient_finish(request, callback=None, headers=None):
     ev.addInfo("Label", "exit")
     oboe.reporter().sendReport(ev, mdobj._oboe_md) # increments metadata in mdobj
 
-# used for wrapping stack contexts in tornado.stack_context
+# used for wrapping stack contexts in Tornado v1.2 stack_context.py
 class OboeContextWrapper(object):
     def __init__(self, wrapped):
         self.wrapped = wrapped
         if oboe.Context.isValid(): # get current context at wrap time (e.g. when preparing "done" callback for an async call)
-            ctx = oboe.Context.copy()
-            self._oboe_md = ctx    # store wrap-time context for use at call time
+            self._oboe_md = oboe.Context.copy() # store wrap-time context for use at call time
 
     def __call__(self, *args, **kwargs):
         with async.OboeContextManager(self): # uses self._oboe_md as context
