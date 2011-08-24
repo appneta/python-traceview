@@ -1,3 +1,8 @@
+0.1.9
+ - add profile_block context manager
+ - fix missing-cprofile logic in log_method and profile_function
+ - deduplicate backtrace gathering code
+
 0.1.8.5
  - reduce overhead of profile_function
  - fix error in some cases when using cProfile with profile_function/log_method
