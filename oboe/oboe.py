@@ -15,6 +15,17 @@ Context.init()
 
 reporter_instance = None
 
+try:
+    import cStringIO, cProfile, pstats
+    found_cprofile = True
+except ImportError:
+    found_cprofile = False
+
+def _str_backtrace(backtrace=None):
+    if backtrace:
+        return "".join(tb.format_tb(backtrace))
+    else:
+        return "".join(tb.format_stack()[:-1]) 
 
 def log(cls, layer, label, backtrace=False, **kwargs):
     """Report an individual tracing event.
@@ -33,7 +44,7 @@ def log(cls, layer, label, backtrace=False, **kwargs):
     evt.addInfo('Layer', layer)
     evt.addInfo('Label', label)
     if backtrace:
-        evt.addInfo('Backtrace', "".join(tb.format_list(tb.extract_stack()[:-1])))
+        evt.addInfo('Backtrace', _str_backtrace())
 
     for k, v in kwargs.items():
         evt.addInfo(str(k), str(v))
@@ -55,7 +66,7 @@ def log_error(cls, exception=None, err_class=None, err_msg=None, backtrace=True)
     evt = Context.createEvent()
     evt.addInfo('Label', 'error')
     if backtrace:
-        evt.addInfo('Backtrace', "".join(tb.format_list(tb.extract_stack()[:-1])))
+        evt.addInfo('Backtrace', _str_backtrace()) # TODO get exception backtrace, not log backtrace
 
     if exception:
         evt.addInfo('ErrorClass', exception.__class__.__name__)
@@ -89,6 +100,76 @@ def _function_signature(func):
         argstrings.append('**'+keywords)
     return name+'('+', '.join(argstrings)+')'
 
+
+class profile_block(object):
+    """A context manager for oboe profiling a block of code with Tracelytics Oboe.
+
+          profile_name: the profile name to use when reporting.
+          this should be unique to the profiled method.
+
+          store_backtrace: whether to capture a backtrace or not (False)
+
+          profile: profile this function with cProfile and report the result
+
+          Reports an error event between entry and exit if an
+          exception is thrown, then reraises.
+    """
+    def __init__(self, cls, profile_name, profile=False, store_backtrace=False):
+        self.profile_name = profile_name
+        self.use_cprofile = profile
+        self.backtrace = store_backtrace
+        self.p = None # possible cProfile.Profile() instance
+
+    def __enter__(self):
+        if not Context.isValid():
+            return
+
+        # build entry event
+        entry_kvs = { 'Language' : 'python',
+                      'ProfileName' : self.profile_name,
+                        # XXX We can definitely figure out a way to make these 
+                        # both available and fast.  For now, this is ok.
+                      'File': '',
+                      'LineNumber': 0,
+                      'Module': '',
+                      'FunctionName': '',
+                      'Signature': ''}
+        if self.backtrace:
+            entry_kvs['Backtrace'] = _str_backtrace()
+        Context.log(None, 'profile_entry', **entry_kvs)
+
+        # begin profiling
+        if self.use_cprofile and found_cprofile:
+            self.p = cProfile.Profile()
+            self.p.enable(subcalls=True)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if not Context.isValid():
+            return
+
+        # end profiling
+        stats = None
+        if self.use_cprofile and found_cprofile and self.p:
+            sio = cStringIO.StringIO()
+            s = pstats.Stats(self.p, stream=sio)
+            s.sort_stats('time')
+            s.print_stats(15)
+            stats = sio.getvalue()
+            sio.close()
+
+        # exception?
+        if exc_type:
+            Context.log(None, 'error', ErrorClass=exc_type.__name__, ErrorMsg=str(exc_val), Backtrace=_str_backtrace(exc_tb))
+
+        # build exit event
+        exit_kvs = {}
+        if self.use_cprofile and stats:
+            exit_kvs['ProfileStats'] = stats
+        exit_kvs['Language'] = 'python'
+        exit_kvs['ProfileName'] = self.profile_name
+
+        Context.log(None, 'profile_exit', **exit_kvs)
+
 def profile_function(cls, profile_name, 
                    store_args=False, store_return=False, store_backtrace=False, profile=False, callback=None, **kwargs):
     """Wrap a method for tracing and profiling with the Tracelytics Oboe library.
@@ -99,6 +180,8 @@ def profile_function(cls, profile_name,
           store_return: report the return value of this function
 
           store_args: report the arguments to this function
+          
+          store_backtrace: whether to capture a backtrace or not (False)
 
           profile: profile this function with cProfile and report the result
 
@@ -120,7 +203,7 @@ def profile_function(cls, profile_name,
             kwargs.update({'Args': f_args, 'kwargs': f_kwargs })
 
         if 'im_class' in dir(func):
-            kwargs.update({'Class': func.im_class.__name__})
+            kwargs['Class'] = func.im_class.__name__
 
         if not hasattr(func, '_oboe_file'): 
             setattr(func, '_oboe_file', inspect.getsourcefile(func))
@@ -140,19 +223,14 @@ def profile_function(cls, profile_name,
                        'Signature': getattr(func, '_oboe_signature')})
 
         if store_backtrace:
-            kwargs['Backtrace'] = "".join(tb.format_stack()[:-1]) 
+            kwargs['Backtrace'] = _str_backtrace() 
 
         Context.log(None, 'profile_entry', **kwargs)
 
         try:
             res = None
             stats = None
-            if profile:
-                try:
-                    import cStringIO, cProfile, pstats
-                except ImportError:
-                    res = func(*f_args, **f_kwargs)
-
+            if profile and found_cprofile:
                 p = cProfile.Profile()
                 res = p.runcall(func, *f_args, **f_kwargs)
 
@@ -177,8 +255,9 @@ def profile_function(cls, profile_name,
             if store_return:
                 exit_kvs['ReturnValue'] = res
             if profile and stats:
-                exit_kvs['ProfileStats'] = stats
+                exit_kvs['Profile'] = stats
 
+            # XXX these redundant, though apparently necessary
             exit_kvs['Language'] = 'python'
             exit_kvs['ProfileName'] = profile_name
 
@@ -220,12 +299,7 @@ def log_method(cls, layer='Python',
             # call wrapped method
             res = None
             got_stats = False
-            if profile:
-                try:
-                    import cStringIO, cProfile, pstats # XXX test cProfile and pstats exist
-                except ImportError:
-                    res = func(*f_args, **f_kwargs)
-
+            if profile and found_cprofile:
                 p = cProfile.Profile()
                 res = p.runcall(func, *f_args, **f_kwargs)
 
@@ -276,3 +350,4 @@ setattr(Context, log.__name__, types.MethodType(log, Context))
 setattr(Context, log_error.__name__, types.MethodType(log_error, Context))
 setattr(Context, log_method.__name__, types.MethodType(log_method, Context))
 setattr(Context, profile_function.__name__, types.MethodType(profile_function, Context))
+setattr(Context, profile_block.__name__, types.MethodType(profile_block, Context))

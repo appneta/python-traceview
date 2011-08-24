@@ -1,5 +1,18 @@
+0.1.9
+ - add profile_block context manager
+ - fix missing-cprofile logic in log_method and profile_function
+ - deduplicate backtrace gathering code
+
+0.1.8.5
+ - reduce overhead of profile_function
+ - fix error in some cases when using cProfile with profile_function/log_method
+
+0.1.8.4
+ - new SWIG methods to add more hooks to liboboe functions
+
 0.1.8.2
  - one more renaming fix for consistency across languages
+
 0.1.8.1
  - switched reversed arguments for consistency
  - profile_method -> profile_function
