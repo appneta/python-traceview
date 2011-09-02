@@ -3,6 +3,7 @@ from oboe_ext import *
 import types
 import traceback as tb
 import inspect
+import sys
 
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 
@@ -66,7 +67,8 @@ def log_error(cls, exception=None, err_class=None, err_msg=None, backtrace=True)
     evt = Context.createEvent()
     evt.addInfo('Label', 'error')
     if backtrace:
-        evt.addInfo('Backtrace', _str_backtrace()) # TODO get exception backtrace, not log backtrace
+        _, _, tb = sys.exc_info()
+        evt.addInfo('Backtrace', _str_backtrace(tb))
 
     if exception:
         evt.addInfo('ErrorClass', exception.__class__.__name__)
