@@ -116,7 +116,7 @@ class profile_block(object):
           Reports an error event between entry and exit if an
           exception is thrown, then reraises.
     """
-    def __init__(self, cls, profile_name, profile=False, store_backtrace=False):
+    def __init__(self, profile_name, profile=False, store_backtrace=False):
         self.profile_name = profile_name
         self.use_cprofile = profile
         self.backtrace = store_backtrace
@@ -352,4 +352,4 @@ setattr(Context, log.__name__, types.MethodType(log, Context))
 setattr(Context, log_error.__name__, types.MethodType(log_error, Context))
 setattr(Context, log_method.__name__, types.MethodType(log_method, Context))
 setattr(Context, profile_function.__name__, types.MethodType(profile_function, Context))
-setattr(Context, profile_block.__name__, types.MethodType(profile_block, Context))
+setattr(Context, profile_block.__name__, profile_block)
