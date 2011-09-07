@@ -161,7 +161,7 @@ class profile_block(object):
 
         # exception?
         if exc_type:
-            Context.log(None, 'error', ErrorClass=exc_type.__name__, ErrorMsg=str(exc_val), Backtrace=_str_backtrace(exc_tb))
+            Context.log(None, 'error', ErrorClass=exc_type.__name__, ErrorMsg=str(exc_val), backtrace=_str_backtrace(exc_tb))
 
         # build exit event
         exit_kvs = {}
