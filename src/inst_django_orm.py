@@ -63,12 +63,15 @@ class CursorOboeWrapper(object):
 def wrap(module):
     try:
         cursor_method = module.BaseDatabaseWrapper.cursor
+        if getattr(cursor_method, '_oboe_wrapped', False):
+            return
 
         def cursor_wrap(self):
             try:
                 return CursorOboeWrapper(cursor_method(self), self)
             except Exception, e:
                 print >> sys.stderr, "[oboe] Error in cursor_wrap", e
+        cursor_wrap._oboe_wrapped = True
 
         setattr(module.BaseDatabaseWrapper, 'cursor', cursor_wrap)
     except Exception, e:
