@@ -1,3 +1,7 @@
+0.1.9.1
+ - fix for crash when e.g. running help() on profile_block context manager
+ - report backtraces correctly in profile blocks
+
 0.1.9
  - add profile_block context manager
  - fix missing-cprofile logic in log_method and profile_function
