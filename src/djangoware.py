@@ -6,7 +6,7 @@
 __all__ = ("OboeDjangoMiddleware", "install_oboe_instrumentation")
 
 from oboeware import imports
-import sys
+import sys, threading, functools
 
 # Middleware hooks listed here: http://docs.djangoproject.com/en/dev/ref/middleware/
 
@@ -107,35 +107,49 @@ def middleware_hooks(module, objname):
     except Exception, e:
         print >> sys.stderr, "Oboe error:", str(e)
 
+load_middleware_lock = threading.Lock()
         
 def on_load_middleware():
     """ wrap Django middleware from a list """
-    from django.conf import settings
 
-    import functools
-    # middleware hooks
-    for i in settings.MIDDLEWARE_CLASSES:
-        if i.startswith('oboe'): continue
-        dot = i.rfind('.')
-        if dot < 0 or dot+1 == len(i): continue
-        objname = i[dot+1:]
-        imports.whenImported(i[:dot],
-                             functools.partial(middleware_hooks, objname=objname))
+    # protect middleware wrapping: only a single thread proceeds
+    global load_middleware_lock         # lock gets overwritten as None after init
+    if not load_middleware_lock: return # already initialized? abort
+    mwlock = load_middleware_lock
+    mwlock.acquire()                    # acquire global lock
+    if not load_middleware_lock:        # check again
+        mwlock.release()                # abort
+        return
+    load_middleware_lock = None         # mark global as "init done"
 
-    # ORM
-    from oboeware import inst_django_orm
-    imports.whenImported('django.db.backends', inst_django_orm.wrap)
+    try:
+        # middleware hooks
+        from django.conf import settings
+        for i in settings.MIDDLEWARE_CLASSES:
+            if i.startswith('oboe'): continue
+            dot = i.rfind('.')
+            if dot < 0 or dot+1 == len(i): continue
+            objname = i[dot+1:]
+            imports.whenImported(i[:dot],
+                                 functools.partial(middleware_hooks, objname=objname))
 
-    from oboeware import inst_memcache
-    from oboeware import inst_httplib2 
+        # ORM
+        from oboeware import inst_django_orm
+        imports.whenImported('django.db.backends', inst_django_orm.wrap)
 
-    # it's usually a tuple, but sometimes it's a list
-    if type(settings.MIDDLEWARE_CLASSES) is tuple:
-        settings.MIDDLEWARE_CLASSES = ('oboeware.djangoware.OboeDjangoMiddleware',) + settings.MIDDLEWARE_CLASSES
-    elif type(settings.MIDDLEWARE_CLASSES) is list:     
-        settings.MIDDLEWARE_CLASSES = ['oboeware.djangoware.OboeDjangoMiddleware'] + settings.MIDDLEWARE_CLASSES
-    else:
-        print >> sys.stderr, "Oboe error: thought MIDDLEWARE_CLASSES would be either a tuple or a list, got " + str(type(settings.MIDDLEWARE_CLASSES))
+        from oboeware import inst_memcache
+        from oboeware import inst_httplib2 
+
+        # it's usually a tuple, but sometimes it's a list
+        if type(settings.MIDDLEWARE_CLASSES) is tuple:
+            settings.MIDDLEWARE_CLASSES = ('oboeware.djangoware.OboeDjangoMiddleware',) + settings.MIDDLEWARE_CLASSES
+        elif type(settings.MIDDLEWARE_CLASSES) is list:     
+            settings.MIDDLEWARE_CLASSES = ['oboeware.djangoware.OboeDjangoMiddleware'] + settings.MIDDLEWARE_CLASSES
+        else:
+            print >> sys.stderr, "Oboe error: thought MIDDLEWARE_CLASSES would be either a tuple or a list, got " + str(type(settings.MIDDLEWARE_CLASSES))
+
+    finally: # release instrumentation lock
+        mwlock.release()
 
 def install_oboe_middleware(module):
     from functools import wraps
