@@ -1,5 +1,4 @@
-oboe_wrap.cxx
-oboe_ext.py
+oboe.hpp
 *.pyc
 *.so
 build
