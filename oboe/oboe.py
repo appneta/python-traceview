@@ -173,7 +173,7 @@ class profile_block(object):
         Context.log(None, 'profile_exit', **exit_kvs)
 
 def profile_function(cls, profile_name, 
-                   store_args=False, store_return=False, store_backtrace=False, profile=False, callback=None, **kwargs):
+                   store_args=False, store_return=False, store_backtrace=False, profile=False, callback=None, **entry_kvs):
     """Wrap a method for tracing and profiling with the Tracelytics Oboe library.
 
           profile_name: the profile name to use when reporting.
@@ -197,16 +197,18 @@ def profile_function(cls, profile_name,
 
     """
     from decorator import decorator
-    @decorator
-    def wrapper(func, *f_args, **f_kwargs):
-        if not Context.isValid(): return func(*f_args, **f_kwargs)
 
+    # run-time event-reporting function, called at each invocation of func(f_args, f_kwargs)
+    def _profile_wrapper(func, *f_args, **f_kwargs):
+        if not Context.isValid():            # tracing not enabled?
+            return func(*f_args, **f_kwargs) # pass through to func right away
         if store_args:
-            kwargs.update({'Args': f_args, 'kwargs': f_kwargs })
+            entry_kvs.update({'Args': f_args, 'kwargs': f_kwargs })
 
-        if 'im_class' in dir(func):
-            kwargs['Class'] = func.im_class.__name__
+        if 'im_class' in dir(func):          # is func an instance method?
+            entry_kvs['Class'] = func.im_class.__name__
 
+        # get filename, line number, etc, and cache in wrapped function to avoid overhead
         if not hasattr(func, '_oboe_file'): 
             setattr(func, '_oboe_file', inspect.getsourcefile(func))
         if not hasattr(func, '_oboe_line_number'): 
@@ -216,7 +218,8 @@ def profile_function(cls, profile_name,
         if not hasattr(func, '_oboe_signature'): 
             setattr(func, '_oboe_signature', _function_signature(func))
 
-        kwargs.update({'Language': 'python',
+        # prepare data for reporting oboe event
+        entry_kvs.update({'Language': 'python',
                        'ProfileName': profile_name,
                        'File': getattr(func, '_oboe_file'),
                        'LineNumber': getattr(func, '_oboe_line_number'),
@@ -225,51 +228,69 @@ def profile_function(cls, profile_name,
                        'Signature': getattr(func, '_oboe_signature')})
 
         if store_backtrace:
-            kwargs['Backtrace'] = _str_backtrace() 
+            entry_kvs['Backtrace'] = _str_backtrace() 
 
-        Context.log(None, 'profile_entry', **kwargs)
+        # log entry event for this profiled function
+        Context.log(None, 'profile_entry', **entry_kvs)
 
+        res = None   # return value of wrapped function
+        stats = None # cProfile statistics, if enabled
         try:
-            res = None
-            stats = None
-            if profile and found_cprofile:
+            if profile and found_cprofile: # use cProfile?
                 p = cProfile.Profile()
-                res = p.runcall(func, *f_args, **f_kwargs)
-
+                res = p.runcall(func, *f_args, **f_kwargs) # call func via cProfile
                 sio = cStringIO.StringIO()
                 s = pstats.Stats(p, stream=sio)
                 s.sort_stats('time')
                 s.print_stats(15)
                 stats = sio.getvalue()
                 sio.close()
-            else:
+            else: # don't use cProfile, call func directly
                 res = func(*f_args, **f_kwargs)
         except Exception, e:
+            # log exception and re-raise
             Context.log(None, 'error', ErrorClass=e.__class__.__name__, ErrorMsg=str(e))
             raise
         finally:
+            # prepare data for reporting exit event
             exit_kvs = {}
+
+            # call the callback function, if set, and merge its return
+            # values with the exit event's reporting data
             if callback and callable(callback):
                 cb_kvs = callback(func, f_args, f_kwargs, res)
                 if cb_kvs:
                     exit_kvs.update(cb_kvs)
 
+            # (optionally) report return value
             if store_return:
                 exit_kvs['ReturnValue'] = res
+
+            # (optionally) report profiler results
             if profile and stats:
                 exit_kvs['Profile'] = stats
 
-            # XXX these redundant, though apparently necessary
             exit_kvs['Language'] = 'python'
             exit_kvs['ProfileName'] = profile_name
 
+            # log exit event
             Context.log(None, 'profile_exit', **exit_kvs)
 
-        return res
-    return wrapper
+        return res # return output of func(*f_args, **f_kwargs)
+
+    _profile_wrapper._oboe_wrapped = True      # mark our wrapper for protection below
+
+    # instrumentation helper decorator, called to add wrapper at "decorate" time
+    def decorate_with_profile_function(f):
+        if getattr(f, '_oboe_wrapped', False): # has this function already been wrapped?
+            return f                           # then pass through
+        return decorator(_profile_wrapper, f)  # otherwise wrap function f with wrapper
+
+    # return decorator function with arguments to profile_function() baked in
+    return decorate_with_profile_function
 
 def log_method(cls, layer='Python',
-               store_return=False, store_args=False, callback=None, profile=False, **kwargs):
+               store_return=False, store_args=False, callback=None, profile=False, **entry_kvs):
     """Wrap a method for tracing with the Tracelytics Oboe library.
         as opposed to profile_function, this decorator gives the method its own layer
 
@@ -289,38 +310,41 @@ def log_method(cls, layer='Python',
 
     """
     from decorator import decorator
-    @decorator
-    def wrap_method(func, *f_args, **f_kwargs):
-        if not Context.isValid(): return func(*f_args, **f_kwargs)
+
+    # run-time event-reporting function, called at each invocation of func(f_args, f_kwargs)
+    def _log_method_wrapper(func, *f_args, **f_kwargs):
+        if not Context.isValid():            # tracing not enabled?
+            return func(*f_args, **f_kwargs) # pass through to func right away
         if store_args:
-            kwargs.update( {'args' : f_args, 'kwargs': f_kwargs} )
+            entry_kvs.update( {'args' : f_args, 'kwargs': f_kwargs} )
+
         # log entry event
-        Context.log(layer, 'entry', **kwargs)
+        Context.log(layer, 'entry', **entry_kvs)
 
+        res = None   # return value of wrapped function
+        stats = None # cProfile statistics, if enabled
         try:
-            # call wrapped method
-            res = None
-            got_stats = False
-            if profile and found_cprofile:
+            if profile and found_cprofile: # use cProfile?
                 p = cProfile.Profile()
-                res = p.runcall(func, *f_args, **f_kwargs)
-
+                res = p.runcall(func, *f_args, **f_kwargs) # call func via cProfile
                 sio = cStringIO.StringIO()
                 s = pstats.Stats(p, stream=sio)
                 s.sort_stats('time')
                 s.print_stats(15)
                 stats = sio.getvalue()
                 sio.close()
-                got_stats = True
-            else:
+            else: # don't use cProfile, call func directly
                 res = func(*f_args, **f_kwargs)
         except Exception, e:
+            # log exception and re-raise
             Context.log(layer, 'error', ErrorClass=e.__class__.__name__, Message=str(e))
-            raise # reraise; finally still fires below
+            raise
         finally:
+            # prepare data for reporting exit event
+            exit_kvs = {}
+
             # call the callback function, if set, and merge its return
             # values with the exit event's reporting data
-            exit_kvs = {}
             if callback and callable(callback):
                 cb_ret = callback(func, f_args, f_kwargs, res)
                 if cb_ret:
@@ -330,15 +354,25 @@ def log_method(cls, layer='Python',
             if store_return:
                 exit_kvs['ReturnValue'] = str(res)
 
-            # (optionally) store profiler results
-            if got_stats:
+            # (optionally) report profiler results
+            if profile and stats:
                 exit_kvs['Profile'] = stats
 
             # log exit event
             Context.log(layer, 'exit', **exit_kvs)
-        return res
 
-    return wrap_method
+        return res # return output of func(*f_args, **f_kwargs)
+
+    _log_method_wrapper._oboe_wrapped = True     # mark our wrapper for protection below
+
+    # instrumentation helper decorator, called to add wrapper at "decorate" time
+    def decorate_with_log_method(f):
+        if getattr(f, '_oboe_wrapped', False):   # has this function already been wrapped?
+            return f                             # then pass through
+        return decorator(_log_method_wrapper, f) # otherwise wrap function f with wrapper
+
+    # return decorator function with arguments to log_method() baked in
+    return decorate_with_log_method
 
 def reporter():
     global reporter_instance
