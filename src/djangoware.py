@@ -97,13 +97,8 @@ def middleware_hooks(module, objname):
                        'process_exception']:
             fn = getattr(cls, method, None)
             if not fn: continue
-            args = { 'layer': objname,
-                     'store_return': False,
-                     'Class': module.__name__ + '.' + objname,
-                     'Function': method,
-                     }
             wrapfn = fn.im_func if hasattr(fn, 'im_func') else fn
-            setattr(cls, method, oboe.Context.log_method(**args)(wrapfn))
+            setattr(cls, method, oboe.Context.profile_function()(wrapfn))
     except Exception, e:
         print >> sys.stderr, "Oboe error:", str(e)
 
