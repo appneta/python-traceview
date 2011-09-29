@@ -98,7 +98,9 @@ def middleware_hooks(module, objname):
             fn = getattr(cls, method, None)
             if not fn: continue
             wrapfn = fn.im_func if hasattr(fn, 'im_func') else fn
-            setattr(cls, method, oboe.Context.profile_function()(wrapfn))
+            profile_name = '%s.%s.%s' % (module.__name__, objname, method)
+            setattr(cls, method, 
+                    oboe.Context.profile_function(profile_name)(wrapfn))
     except Exception, e:
         print >> sys.stderr, "Oboe error:", str(e)
 
