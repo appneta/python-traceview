@@ -63,7 +63,7 @@ class OboeMiddleware:
             # http://www.wsgi.org/en/latest/definitions.html
             for hosthdr in ("HTTP_HOST", "HTTP_X_HOST", "HTTP_X_FORWARDED_HOST", "SERVER_NAME"):
                 if hosthdr in environ:
-                    evt.addInfo("HTTP-Host", hosthdr)
+                    evt.addInfo("HTTP-Host", environ[hosthdr])
                     break
             if 'PATH_INFO' in environ:
                 evt.addInfo("URL", environ['PATH_INFO'])
