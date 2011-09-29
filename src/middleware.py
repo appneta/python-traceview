@@ -59,6 +59,19 @@ class OboeMiddleware:
         if oboe.Context.isValid() and tracing_mode != 'never':
             evt.addInfo("Layer", self.layer)
             evt.addInfo("Label", "entry")
+            # get some HTTP details from WSGI vars
+            # http://www.wsgi.org/en/latest/definitions.html
+            for hosthdr in ("HTTP_HOST", "HTTP_X_HOST", "HTTP_X_FORWARDED_HOST", "SERVER_NAME"):
+                if hosthdr in environ:
+                    evt.addInfo("HTTP-Host", hosthdr)
+                    break
+            if 'PATH_INFO' in environ:
+                evt.addInfo("URL", environ['PATH_INFO'])
+            if 'REQUEST_METHOD' in environ:
+                evt.addInfo("Method", environ['REQUEST_METHOD'])
+            if 'QUERY_STRING' in environ:
+                evt.addInfo("Query-String", environ['QUERY_STRING'])
+
             reporter = oboe.reporter().sendReport(evt)
 
             endEvt = oboe.Context.createEvent()
