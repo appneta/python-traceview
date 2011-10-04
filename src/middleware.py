@@ -84,7 +84,7 @@ class OboeMiddleware:
         def wrapped_start_response(status, headers, exc_info=None):
             if add_header:
                 headers.append(("X-Trace", endEvt.metadataString()))
-                endEvt.addInfo("Status", status)
+                endEvt.addInfo("Status", status.split(' ', 1)[0])
                 if exc_info:
                     import traceback as tb
                     (t, exc, trace) = exc_info
