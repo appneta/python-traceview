@@ -1,3 +1,4 @@
+0.3.1 Django middleware now wrapped as a "profiled function" rather than its own layer.
 0.3.0 Fixes for Django instrumentation wrapping multiple times.
 0.2.0 New-style instrumentation-wrapping imports for ease-of-use and no confusing exceptions.
 0.1.8 Added support for handling httplib2 requests
