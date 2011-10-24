@@ -5,9 +5,10 @@
 
 
 from setuptools import setup
+import src as oboeware
 
 setup(name = 'oboeware',
-      version = '0.3.1',
+      version = oboeware.__version__,
       author = 'Tracelytics',
       author_email = 'contact@tracelytics.com',
       url = 'http://www.tracelytics.com',
