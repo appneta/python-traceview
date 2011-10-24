@@ -4,6 +4,7 @@
 
 # WSGI middleware for Oboe support
 import oboe
+from oboeware import oninit
 import sys, os
 
 class OboeMiddleware:
@@ -38,6 +39,7 @@ class OboeMiddleware:
         
         from oboeware import inst_memcache
         from oboeware import inst_httplib2
+        oninit.report_layer_init()
 
     def __call__(self, environ, start_response):
         xtr_hdr = environ.get("HTTP_X-Trace", environ.get("HTTP_X_TRACE"))

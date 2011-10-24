@@ -6,6 +6,7 @@
 __all__ = ("OboeDjangoMiddleware", "install_oboe_instrumentation")
 
 from oboeware import imports
+from oboeware import oninit
 import sys, threading, functools
 
 # Middleware hooks listed here: http://docs.djangoproject.com/en/dev/ref/middleware/
@@ -120,6 +121,7 @@ def on_load_middleware():
     load_middleware_lock = None         # mark global as "init done"
 
     try:
+        oninit.report_layer_init()
         # middleware hooks
         from django.conf import settings
         for i in settings.MIDDLEWARE_CLASSES:
