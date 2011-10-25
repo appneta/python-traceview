@@ -121,7 +121,6 @@ def on_load_middleware():
     load_middleware_lock = None         # mark global as "init done"
 
     try:
-        oninit.report_layer_init()
         # middleware hooks
         from django.conf import settings
         for i in settings.MIDDLEWARE_CLASSES:
@@ -174,6 +173,7 @@ def install_oboe_middleware(module):
 try:
     import functools
     imports.whenImported('django.core.handlers.base', install_oboe_middleware)
+    oninit.report_layer_init(layer='django')
 except ImportError, e:
     print >> sys.stderr, "[oboe] Unable to instrument app and middleware: %s" % e
     pass # gracefully disable tracing if Tracelytics oboeware not present
