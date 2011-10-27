@@ -1,7 +1,7 @@
 # Copyright (C) 2011 by Tracelytics, Inc.
 # All rights reserved.
 
-from oboeware.middleware import OboeMiddleware
+from middleware import OboeMiddleware
 
 __version__ = '0.3.1'
 __all__ = ('OboeMiddleware', 'django', 'async', 'tornado', '__version__')
