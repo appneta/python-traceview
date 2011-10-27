@@ -1,4 +1,4 @@
-oboe-python (__VERSION__) unstable; urgency=low
+oboe-python (0.3.0-__DISTRO__1) unstable; urgency=low
 
   * Initial release 
 
