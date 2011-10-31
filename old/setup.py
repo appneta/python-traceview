@@ -14,5 +14,6 @@ setup(name = 'oboeware',
       url = 'http://www.tracelytics.com',
       description  = 'This package has been deprecated: only "oboe" is required.',
       packages = [],
+      install_requires=['oboe >= 0.4.0'],
       license = 'Tracelytics Alpha Agreement',
       )
