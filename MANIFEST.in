@@ -2,3 +2,4 @@ recursive-include oboe *.py *.hpp *.cxx
 exclude README
 exclude MANIFEST.in
 prune test
+prune old
