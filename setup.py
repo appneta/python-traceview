@@ -5,7 +5,7 @@
 
 
 from distutils.core import setup, Extension
-import oboeware
+version = '0.4.0'
 
 oboe_module = Extension('oboe._oboe_ext', 
                         sources=['oboe/oboe_wrap.cxx'], 
@@ -13,7 +13,7 @@ oboe_module = Extension('oboe._oboe_ext',
                         libraries=['oboe'])
 
 setup(name = 'oboe',
-      version = oboeware.__version__,
+      version = version,
       author = 'Tracelytics',
       author_email = 'contact@tracelytics.com',
       url = 'http://www.tracelytics.com',

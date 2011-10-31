@@ -5,6 +5,7 @@ import traceback as tb
 import inspect
 import sys
 
+__version__ = '0.4.0'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 
 config = dict()
