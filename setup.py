@@ -4,7 +4,7 @@
 # All rights reserved.
 
 
-from distutils.core import setup, Extension
+from setuptools import setup, Extension
 version = '0.4.0'
 
 oboe_module = Extension('oboe._oboe_ext', 
