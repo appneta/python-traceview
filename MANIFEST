@@ -1,8 +1,0 @@
-CHANGELOG
-setup.py
-src/__init__.py
-src/middleware.py
-src/djangoware.py
-src/inst_django_orm.py
-src/inst_memcache.py
-src/imports.py
