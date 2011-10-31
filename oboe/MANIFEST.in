@@ -1,0 +1,3 @@
+include *.py *.hpp *.cxx
+exclude README
+exclude MANIFEST.in

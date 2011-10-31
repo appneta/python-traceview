@@ -1,0 +1,5 @@
+oboe.hpp
+*.pyc
+*.so
+build
+oboe.egg-info
