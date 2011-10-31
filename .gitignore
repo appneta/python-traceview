@@ -1,4 +1,5 @@
 build
 dist
 *.pyc
-oboeware.egg-info
+*.so
+*.egg-info
