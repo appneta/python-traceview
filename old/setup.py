@@ -13,7 +13,7 @@ setup(name = 'oboeware',
       author_email = 'contact@tracelytics.com',
       url = 'http://www.tracelytics.com',
       description  = 'This package has been deprecated: only "oboe" is required.',
-      packages = [],
+      packages = ['oboeware'],
       install_requires=['oboe>=0.4.0'],
       license = 'Tracelytics Alpha Agreement',
       )
