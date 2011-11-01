@@ -21,5 +21,6 @@ if ! git tag rel-$VERSION; then
 fi
 git push --tags
 
-# publish package
-python setup.py register -r http://pypi.tracelytics.com sdist upload -r http://pypi.tracelytics.com
+# make package
+python setup.py sdist
+echo "Now you can copy dist/oboe-${VERSION}.tar.gz into the packages/pypi repo."
