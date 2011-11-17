@@ -1,5 +1,6 @@
 # useful methods for instrumenting Tornado
 # (c) 2011 Tracelytics, Inc.
+from __future__ import with_statement
 import oboe
 from oboeware import async
 
