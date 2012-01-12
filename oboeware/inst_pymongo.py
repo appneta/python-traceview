@@ -4,10 +4,8 @@
 import sys
 import oboe
 import socket
-from functools import partial
 
 from oboeware.skeleton import skeleton
-from bson.objectid import ObjectId
 from bson.son import SON
 
 try:
@@ -342,6 +340,7 @@ def wrap_class(cls, class_name, class_method_inst):
         setattr(cls, method, oboe.Context.log_method(**args)(wrapfn))
 
 def wrap(module):
+    """ wrap pymongo module, adding instrumentation to core classes """
     try:
         wrap_class(module.collection.Collection, 'collection', COLLECTION_METHOD_INST)
         wrap_class(module.database.Database, 'database', DATABASE_METHOD_INST)
@@ -354,3 +353,4 @@ try:
     wrap(pymongo)
 except ImportError, e:
     pass
+
