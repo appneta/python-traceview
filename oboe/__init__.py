@@ -383,6 +383,23 @@ def reporter():
 
     return reporter_instance
 
+def _Event_addInfo_safe(func):
+    def wrapped(*args, **kw):
+        try: # call SWIG-generated Event.addInfo (from oboe_ext.py)
+            return func(*args, **kw)
+        except NotImplementedError as e: # unrecognized type passed to addInfo SWIG binding
+            # args: [self, KeyName, Value]
+            if len(args) == 3 and isinstance(args[1], basestring):
+                # report this error
+                func(args[0], '_Warning', 'Bad type for %s: %s' % (args[1], type(args[2])))
+                # last resort: coerce type to string
+                if hasattr(args[2], '__str__'):
+                    return func(args[0], args[1], str(args[2]))
+                elif hasattr(args[2], '__repr__'):
+                    return func(args[0], args[1], repr(args[2]))
+    return wrapped
+
+setattr(Event, 'addInfo', _Event_addInfo_safe(getattr(Event, 'addInfo')))
 setattr(Context, log.__name__, types.MethodType(log, Context))
 setattr(Context, log_error.__name__, types.MethodType(log_error, Context))
 setattr(Context, log_method.__name__, types.MethodType(log_method, Context))
