@@ -1,3 +1,7 @@
+import sys
+
+sys.path.insert(0, '../oboeware')
+
 MIDDLEWARE_CLASSES = [
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -8,14 +12,11 @@ MIDDLEWARE_CLASSES = [
     'oboeware.django.OboeDjangoMiddleware',
 ]
 
-from django import wrap_middleware_classes
-wrap_middleware_classes(MIDDLEWARE_CLASSES)
-
-#import oboeware
-from oboeware.django import OboeDjangoMiddleware
-
+from oboeware.djangoware import OboeDjangoMiddleware
 o = OboeDjangoMiddleware()
-import oboe
 
-print oboe.__file__
-print o.process_request("hey")
+class FakeRequest(object):
+    def __init__(self):
+        self.META = dict()
+
+print o.process_request(FakeRequest())
