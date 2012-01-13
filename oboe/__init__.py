@@ -1,17 +1,23 @@
 from oboe_ext import *
 
-import types
-import traceback as tb
 import inspect
 import sys
+import types
+import traceback as tb
 
-__version__ = '0.4.1'
+# defaultdict not implemented before 2.5
+from backport import defaultdict
+
+__version__ = '0.4.2'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 
+# configuration
 config = dict()
 config['tracing_mode'] = 'through'
 config['reporter_host'] = '127.0.0.1'
 config['reporter_port'] = 7831
+
+config['inst_enabled'] = defaultdict(lambda: True)
 
 Context.init()
 
@@ -27,7 +33,7 @@ def _str_backtrace(backtrace=None):
     if backtrace:
         return "".join(tb.format_tb(backtrace))
     else:
-        return "".join(tb.format_stack()[:-1]) 
+        return "".join(tb.format_stack()[:-1])
 
 def log(cls, layer, label, backtrace=False, **kwargs):
     """Report an individual tracing event.
@@ -130,7 +136,7 @@ class profile_block(object):
         # build entry event
         entry_kvs = { 'Language' : 'python',
                       'ProfileName' : self.profile_name,
-                        # XXX We can definitely figure out a way to make these 
+                        # XXX We can definitely figure out a way to make these
                         # both available and fast.  For now, this is ok.
                       'File': '',
                       'LineNumber': 0,
@@ -173,7 +179,7 @@ class profile_block(object):
 
         Context.log(None, 'profile_exit', **exit_kvs)
 
-def profile_function(cls, profile_name, 
+def profile_function(cls, profile_name,
                    store_args=False, store_return=False, store_backtrace=False, profile=False, callback=None, **entry_kvs):
     """Wrap a method for tracing and profiling with the Tracelytics Oboe library.
 
@@ -183,7 +189,7 @@ def profile_function(cls, profile_name,
           store_return: report the return value of this function
 
           store_args: report the arguments to this function
-          
+
           store_backtrace: whether to capture a backtrace or not (False)
 
           profile: profile this function with cProfile and report the result
@@ -210,13 +216,13 @@ def profile_function(cls, profile_name,
             entry_kvs['Class'] = func.im_class.__name__
 
         # get filename, line number, etc, and cache in wrapped function to avoid overhead
-        if not hasattr(func, '_oboe_file'): 
+        if not hasattr(func, '_oboe_file'):
             setattr(func, '_oboe_file', inspect.getsourcefile(func))
-        if not hasattr(func, '_oboe_line_number'): 
+        if not hasattr(func, '_oboe_line_number'):
             setattr(func, '_oboe_line_number', inspect.getsourcelines(func)[1])
-        if not hasattr(func, '_oboe_module'): 
+        if not hasattr(func, '_oboe_module'):
             setattr(func, '_oboe_module', inspect.getmodule(func).__name__)
-        if not hasattr(func, '_oboe_signature'): 
+        if not hasattr(func, '_oboe_signature'):
             setattr(func, '_oboe_signature', _function_signature(func))
 
         # prepare data for reporting oboe event
@@ -229,7 +235,7 @@ def profile_function(cls, profile_name,
                        'Signature': getattr(func, '_oboe_signature')})
 
         if store_backtrace:
-            entry_kvs['Backtrace'] = _str_backtrace() 
+            entry_kvs['Backtrace'] = _str_backtrace()
 
         # log entry event for this profiled function
         Context.log(None, 'profile_entry', **entry_kvs)
