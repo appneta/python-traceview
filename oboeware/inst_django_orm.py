@@ -29,7 +29,7 @@ class CursorOboeWrapper(object):
             raise # reraise; finally still fires below
         finally:
             oboe.Context.log('djangoORM', 'exit')
-            
+
     def executemany(self, sql, param_list):
         import oboe
         import re

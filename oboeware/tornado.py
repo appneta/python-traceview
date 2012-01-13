@@ -7,7 +7,7 @@ from oboeware import async
 # instrumentation functions for tornado.web.RequestHandler
 def RequestHandler_start(self):
     """ runs from the main HTTP server thread (doesn't set/get Context)
-    
+
         takes 'self' parameter, which is the current RequestHandler
         instance (which holds the current HTTPRequest in self.request)
     """
@@ -38,7 +38,7 @@ def RequestHandler_start(self):
     self.set_header("X-Trace", self.request._oboe_finish_ev.metadataString())
 
 def RequestHandler_finish(self):
-    """ runs from the main HTTP server thread, or from write/flush() callback 
+    """ runs from the main HTTP server thread, or from write/flush() callback
         doesn't set/get Context; just checks if finish event was set by oboe_start()
     """
     if self.request._oboe_finish_ev and self.request._oboe_md:

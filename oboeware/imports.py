@@ -19,7 +19,7 @@
 #      from the copyright holders.
 #
 #   4. The right to distribute this software or to use it for any purpose does
-#      not give you the right to use Servicemarks (sm) or Trademarks (tm) of 
+#      not give you the right to use Servicemarks (sm) or Trademarks (tm) of
 #      the copyright holders. Use of them is covered by separate agreement with
 #      the copyright holders.
 #
@@ -39,7 +39,7 @@
 # PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-# EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+# EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """Tools for doing dynamic imports"""
 
@@ -262,7 +262,7 @@ def lazyModule(modname, relativePath=None):
                 # don't reload if already loaded!
                 if module.__dict__.keys()==['__name__']:
                     # Get Python to do the real import!
-                    reload(module)           
+                    reload(module)
                 try:
                     for hook in getModuleHooks(module.__name__):
                         hook(module)
@@ -311,7 +311,7 @@ def lazyModule(modname, relativePath=None):
             modules[modname] = LazyModule(modname)
             if '.' in modname:
                 # ensure parent module/package is in sys.modules
-                # and parent.modname=module, as soon as the parent is imported   
+                # and parent.modname=module, as soon as the parent is imported
                 splitpos = modname.rindex('.')
                 whenImported(
                     modname[:splitpos],
@@ -344,13 +344,13 @@ def getModuleHooks(moduleName):
 
 def _setModuleHook(moduleName, hook):
     acquire_lock()
-    try:   
+    try:
         if moduleName in modules and postLoadHooks.get(moduleName) is None:
             # Module is already imported/loaded, just call the hook
             module = modules[moduleName]
             hook(module)
             return module
-    
+
         getModuleHooks(moduleName).append(hook)
         return lazyModule(moduleName)
     finally:

@@ -65,8 +65,8 @@ def skeleton(query_part, preserve_first=False, keep_values=False, no_wrap=False)
         query_part = query_part.to_dict()
         t = type(query_part)
     elif query_part is None:
-        query_part = '' 
-        t = type(query_part) 
+        query_part = ''
+        t = type(query_part)
 
     if t == list:
         out = []

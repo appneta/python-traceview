@@ -10,12 +10,12 @@ HTTPLIB2_LAYER = 'httplib2'
 def wrap(module):
     try:
         real_request = module.Http.request
-        from functools import wraps 
+        from functools import wraps
         @wraps(module.Http.request)
         def wrapped_request(self, uri, method="GET", body=None, headers=None, redirections=5, connection_type=None):
             if not headers:
                 headers = {}
-            if oboe.Context.isValid(): 
+            if oboe.Context.isValid():
                 evt = oboe.Context.createEvent()
                 info = urlparse(uri)
                 evt.addInfo('IsService', 'yes')
@@ -28,7 +28,7 @@ def wrap(module):
                 if info.query != '':
                     path += '?' + info.query
                 evt.addInfo('ServiceArg', path)
-                 
+
                 evt.addInfo('Layer', HTTPLIB2_LAYER)
                 evt.addInfo('Label', 'entry')
                 reporter = oboe.reporter().sendReport(evt)

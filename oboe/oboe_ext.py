@@ -73,7 +73,7 @@ class Metadata(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, Metadata, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+    def __init__(self, *args):
         this = _oboe_ext.new_Metadata(*args)
         try: self.this.append(this)
         except: self.this = this
@@ -124,7 +124,7 @@ class Context(_object):
     if _newclass:createEvent = staticmethod(_oboe_ext.Context_createEvent)
     __swig_getmethods__["startTrace"] = lambda x: _oboe_ext.Context_startTrace
     if _newclass:startTrace = staticmethod(_oboe_ext.Context_startTrace)
-    def __init__(self): 
+    def __init__(self):
         this = _oboe_ext.new_Context()
         try: self.this.append(this)
         except: self.this = this
@@ -201,7 +201,7 @@ class UdpReporter(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, UdpReporter, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+    def __init__(self, *args):
         this = _oboe_ext.new_UdpReporter(*args)
         try: self.this.append(this)
         except: self.this = this
@@ -217,7 +217,7 @@ class FileReporter(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, FileReporter, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+    def __init__(self, *args):
         this = _oboe_ext.new_FileReporter(*args)
         try: self.this.append(this)
         except: self.this = this
