@@ -1,3 +1,5 @@
+0.4.1 Don't throw exception if unrecognized types passed to Event.addInfo
+0.4.0 New release that consolidates oboe and oboeware modules into single package.
 0.3.2 Add instrumentation load reports for improved install experience; provide pythonic __version__
 0.3.1 Django middleware now wrapped as a "profiled function" rather than its own layer.
 0.3.0 Fixes for Django instrumentation wrapping multiple times.
