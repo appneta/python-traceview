@@ -1,19 +1,17 @@
 # Copyright (C) 2012 by Tracelytics, Inc.
 # All rights reserved.
 
-import sys
-import oboe
 import socket
+import sys
 
+import oboe
+from oboeware.json_encoder import JSONEncoder
 from oboeware.skeleton import skeleton
-from bson.son import SON
 
 try:
     import json
 except ImportError:
     import simplejson as json
-
-from oboeware.json_encoder import JSONEncoder
 
 PYMONGO_LAYER = "pymongo"
 
@@ -28,11 +26,11 @@ def profile_find(func, args, kwargs, func_result):
         query = 'all'
 
     return _profile_query(collection, query, op='find')
-    
+
 def profile_update(func, args, kwargs, func_result):
     """ Oboe callback for pymongo 'update' profiling """
     (collection, query, doc, upsert, manipulate, safe, multi) = args[:7]
-    
+
     report_kvs = _profile_query(collection, query, op='update', safe=safe, result=func_result)
     report_kvs['Update_Document'] = _to_json(doc)
 
@@ -47,7 +45,7 @@ def profile_insert(func, args, kwargs, func_result):
     if isinstance(docs, dict):
         docs = [docs]
 
-    # Only first doc is finger printed 
+    # Only first doc is finger printed
     report_kvs = _profile_query(collection, docs[0], op='insert', safe=safe, result=func_result, docs_affected=len(docs))
 
     return report_kvs
@@ -58,10 +56,10 @@ def profile_remove(func, args, kwargs, func_result):
 
     if spec_or_id is None:
         spec_or_id = {}
-    
+
     if not isinstance(spec_or_id, dict):
         spec_or_id = {"_id": spec_or_id}
-    
+
     return _profile_query(collection, spec_or_id, op='remove', safe=safe, result=func_result)
 
 def profile_drop(func, args, kwargs, func_results):
@@ -73,7 +71,7 @@ def profile_index(func, args, kwargs, func_result):
     collection = args[0]
 
     report_kvs = _profile_query(collection)
-    
+
     if len(args) > 1:
         report_kvs['Index'] = _to_json(args[1])
 
@@ -86,10 +84,10 @@ def profile_group(func, args, kwargs, func_result):
 
     if key:
         report_kvs['Group_Key'] = _to_json(key)
-    
+
     if condition:
         report_kvs['Group_Condition'] = _to_json(condition)
-    
+
     if initial:
         report_kvs['Group_Initial'] = _to_json(initial)
 
@@ -160,18 +158,18 @@ def profile_command(func, args, kwargs, func_results):
     """ Oboe callback for pymongo database 'command' profiling """
     (db, command) = args[:2]
     report_kvs = {}
-    
+
     _add_connection_info(report_kvs, db)
     if not isinstance(command, basestring):
         command = _to_json(command)
 
     report_kvs['Command'] = command
-    
+
     return report_kvs
 
 def _profile_query(collection, query=None, op=None, safe=None, result=None, docs_affected=None):
     """ Gathers report key/values from collection and (optional) query """
-    
+
     report_kvs = {}
     _add_connection_info(report_kvs, collection.database)
     report_kvs['Collection'] = collection.name
@@ -194,18 +192,18 @@ def _profile_query(collection, query=None, op=None, safe=None, result=None, docs
         # We only get document count if safe mode is true
         if safe and docs_affected is None and result is not None and 'n' in result:
             report_kvs['NumDocumentsAffected'] = result['n']
-    
+
     if docs_affected is not None: # Used for insert
         report_kvs['NumDocumentsAffected'] = docs_affected
 
-    return report_kvs 
+    return report_kvs
 
 
 def _add_connection_info(report_kvs, db):
     """ Connection info common to every mongodb trace """
     report_kvs['Flavor'] = 'mongodb'
     report_kvs['Database'] = db.name
-    report_kvs['RemoteHost'] = db.connection.host  
+    report_kvs['RemoteHost'] = db.connection.host
     report_kvs['RemotePort'] = db.connection.port
 
 def _to_json(obj):
@@ -216,12 +214,12 @@ def _query_fingerprint(query):
 
 def _command_fingerprint(query):
     """ Special case for commands: preserve order of arguments, and save
-        first argument name/value 
+        first argument name/value
     """
     fp = None
     if query and isinstance(query, SON) and len(query) > 0:
         cmd_args = [ {item[0] : item[1]} for item in query.items() ]
-        fp = skeleton(cmd_args, preserve_first=True, no_wrap=True) 
+        fp = skeleton(cmd_args, preserve_first=True, no_wrap=True)
 
     return fp
 
@@ -233,80 +231,80 @@ COLLECTION_METHOD_INST = {
     'save': {},
     'insert': {
         'callback': profile_insert,
-        'backtrace': True,    
+        'backtrace': True,
     },
     'update': {
         'callback': profile_update,
-        'backtrace': True,    
+        'backtrace': True,
     },
     'drop': {
         'callback': profile_drop,
-        'backtrace': True,    
+        'backtrace': True,
     },
     'remove': {
         'callback': profile_remove,
-        'backtrace': True,    
+        'backtrace': True,
     },
     'find': {
         'callback': profile_find,
-        'backtrace': True,    
+        'backtrace': True,
     },
     'count': {},
     'create_index': {
         'callback': profile_index,
-        'backtrace': True,            
+        'backtrace': True,
     },
     'ensure_index': {
         'callback': profile_index,
-        'backtrace': True,    
+        'backtrace': True,
     },
     'drop_indexes': {
         'callback': profile_index,
     },
     'drop_index': {
         'callback': profile_index,
-        'backtrace': True,    
+        'backtrace': True,
     },
     'reindex': {
         'callback': profile_index,
-        'backtrace': True,    
+        'backtrace': True,
     },
     'index_information': {
         'callback': profile_index,
-        'backtrace': True,    
+        'backtrace': True,
     },
     'options': {
-        'backtrace': True,    
+        'backtrace': True,
     },
     'group': {
         'callback': profile_group,
-        'backtrace': True,    
+        'backtrace': True,
     },
     'rename': {
         'callback': profile_rename_collection,
-        'backtrace': True,    
+        'backtrace': True,
     },
     'distinct': {
         'callback': profile_distinct,
     },
     'map_reduce': {
         'callback': profile_map_reduce,
-        'backtrace': True,    
+        'backtrace': True,
     },
     'inline_map_reduce': {
         'callback': profile_map_reduce,
-        'backtrace': True,    
+        'backtrace': True,
     },
     'find_and_modify': {
         'callback': profile_find_and_modify,
-        'backtrace': True,    
+        'backtrace': True,
     },
 }
 
 # For pymongo.database.Database
 DATABASE_METHOD_INST = {
     'create_collection': {
-        'callback': profile_create_collection,    
+        'callback': profile_create_collection,
     },
     'command': {
         'callback': profile_command,
@@ -332,7 +330,7 @@ def wrap_class(cls, class_name, class_method_inst):
             raise Exception('method %s not found in %s' % (method, module))
         args = { 'layer': PYMONGO_LAYER,
                  'Class': '%s.%s' % (cls.__module__, cls.__name__),
-                 'Function': method, 
+                 'Function': method,
                  'Action': '%s.%s' % (class_name, method),
                }
         args.update(method_log_args)
@@ -350,7 +348,7 @@ def wrap(module):
 
 try:
     import pymongo
+    from bson.son import SON
     wrap(pymongo)
 except ImportError, e:
     pass
-
