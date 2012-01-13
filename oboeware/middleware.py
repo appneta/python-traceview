@@ -35,16 +35,18 @@ class OboeMiddleware:
 
         if self.oboe_config.get('oboe.reporter_port'):
             oboe.config['reporter_port'] = self.oboe_config['oboe.reporter_port']
-        
-        from oboeware import inst_memcache
-        from oboeware import inst_httplib2
-        from oboeware import oninit
+
+        # load pluggaable instrumentation
+        from loader import load_inst_modules
+        load_inst_modules()
+
+        # phone home
         oninit.report_layer_init()
 
     def __call__(self, environ, start_response):
         xtr_hdr = environ.get("HTTP_X-Trace", environ.get("HTTP_X_TRACE"))
         evt, endEvt = None, None
-        
+
         tracing_mode = oboe.config.get('tracing_mode')
 
         # Check for existing context: pylons errors with debug=false result in
@@ -138,7 +140,7 @@ class OboeMiddleware:
             evt.addEdge(oboe.Context.get())
             evt.addInfo("Layer", layer)
             evt.addInfo("Label", "exit")
-            if stats: 
+            if stats:
                 evt.addInfo("Profile", stats)
             if threw_error:
                 import traceback as tb

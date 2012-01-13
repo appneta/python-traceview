@@ -23,7 +23,7 @@ class OboeDjangoMiddleware(object):
 
     def _singleline(self, e): # some logs like single-line errors better
         return str(e).replace('\n', ' ').replace('\r', ' ')
-    
+
     def process_request(self, request):
         import oboe
         xtr_hdr = request.META.get("HTTP_X-Trace", request.META.get("HTTP_X_TRACE"))
@@ -100,13 +100,13 @@ def middleware_hooks(module, objname):
             if not fn: continue
             wrapfn = fn.im_func if hasattr(fn, 'im_func') else fn
             profile_name = '%s.%s.%s' % (module.__name__, objname, method)
-            setattr(cls, method, 
+            setattr(cls, method,
                     oboe.Context.profile_function(profile_name)(wrapfn))
     except Exception, e:
         print >> sys.stderr, "Oboe error:", str(e)
 
 load_middleware_lock = threading.Lock()
-        
+
 def on_load_middleware():
     """ wrap Django middleware from a list """
 
@@ -132,16 +132,18 @@ def on_load_middleware():
                                  functools.partial(middleware_hooks, objname=objname))
 
         # ORM
-        from oboeware import inst_django_orm
-        imports.whenImported('django.db.backends', inst_django_orm.wrap)
+        if oboe.config['inst_enabled']['django_orm']:
+            from oboeware import inst_django_orm
+            imports.whenImported('django.db.backends', inst_django_orm.wrap)
 
-        from oboeware import inst_memcache
-        from oboeware import inst_httplib2 
+        # load pluggaable instrumentation
+        from loader import load_inst_modules
+        load_inst_modules()
 
         # it's usually a tuple, but sometimes it's a list
         if type(settings.MIDDLEWARE_CLASSES) is tuple:
             settings.MIDDLEWARE_CLASSES = ('oboeware.djangoware.OboeDjangoMiddleware',) + settings.MIDDLEWARE_CLASSES
-        elif type(settings.MIDDLEWARE_CLASSES) is list:     
+        elif type(settings.MIDDLEWARE_CLASSES) is list:
             settings.MIDDLEWARE_CLASSES = ['oboeware.djangoware.OboeDjangoMiddleware'] + settings.MIDDLEWARE_CLASSES
         else:
             print >> sys.stderr, "Oboe error: thought MIDDLEWARE_CLASSES would be either a tuple or a list, got " + str(type(settings.MIDDLEWARE_CLASSES))
@@ -173,6 +175,7 @@ def install_oboe_middleware(module):
 try:
     import functools
     imports.whenImported('django.core.handlers.base', install_oboe_middleware)
+    # phone home
     oninit.report_layer_init(layer='django')
 except ImportError, e:
     print >> sys.stderr, "[oboe] Unable to instrument app and middleware: %s" % e
