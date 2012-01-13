@@ -132,6 +132,7 @@ def on_load_middleware():
                                  functools.partial(middleware_hooks, objname=objname))
 
         # ORM
+        import oboe
         if oboe.config['inst_enabled']['django_orm']:
             from oboeware import inst_django_orm
             imports.whenImported('django.db.backends', inst_django_orm.wrap)
