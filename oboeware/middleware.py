@@ -41,6 +41,7 @@ class OboeMiddleware:
         load_inst_modules()
 
         # phone home
+        import oninit
         oninit.report_layer_init()
 
     def __call__(self, environ, start_response):
