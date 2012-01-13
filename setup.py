@@ -5,11 +5,11 @@
 
 
 from setuptools import setup, Extension
-version = '0.4.1'
+version = '0.4.2'
 
-oboe_module = Extension('oboe._oboe_ext', 
-                        sources=['oboe/oboe_wrap.cxx'], 
-                        depends=['oboe/oboe.hpp'], 
+oboe_module = Extension('oboe._oboe_ext',
+                        sources=['oboe/oboe_wrap.cxx'],
+                        depends=['oboe/oboe.hpp'],
                         libraries=['oboe'])
 
 setup(name = 'oboe',
