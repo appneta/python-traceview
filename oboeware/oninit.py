@@ -18,3 +18,5 @@ def report_layer_init(layer="wsgi"):
     evt.addInfo("Layer", layer)
     evt.addInfo("Label", "exit")
     oboe.reporter().sendReport(evt)
+
+    oboe.Context.clear()
