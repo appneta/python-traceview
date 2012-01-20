@@ -6,6 +6,8 @@
 import oboe
 import sys, os
 
+MODULE_INIT_REPORTED = False
+
 class OboeMiddleware:
     def __init__(self, app, oboe_config, layer="wsgi", profile=False):
         """
@@ -41,8 +43,11 @@ class OboeMiddleware:
         load_inst_modules()
 
         # phone home
-        import oninit
-        oninit.report_layer_init()
+        global MODULE_INIT_REPORTED
+        if not MODULE_INIT_REPORTED:
+            import oninit
+            oninit.report_layer_init()
+            MODULE_INIT_REPORTED = True
 
     def __call__(self, environ, start_response):
         xtr_hdr = environ.get("HTTP_X-Trace", environ.get("HTTP_X_TRACE"))
