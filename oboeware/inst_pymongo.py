@@ -5,8 +5,6 @@ import socket
 import sys
 
 import oboe
-from oboeware.json_encoder import JSONEncoder
-from oboeware.skeleton import skeleton
 
 try:
     import json
@@ -348,6 +346,8 @@ def wrap(module):
 
 try:
     import pymongo
+    from oboeware.json_encoder import JSONEncoder
+    from oboeware.skeleton import skeleton
     from bson.son import SON
     wrap(pymongo)
 except ImportError, e:
