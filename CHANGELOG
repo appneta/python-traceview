@@ -1,5 +1,8 @@
+0.4.5
+ - Use json instead of simplejson, safeguard import
+
 0.4.4
- - Proect pymongo imports so that bson module not required by oboeware
+ - Protect pymongo imports so that bson module not required by oboeware
 
 0.4.3
  - Fix initialization reporting bug with Flask framework
