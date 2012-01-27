@@ -1,3 +1,6 @@
+0.4.4
+ - Proect pymongo imports so that bson module not required by oboeware
+
 0.4.3
  - Fix initialization reporting bug with Flask framework
 
