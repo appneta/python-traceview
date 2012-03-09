@@ -1,5 +1,5 @@
 recursive-include oboe *.py *.hpp *.cxx
-exclude README
+include *.txt
 exclude MANIFEST.in
 prune test
 prune old

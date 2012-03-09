@@ -1,3 +1,6 @@
+# Copyright (C) 2012 by Tracelytics, Inc.
+# All rights reserved.
+
 # instrumentation loader -- checks oboe.config['inst_enabled'] and imports
 # as requested.  used by middleware and djangoware.
 import oboe

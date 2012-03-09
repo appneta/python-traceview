@@ -1,3 +1,6 @@
+# Copyright (C) 2012 by Tracelytics, Inc.
+# All rights reserved.
+
 from oboe_ext import *
 
 import inspect

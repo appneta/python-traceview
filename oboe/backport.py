@@ -1,5 +1,5 @@
 # from http://code.activestate.com/recipes/523034-emulate-collectionsdefaultdict/
-# PSF license applies
+# Distributed under the PSF license.
 
 try:
     from collections import defaultdict
