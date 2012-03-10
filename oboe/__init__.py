@@ -90,6 +90,26 @@ def log_error(cls, exception=None, err_class=None, err_msg=None, backtrace=True)
     rep = reporter()
     return rep.sendReport(evt)
 
+def log_exception(cls, msg=None):
+    """Report the message with exception information included. This should only
+    be called from an exception handler."""
+
+    if not Context.isValid():
+        return
+
+    typ, val, tb = sys.exc_info()
+    if msg is None:
+        msg = str(val)
+
+    evt = Context.createEvent()
+    evt.addInfo('Label', 'error')
+    evt.addInfo('Backtrace', _str_backtrace(tb))
+    evt.addInfo('ErrorClass', typ.__name__)
+    evt.addInfo('ErrorMsg', msg)
+
+    return reporter().sendReport(evt)
+
+
 def _function_signature(func):
     name = func.__name__
     (args, varargs, keywords, defaults) = inspect.getargspec(func)
