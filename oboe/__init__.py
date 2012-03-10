@@ -90,14 +90,14 @@ def log_error(cls, exception=None, err_class=None, err_msg=None, backtrace=True)
     rep = reporter()
     return rep.sendReport(evt)
 
-def log_exception(cls, msg=None):
+def log_exception(cls, msg=None, exc_info=None):
     """Report the message with exception information included. This should only
-    be called from an exception handler."""
+    be called from an exception handler, unless exc_info is provided."""
 
     if not Context.isValid():
         return
 
-    typ, val, tb = sys.exc_info()
+    typ, val, tb = exc_info or sys.exc_info()
     if msg is None:
         msg = str(val)
 
