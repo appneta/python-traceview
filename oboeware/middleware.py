@@ -155,8 +155,9 @@ class OboeMiddleware:
                 endEvt.addInfo("ErrorClass", exc.__class__.__name__)
                 evt.addInfo("Backtrace", "".join(tb.format_list(tb.extract_tb(trace))))
 
-            # gets controller, layer
+            # gets controller, action
             for k, v in  environ.get('wsgiorg.routing_args', [{},{}])[1].items():
-                evt.addInfo(str(k).capitalize(), str(v))
+                if k in set("controller", "action"):
+                    evt.addInfo(str(k).capitalize(), str(v))
 
             reporter = oboe.reporter().sendReport(evt)
