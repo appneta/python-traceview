@@ -416,7 +416,7 @@ def _Event_addInfo_safe(func):
     def wrapped(*args, **kw):
         try: # call SWIG-generated Event.addInfo (from oboe_ext.py)
             return func(*args, **kw)
-        except NotImplementedError as e: # unrecognized type passed to addInfo SWIG binding
+        except NotImplementedError, e: # unrecognized type passed to addInfo SWIG binding
             # args: [self, KeyName, Value]
             if len(args) == 3 and isinstance(args[1], basestring):
                 # report this error
