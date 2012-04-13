@@ -1,3 +1,7 @@
+0.4.6
+ - Restore compatibility with Python 2.5.
+ - Add log_exception() method to oboe.
+
 0.4.5
  - Use json instead of simplejson, safeguard import
 
