@@ -76,12 +76,7 @@ class OboeDjangoMiddleware(object):
         import oboe
         if not oboe.Context.isValid(): return
         try:
-            evt = oboe.Context.createEvent()
-            evt.addInfo('Layer', 'django')
-            evt.addInfo('Label', 'error')
-            evt.addInfo('ErrorMsg', str(exception))
-            evt.addInfo('ErrorClass', exception.__class__.__name__)
-            reporter = oboe.reporter().sendReport(evt)
+            oboe.Context.log_exception(exc_info=exception)
         except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
 
