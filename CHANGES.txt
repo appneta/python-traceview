@@ -1,6 +1,7 @@
 0.4.7
  - New oboeware.djangoware:OboeWSGIHandler, e.g. for use with uWSGI.
- - Add log_exception() method to oboe.Context also.
+ - Collect backtraces for uncaught exceptions in Django
+ - Add log_exception() method to oboe.Context .
 
 0.4.6
  - Restore compatibility with Python 2.5.
