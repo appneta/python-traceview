@@ -89,7 +89,7 @@ class OboeDjangoMiddleware(object):
         import oboe
         if not oboe.Context.isValid(): return
         try:
-            oboe.Context.log_exception(exc_info=exception)
+            oboe.Context.log_error(exception=exception)
         except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
 
