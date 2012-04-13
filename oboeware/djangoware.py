@@ -9,18 +9,20 @@ from oboeware import imports
 from oboeware import oninit
 import sys, threading, functools
 
-# Middleware hooks listed here: http://docs.djangoproject.com/en/dev/ref/middleware/
-
 class OboeWSGIHandler(object):
     """ Wrapper WSGI Handler for Django's django.core.handlers.wsgi:WSGIHandler
     Can be used as a replacement for Django's WSGIHandler, e.g. with uWSGI.
     """
     def __init__(self):
+        """ Import and instantiate django.core.handlers.WSGIHandler,
+        now that the load_middleware wrapper below has been initialized. """
         from django.core.handlers.wsgi import WSGIHandler as djhandler
         self._handler = djhandler()
 
     def __call__(self, environ, start_response):
         return self._handler(environ, start_response)
+
+# Middleware hooks listed here: http://docs.djangoproject.com/en/dev/ref/middleware/
 
 class OboeDjangoMiddleware(object):
 
