@@ -431,6 +431,7 @@ def _Event_addInfo_safe(func):
 setattr(Event, 'addInfo', _Event_addInfo_safe(getattr(Event, 'addInfo')))
 setattr(Context, log.__name__, types.MethodType(log, Context))
 setattr(Context, log_error.__name__, types.MethodType(log_error, Context))
+setattr(Context, log_exception.__name__, types.MethodType(log_exception, Context))
 setattr(Context, log_method.__name__, types.MethodType(log_method, Context))
 setattr(Context, profile_function.__name__, types.MethodType(profile_function, Context))
 setattr(Context, profile_block.__name__, profile_block)
