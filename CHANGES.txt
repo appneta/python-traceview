@@ -1,3 +1,6 @@
+0.4.8
+ - Safeguard method profiling introspection calls against missing source files (possibly http://bugs.python.org/issue4223)
+
 0.4.7
  - New oboeware.djangoware:OboeWSGIHandler, e.g. for use with uWSGI.
  - Collect backtraces for uncaught exceptions in Django
