@@ -238,29 +238,39 @@ def profile_function(cls, profile_name,
         if 'im_class' in dir(func):          # is func an instance method?
             entry_kvs['Class'] = func.im_class.__name__
 
-
+        # get filename, line number, etc, and cache in wrapped function to avoid overhead
         try:
-            # get filename, line number, etc, and cache in wrapped function to avoid overhead
             if not hasattr(func, '_oboe_file'):
                 setattr(func, '_oboe_file', inspect.getsourcefile(func))
+        except Exception, e:
+            setattr(func, '_oboe_file', None)
+
+        try:
             if not hasattr(func, '_oboe_line_number'):
                 setattr(func, '_oboe_line_number', inspect.getsourcelines(func)[1])
+        except Exception, e:
+            setattr(func, '_oboe_line_number', None)
+
+        try:
             if not hasattr(func, '_oboe_module'):
                 setattr(func, '_oboe_module', inspect.getmodule(func).__name__)
+        except Exception, e:
+            setattr(func, '_oboe_module', None)
+
+        try:
             if not hasattr(func, '_oboe_signature'):
                 setattr(func, '_oboe_signature', _function_signature(func))
         except Exception, e:
-            entry_kvs['_OboeError'] = 'Error getting function signature data: %s' % str(e)
-
+            setattr(func, '_oboe_signature', None)
 
         # prepare data for reporting oboe event
         entry_kvs.update({'Language': 'python',
                        'ProfileName': profile_name,
-                       'File': getattr(func, '_oboe_file', 'None'),
-                       'LineNumber': getattr(func, '_oboe_line_number', 'None'),
-                       'Module': getattr(func, '_oboe_module', 'None'),
-                       'FunctionName': func.__name__,
-                       'Signature': getattr(func, '_oboe_signature', 'None')})
+                       'File': getattr(func, '_oboe_file'),
+                       'LineNumber': getattr(func, '_oboe_line_number'),
+                       'Module': getattr(func, '_oboe_module'),
+                       'FunctionName': getattr(func, '__name__')
+                       'Signature': getattr(func, '_oboe_signature')})
 
         if store_backtrace:
             entry_kvs['Backtrace'] = _str_backtrace()
