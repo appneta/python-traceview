@@ -157,7 +157,7 @@ class OboeMiddleware:
 
             # gets controller, action
             for k, v in  environ.get('wsgiorg.routing_args', [{},{}])[1].items():
-                if k in set("controller", "action"):
+                if k in set(("controller", "action")):
                     evt.addInfo(str(k).capitalize(), str(v))
 
             reporter = oboe.reporter().sendReport(evt)
