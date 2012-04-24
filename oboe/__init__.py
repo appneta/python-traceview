@@ -269,7 +269,7 @@ def profile_function(cls, profile_name,
                        'File': getattr(func, '_oboe_file'),
                        'LineNumber': getattr(func, '_oboe_line_number'),
                        'Module': getattr(func, '_oboe_module'),
-                       'FunctionName': getattr(func, '__name__')
+                       'FunctionName': getattr(func, '__name__'),
                        'Signature': getattr(func, '_oboe_signature')})
 
         if store_backtrace:
