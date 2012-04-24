@@ -1,3 +1,7 @@
+0.4.9
+ - Fix for controller/action gathering in pylons middleware
+ - Fix for method profilin typo
+
 0.4.8
  - Safeguard method profiling introspection calls against missing source files (possibly http://bugs.python.org/issue4223)
 
