@@ -107,7 +107,12 @@ def log_exception(cls, msg=None, exc_info=None):
 def trace(cls, layer='Python', xtr_hdr=None, kvs=None):
     """ Decorator to begin a new trace on a block of code.  Takes
         into account oboe.config['tracing_mode'] as well as
-        oboe.config['sample_rate'], so may not always start a trace. """
+        oboe.config['sample_rate'], so may not always start a trace.
+
+        layer: layer name to report as
+        xtr_hdr: optional, incoming x-trace header if available
+        kvs: optional, dictionary of additional key/value pairs to report
+    """
     from decorator import decorator
 
     def _trace_wrapper(func, *f_args, **f_kwargs):
