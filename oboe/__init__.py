@@ -4,6 +4,7 @@
 from oboe_ext import *
 
 import inspect
+import random
 import sys
 import types
 import traceback as tb
@@ -14,11 +15,12 @@ from backport import defaultdict
 __version__ = '0.4.8'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 
-# configuration
+# configuration defaults
 config = dict()
-config['tracing_mode'] = 'through'
-config['reporter_host'] = '127.0.0.1'
-config['reporter_port'] = 7831
+config['tracing_mode'] = 'through'      # always, through, never
+config['sample_rate'] = 0.3             # out of 1.0
+config['reporter_host'] = '127.0.0.1'   # you probably don't want to change the
+config['reporter_port'] = 7831          # last two options
 
 config['inst_enabled'] = defaultdict(lambda: True)
 
@@ -52,17 +54,10 @@ def log(cls, layer, label, backtrace=False, **kwargs):
     """
     if not Context.isValid(): return
     evt = Context.createEvent()
-    evt.addInfo('Layer', layer)
-    evt.addInfo('Label', label)
     if backtrace:
-        evt.addInfo('Backtrace', _str_backtrace())
+        kwargs['Backtrace'] = _str_backtrace()
 
-    for k, v in kwargs.items():
-        evt.addInfo(str(k), str(v))
-
-    rep = reporter()
-    return rep.sendReport(evt)
-
+    _log_event(evt, layer, label, kvs=kwargs)
 
 def log_error(cls, exception=None, err_class=None, err_msg=None, backtrace=True):
     """Report an error from python exception or from specified message.
@@ -109,6 +104,71 @@ def log_exception(cls, msg=None, exc_info=None):
 
     return reporter().sendReport(evt)
 
+def trace(cls, layer='Python', xtr_hdr=None, kvs=None):
+    """ Decorator to begin a new trace on a block of code.  Takes
+        into account oboe.config['tracing_mode'] as well as
+        oboe.config['sample_rate'], so may not always start a trace. """
+    from decorator import decorator
+
+    def _trace_wrapper(func, *f_args, **f_kwargs):
+        _start_trace(layer, xtr_hdr, kvs)
+        try:
+            res = func(*f_args, **f_kwargs)
+        except Exception, e:
+            # log exception and re-raise
+            Context.log(layer, 'error', ErrorClass=e.__class__.__name__, Message=str(e))
+            raise
+        finally:
+            _end_trace(layer)
+
+        return res # return output of func(*f_args, **f_kwargs)
+
+    _trace_wrapper._oboe_wrapped = True     # mark our wrapper for protection below
+
+    # instrumentation helper decorator, called to add wrapper at "decorate" time
+    def decorate_with_trace(f):
+        if getattr(f, '_oboe_wrapped', False):   # has this function already been wrapped?
+            return f                             # then pass through
+        return decorator(_trace_wrapper, f) # otherwise wrap function f with wrapper
+
+    return decorate_with_trace
+
+def _log_event(evt, layer, label, kvs=None):
+    """ Reports an event, attaching given layer, label, and kvs. """
+    evt.addInfo('Layer', layer)
+    evt.addInfo('Label', label)
+
+    if kvs != None:
+        for k, v in kvs.items():
+            evt.addInfo(str(k), str(v))
+
+    rep = reporter()
+    return rep.sendReport(evt)
+
+def _start_trace(layer, xtr_hdr=None, kvs=None):
+    """ Begin a new trace.  Takes into account oboe.config['tracing_mode'] and
+        oboe.config['sample_rate'], so may not always start a trace. """
+
+    tracing_mode = config.get('tracing_mode')
+    sample_rate = config.get('sample_rate')
+
+    if not Context.isValid() and xtr_hdr and tracing_mode in ['always', 'through']:
+        Context.fromString(xtr_hdr)
+
+    if not Context.isValid() and tracing_mode == 'always' and random.random() < sample_rate:
+        evt = Context.startTrace()
+    elif Context.isValid() and tracing_mode != 'never':
+        evt = Context.createEvent()
+
+    if not Context.isValid(): return
+    _log_event(evt, layer, 'entry', kvs)
+
+def _end_trace(layer, kvs=None):
+    """ Marks the end of a trace.  Clears oboe.Context to reset tracing state. """
+    if not Context.isValid(): return
+    evt = Context.createEvent()
+    _log_event(evt, layer, 'exit', kvs)
+    Context.clear()
 
 def _function_signature(func):
     name = func.__name__
@@ -448,5 +508,6 @@ setattr(Context, log.__name__, types.MethodType(log, Context))
 setattr(Context, log_error.__name__, types.MethodType(log_error, Context))
 setattr(Context, log_exception.__name__, types.MethodType(log_exception, Context))
 setattr(Context, log_method.__name__, types.MethodType(log_method, Context))
+setattr(Context, trace.__name__, types.MethodType(trace, Context))
 setattr(Context, profile_function.__name__, types.MethodType(profile_function, Context))
 setattr(Context, profile_block.__name__, profile_block)
