@@ -121,7 +121,7 @@ def trace(cls, layer='Python', xtr_hdr=None, kvs=None):
             res = func(*f_args, **f_kwargs)
         except Exception, e:
             # log exception and re-raise
-            Context.log(layer, 'error', ErrorClass=e.__class__.__name__, Message=str(e))
+            Context.log_exception()
             raise
         finally:
             _end_trace(layer)
