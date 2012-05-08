@@ -12,7 +12,7 @@ def wrap_default_dialect(module):
             except ImportError:
                 oboe_enabled = False
             if oboe_enabled:
-                oboe.Context.log('sqlalchemy', 'entry', backtrace=False, Query=statement.replace('%s', "''"))
+                oboe.Context.log('sqlalchemy', 'entry', backtrace=True, Query=statement.replace('%s', "''"))
             try:
                 super(DefaultDialect, self).do_executemany(cursor, statement, parameters, context=context)
             except Exception, e:
@@ -30,7 +30,7 @@ def wrap_default_dialect(module):
             except ImportError:
                 oboe_enabled = False
             if oboe_enabled:
-                oboe.Context.log('sqlalchemy', 'entry', backtrace=False, Query=statement.replace('%s', "''"))
+                oboe.Context.log('sqlalchemy', 'entry', backtrace=True, Query=statement.replace('%s', "''"))
             try:
                 super(DefaultDialect, self).do_execute(cursor, statement, parameters, context=context)
             except Exception, e:
