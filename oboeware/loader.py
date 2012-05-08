@@ -15,3 +15,5 @@ def load_inst_modules():
         from oboeware import inst_memcache
     if _enabled('pymongo'):
         from oboeware import inst_pymongo
+    if _enabled('sqlalchemy'):
+        from oboeware import inst_sqlalchemy
