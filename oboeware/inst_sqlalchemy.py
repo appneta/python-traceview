@@ -22,7 +22,7 @@ def wrap_execute(func, f_args, _f_kwargs, _return_val):
 def wrap(module):
     """ wrap default SQLAlchemy dialect, to catch execute calls to the cursor. """
     cls = getattr(module, 'DefaultDialect', None)
-    decorate = oboe.Context.log_method(layer='sqlalchemy', backtrace=False, callback=wrap_execute)
+    decorate = oboe.Context.log_method(layer='sqlalchemy', backtrace=True, callback=wrap_execute)
     if cls:
         for method_name in METHODS:
             method = getattr(cls, method_name, None)
