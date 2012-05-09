@@ -1,18 +1,33 @@
+""" Tracelytics instrumentation for SQLAlchemy.
+
+ Copyright (C) 2011 by Tracelytics, Inc.
+ All rights reserved.
+"""
 import oboe
 
-def wrap_execute(func, f_args, f_kwargs, return_val):
-    return { 'Query': f_args[2].replace('%s', "''") }
+METHODS = ['do_execute', 'do_executemany', 'do_rollback', 'do_commit']
+
+# Mapping of method names to assumed SQL statements.
+QUERY_MAP = {'do_rollback': 'ROLLBACK',
+             'do_commit': 'COMMIT' }
+
+def wrap_execute(func, f_args, _f_kwargs, _return_val):
+    if func.__name__ in QUERY_MAP:
+        return { 'Query': QUERY_MAP[func.__name__] }
+    elif len(f_args) >= 3:
+        return { 'Query': f_args[2].replace('%s', "''") }
+    else:
+        return {}
 
 def wrap(module):
     """ wrap default SQLAlchemy dialect, to catch execute calls to the cursor. """
     cls = getattr(module, 'DefaultDialect', None)
+    decorate = oboe.Context.log_method(layer='sqlalchemy', backtrace=False, callback=wrap_execute)
     if cls:
-        do_execute = getattr(cls, 'do_execute', None)
-        if do_execute:
-            cls.do_execute = oboe.Context.log_method(layer='sqlalchemy', backtrace=True, callback=wrap_execute)(do_execute.im_func)
-        do_executemany = getattr(cls, 'do_executemany', None)
-        if do_executemany:
-            cls.do_executemany = oboe.Context.log_method(layer='sqlalchemy', backtrace=True, callback=wrap_execute)(do_executemany.im_func)
+        for method_name in METHODS:
+            method = getattr(cls, method_name, None)
+            if method:
+                setattr(cls, method_name, decorate(method.im_func))
 
 try:
     import sqlalchemy
