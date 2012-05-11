@@ -17,3 +17,5 @@ def load_inst_modules():
         from oboeware import inst_pymongo
     if _enabled('sqlalchemy'):
         from oboeware import inst_sqlalchemy
+    if _enabled('urllib3'):
+        from oboeware import inst_urllib3
