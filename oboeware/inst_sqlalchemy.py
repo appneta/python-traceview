@@ -31,9 +31,19 @@ def wrap(module, class_name, methods):
                 setattr(cls, method_name, decorate(method.im_func))
 
 try:
-    import sqlalchemy as sa
-    wrap(sa.engine.default, 'DefaultDialect', DEFAULT_METHODS)
-    for (dialect, class_name) in [(sa.dialects.mysql.base, 'MySQLDialect')]:
-        wrap(dialect, class_name, DIALECT_METHODS)
+    import sqlalchemy.engine.default as sad
+    wrap(sad, 'DefaultDialect', DEFAULT_METHODS)
+except ImportError, e:
+    pass
+
+try:
+    import sqlalchemy.dialects.mysql.base as sdmb
+    wrap(sdmb, 'MySQLDialect', DIALECT_METHODS)
+except ImportError, e:
+    pass
+
+try:
+    import sqlalchemy.dialects.postgresql.base as sdpb
+    wrap(sdpb, 'PGDialect', DIALECT_METHODS)
 except ImportError, e:
     pass
