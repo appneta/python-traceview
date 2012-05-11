@@ -40,12 +40,7 @@ def wrap(module):
                                             headers=headers, redirections=redirections,
                                             connection_type=connection_type)
                 except Exception, exc:
-                    evt = oboe.Context.createEvent()
-                    evt.addInfo('Layer', HTTPLIB2_LAYER)
-                    evt.addInfo('Label', 'error')
-                    evt.addInfo('ErrorMsg', str(exc))
-                    evt.addInfo('ErrorClass', exc.__class__.__name__)
-                    reporter = oboe.reporter().sendReport(evt)
+                    oboe.Context.log_exception()
                 finally:
                     evt = oboe.Context.createEvent()
                     evt.addInfo('Layer', HTTPLIB2_LAYER)
