@@ -12,7 +12,7 @@ import traceback as tb
 # defaultdict not implemented before 2.5
 from backport import defaultdict
 
-__version__ = '0.5.0'
+__version__ = '0.5.1'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 
 # configuration defaults
