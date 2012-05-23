@@ -75,16 +75,28 @@ def wrap(module):
                      }
 
             wrapfn = fn.im_func if hasattr(fn, 'im_func') else fn # wrap unbound instance method
-            setattr(cls, method, oboe.Context.log_method(**args)(wrapfn))
+
+            def build_ww(wrapfn):
+                def ww(*args, **kwargs):
+                    return wrapfn(*args, **kwargs)
+                return ww
+
+            setattr(cls, method, oboe.Context.log_method(**args)(build_ww(wrapfn)))
 
         # per-key memcache host hook
         fn = getattr(cls, '_get_server', None)
         setattr(cls, '_get_server', wrap_get_server(fn))
     except Exception, e:
-        print >> sys.stderr, "Oboe error:", str(e)
+        print >> sys.stderr, "Oboe %s error: %s" % (module.__name__, str(e))
 
 try:
     import memcache
     wrap(memcache)
+except ImportError, e:
+    pass
+
+try:
+    from pylibmc import client
+    wrap(client)
 except ImportError, e:
     pass
