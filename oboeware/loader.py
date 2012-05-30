@@ -19,3 +19,4 @@ def load_inst_modules():
         from oboeware import inst_sqlalchemy
     if _enabled('urllib3'):
         from oboeware import inst_urllib3
+    # additionally, in djangoware.py: 'django_orm'
