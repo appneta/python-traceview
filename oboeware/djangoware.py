@@ -193,14 +193,10 @@ def install_oboe_middleware(module):
     except Exception as e:
         print >> sys.stderr, "Oboe error:", str(e)
 
-def main():
-    try:
-        imports.whenImported('django.core.handlers.base', install_oboe_middleware)
-        # phone home
-        oninit.report_layer_init(layer='django')
-    except ImportError as e:
-        # gracefully disable tracing if Tracelytics oboeware not present
-        print >> sys.stderr, "[oboe] Unable to instrument app and middleware: %s" % e
-
-if __name__ == '__main__':
-    main()
+try:
+    imports.whenImported('django.core.handlers.base', install_oboe_middleware)
+    # phone home
+    oninit.report_layer_init(layer='django')
+except ImportError as e:
+    # gracefully disable tracing if Tracelytics oboeware not present
+    print >> sys.stderr, "[oboe] Unable to instrument app and middleware: %s" % e
