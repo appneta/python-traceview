@@ -1,6 +1,8 @@
-# Copyright (C) 2012 by Tracelytics, Inc.
-# All rights reserved.
+""" Tracelytics instrumentation for pymongo (MongoDB client).
 
+Copyright (C) 2012 by Tracelytics, Inc.
+All rights reserved.
+"""
 import socket
 import sys
 

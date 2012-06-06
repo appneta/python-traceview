@@ -1,6 +1,8 @@
-# Copyright (C) 2011 by Tracelytics, Inc.
-# All rights reserved.
+""" Tracelytics instrumentation for httplib2.
 
+Copyright (C) 2011 by Tracelytics, Inc.
+All rights reserved.
+"""
 import sys
 import oboe
 from  urlparse import urlparse

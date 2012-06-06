@@ -1,6 +1,8 @@
-# Copyright (C) 2011 by Tracelytics, Inc.
-# All rights reserved.
+""" Tracelytics initialization function(s).
 
+Copyright (C) 2011 by Tracelytics, Inc.
+All rights reserved.
+"""
 import oboe
 import oboeware
 

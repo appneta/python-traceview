@@ -59,6 +59,7 @@ def log(cls, layer, label, backtrace=False, **kwargs):
 
     _log_event(evt, layer, label, kvs=kwargs)
 
+# XXX Different function names?
 def log_error(cls, exception=None, err_class=None, err_msg=None, backtrace=True):
     """Report an error from python exception or from specified message.
 
@@ -85,7 +86,7 @@ def log_error(cls, exception=None, err_class=None, err_msg=None, backtrace=True)
     rep = reporter()
     return rep.sendReport(evt)
 
-def log_exception(cls, msg=None, exc_info=None):
+def log_exception(cls, msg=None, exc_info=None, backtrace=True):
     """Report the message with exception information included. This should only
     be called from an exception handler, unless exc_info is provided."""
 
@@ -176,6 +177,7 @@ def _end_trace(layer, kvs=None):
     Context.clear()
 
 def _function_signature(func):
+    """Returns a string representation of the function signature of the given func."""
     name = func.__name__
     (args, varargs, keywords, defaults) = inspect.getargspec(func)
     argstrings = []

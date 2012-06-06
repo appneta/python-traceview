@@ -1,6 +1,10 @@
-# Copyright (C) 2011 by Tracelytics, Inc.
-# All rights reserved.
+""" Tracelytics instrumentation for requests.
 
+Instrumentation is done in urllib3.
+
+Copyright (C) 2011 by Tracelytics, Inc.
+All rights reserved.
+"""
 import sys
 import oboe
 from  urlparse import urlparse

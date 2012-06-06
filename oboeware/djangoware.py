@@ -1,4 +1,4 @@
-"""Tracelytics Django Middleware
+"""Tracelytics instrumentation for Django
 
  Copyright (C) 2011 by Tracelytics, Inc.
  All rights reserved.

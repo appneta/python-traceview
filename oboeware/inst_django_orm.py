@@ -1,6 +1,8 @@
-# Copyright (C) 2011 by Tracelytics, Inc.
-# All rights reserved.
+""" Tracelytics instrumentation for Django ORM.
 
+Copyright (C) 2011 by Tracelytics, Inc.
+All rights reserved.
+"""
 
 import sys
 
