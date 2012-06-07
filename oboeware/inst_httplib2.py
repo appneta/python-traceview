@@ -13,7 +13,7 @@ def wrap(module):
     try:
         real_request = module.Http.request
         from functools import wraps
-        @wraps(module.Http.request)
+        @wraps(module.Http.request) # XXX Not Python2.4-friendly
         def wrapped_request(self, uri, method="GET", body=None, headers=None, redirections=5, connection_type=None):
             if not headers:
                 headers = {}
@@ -21,7 +21,7 @@ def wrap(module):
                 evt = oboe.Context.createEvent()
                 info = urlparse(uri)
                 evt.addInfo('IsService', 'yes')
-                evt.addInfo('RemoteProtocol', info.scheme if info.scheme != '' else 'http')
+                evt.addInfo('RemoteProtocol', info.scheme if info.scheme != '' else 'http') # XXX Not Python2.4-friendly
                 evt.addInfo('RemoteHost', info.netloc)
 
                 path = info.path
@@ -43,7 +43,7 @@ def wrap(module):
                                             connection_type=connection_type)
                 except Exception, exc:
                     oboe.Context.log_exception()
-                finally:
+                finally: # XXX Not Python2.4-friendly
                     evt = oboe.Context.createEvent()
                     evt.addInfo('Layer', HTTPLIB2_LAYER)
                     evt.addInfo('Label', 'exit')

@@ -29,7 +29,7 @@ class CursorOboeWrapper(object):
         except Exception, e:
             oboe.Context.log('djangoORM', 'error', ErrorClass=e.__class__.__name__, Message=str(e))
             raise # reraise; finally still fires below
-        finally:
+        finally: # XXX Not Python2.4-friendly
             oboe.Context.log('djangoORM', 'exit')
 
     def executemany(self, sql, param_list):
@@ -50,7 +50,7 @@ class CursorOboeWrapper(object):
         except Exception, e:
             oboe.Context.log('djangoORM', 'error', ErrorClass=e.__class__.__name__, Message=str(e))
             raise # reraise; finally still fires below
-        finally:
+        finally: # XXX Not Python2.4-friendly
             oboe.Context.log('djangoORM', 'exit')
 
     def __getattr__(self, attr):

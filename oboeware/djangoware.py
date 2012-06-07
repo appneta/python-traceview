@@ -70,6 +70,7 @@ class OboeDjangoMiddleware(object):
             evt.addInfo('Layer', 'django')
             evt.addInfo('Label', 'process_view')
             evt.addInfo('Controller', view_func.__module__)
+            # XXX Not Python2.4-friendly
             evt.addInfo('Action', view_func.__name__ if hasattr(view_func, '__name__') else None)
             oboe.reporter().sendReport(evt)
         except Exception, e:
@@ -114,7 +115,7 @@ def middleware_hooks(module, objname):
             fn = getattr(cls, method, None)
             if not fn:
                 continue
-            wrapfn = fn.im_func if hasattr(fn, 'im_func') else fn
+            wrapfn = fn.im_func if hasattr(fn, 'im_func') else fn # XXX Not Python2.4-friendly
             profile_name = '%s.%s.%s' % (module.__name__, objname, method)
             setattr(cls, method,
                     oboe.Context.profile_function(profile_name)(wrapfn))
@@ -148,7 +149,7 @@ def on_load_middleware():
                 continue
             objname = i[dot+1:]
             imports.whenImported(i[:dot],
-                                 functools.partial(middleware_hooks, objname=objname))
+                                 functools.partial(middleware_hooks, objname=objname))  # XXX Not Python2.4-friendly
 
         # ORM
         import oboe
@@ -173,9 +174,8 @@ def on_load_middleware():
         mwlock.release()
 
 def install_oboe_middleware(module):
-    from functools import wraps
     def base_handler_wrapper(func):
-        @wraps(func)
+        @functools.wraps(func)  # XXX Not Python2.4-friendly
         def wrap_method(*f_args, **f_kwargs):
             on_load_middleware()
             return func(*f_args, **f_kwargs)

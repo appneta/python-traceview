@@ -15,7 +15,7 @@ def wrap(module):
     try:
         real_urlopen =  module.connectionpool.HTTPConnectionPool.urlopen
         from functools import wraps
-        @wraps(real_urlopen)
+        @wraps(real_urlopen) # XXX Not Python2.4-friendly
         def wrapped_urlopen(self, method, url, body=None, headers=None, retries=3,
                 redirect=True, assert_same_host=True,
                 pool_timeout=None, release_conn=None, **response_kw):
@@ -25,7 +25,7 @@ def wrap(module):
                 evt = oboe.Context.createEvent()
                 info = urlparse(url)
                 evt.addInfo('IsService', 'yes')
-                evt.addInfo('RemoteProtocol', info.scheme if info.scheme != '' else 'http')
+                evt.addInfo('RemoteProtocol', info.scheme if info.scheme != '' else 'http') # XXX Not Python2.4-friendly
                 evt.addInfo('RemoteHost', info.netloc)
 
                 path = info.path
@@ -47,7 +47,7 @@ def wrap(module):
                                                 pool_timeout=pool_timeout, release_conn=release_conn, **response_kw)
                 except Exception, exc:
                     oboe.Context.log_exception()
-                finally:
+                finally: # XXX Not Python2.4-friendly
                     evt = oboe.Context.createEvent()
                     evt.addInfo('Layer', URLLIB3_LAYER)
                     evt.addInfo('Label', 'exit')

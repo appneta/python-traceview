@@ -45,7 +45,7 @@ def wrap_get_server(func):
     function is called.
     """
     from functools import wraps
-    @wraps(func)
+    @wraps(func) # XXX Not Python2.4-friendly
     def wrapper(*f_args, **f_kwargs):
         ret = func(*f_args, **f_kwargs)
         try:
@@ -75,12 +75,13 @@ def wrap(module):
                 raise Exception('method %s not found in %s' % (method, module))
             args = { 'layer': MC_LAYER,
                      'store_return': False,
-                     'callback': partial(wrap_mc_method, funcname=method),
+                     'callback': partial(wrap_mc_method, funcname=method), # XXX Not Python2.4-friendly
                      'Class': module.__name__ + '.Client',
                      'Function': method,
                      'backtrace': True,
                      }
 
+            # XXX Not Python2.4-friendly
             wrapfn = fn.im_func if hasattr(fn, 'im_func') else fn # wrap unbound instance method
             setattr(cls, method, oboe.Context.log_method(**args)(wrapfn))
 
