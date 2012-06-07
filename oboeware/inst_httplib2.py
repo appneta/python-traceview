@@ -33,7 +33,7 @@ def wrap(module):
 
                 evt.addInfo('Layer', HTTPLIB2_LAYER)
                 evt.addInfo('Label', 'entry')
-                reporter = oboe.reporter().sendReport(evt)
+                oboe.reporter().sendReport(evt)
                 response = None
                 try:
                     if not 'X-Trace' in headers:
@@ -41,13 +41,13 @@ def wrap(module):
                     response = real_request(self, uri, method=method, body=body,
                                             headers=headers, redirections=redirections,
                                             connection_type=connection_type)
-                except Exception, exc:
+                except Exception:
                     oboe.Context.log_exception()
                 finally: # XXX Not Python2.4-friendly
                     evt = oboe.Context.createEvent()
                     evt.addInfo('Layer', HTTPLIB2_LAYER)
                     evt.addInfo('Label', 'exit')
-                    reporter = oboe.reporter().sendReport(evt)
+                    oboe.reporter().sendReport(evt)
                 return response
             else:
                 return real_request(self, uri, method=method, body=body,
