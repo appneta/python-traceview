@@ -3,6 +3,7 @@
 
 import oboe
 import oboeware
+import sys
 
 def report_layer_init(layer="wsgi"):
     """ Send a fake trace showing the initialization and version of this layer's
@@ -12,6 +13,7 @@ def report_layer_init(layer="wsgi"):
     evt.addInfo("Label", "entry")
     evt.addInfo("__Init", 1)
     evt.addInfo("Version", oboeware.__version__)
+    evt.addInfo("PyVersion", sys.version)
     oboe.reporter().sendReport(evt)
 
     evt = oboe.Context.createEvent()
