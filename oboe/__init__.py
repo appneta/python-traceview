@@ -64,7 +64,6 @@ def log(cls, layer, label, backtrace=False, **kwargs):
 
     _log_event(evt, layer, label, kvs=kwargs)
 
-# XXX Different function names?
 def log_error(cls, exception=None, err_class=None, err_msg=None, backtrace=True):
     """Report an error from python exception or from specified message.
 
@@ -405,7 +404,7 @@ def profile_function(cls, profile_name,
     # return decorator function with arguments to profile_function() baked in
     return decorate_with_profile_function
 
-def log_method(cls, layer, store_return=False, store_args=False, callback=None, profile=False, **entry_kvs):
+def log_method(cls, layer='Python', store_return=False, store_args=False, callback=None, profile=False, **entry_kvs):
     """Wrap a method for tracing with the Tracelytics Oboe library.
         as opposed to profile_function, this decorator gives the method its own layer
 
