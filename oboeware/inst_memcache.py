@@ -55,15 +55,15 @@ def wrap_get_server(func):
             oboe.Context.log(MC_LAYER, 'info', **args)
         except Exception, e:
             print >> sys.stderr, "Oboe error: %s" % e
-        finally:
-            return ret
+        return ret
     return wrapper
 
 def wrap(module):
     try:
         # wrap middleware callables we want to wrap
         cls = getattr(module, 'Client', None)
-        if not cls: return
+        if not cls:
+            return
         for method in MC_COMMANDS:
             fn = getattr(cls, method, None)
             if not fn:
