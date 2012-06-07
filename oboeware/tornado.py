@@ -1,6 +1,8 @@
-# Copyright (C) 2012 by Tracelytics, Inc.
-# All rights reserved.
+""" Tracelytics instrumentation for Tornado.
 
+Copyright (C) 2012 by Tracelytics, Inc.
+All rights reserved.
+"""
 # useful methods for instrumenting Tornado
 from __future__ import with_statement
 import oboe

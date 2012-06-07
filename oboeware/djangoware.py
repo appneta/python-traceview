@@ -1,6 +1,8 @@
-# Copyright (C) 2011 by Tracelytics, Inc.
-# All rights reserved.
+"""Tracelytics instrumentation for Django
 
+ Copyright (C) 2011 by Tracelytics, Inc.
+ All rights reserved.
+"""
 
 # django middleware for passing values to oboe
 __all__ = ("OboeDjangoMiddleware", "install_oboe_instrumentation")
@@ -50,35 +52,39 @@ class OboeDjangoMiddleware(object):
         elif oboe.Context.isValid() and tracing_mode != 'never':
             evt = oboe.Context.createEvent()
 
-        if not oboe.Context.isValid(): return
+        if not oboe.Context.isValid():
+            return
         try:
             evt.addInfo('Layer', 'django')
             evt.addInfo('Label', 'entry')
-            reporter = oboe.reporter().sendReport(evt)
+            oboe.reporter().sendReport(evt)
         except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         import oboe
-        if not oboe.Context.isValid(): return
+        if not oboe.Context.isValid():
+            return
         try:
             evt = oboe.Context.createEvent()
             evt.addInfo('Layer', 'django')
             evt.addInfo('Label', 'process_view')
             evt.addInfo('Controller', view_func.__module__)
+            # XXX Not Python2.4-friendly
             evt.addInfo('Action', view_func.__name__ if hasattr(view_func, '__name__') else None)
-            reporter = oboe.reporter().sendReport(evt)
+            oboe.reporter().sendReport(evt)
         except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
 
     def process_response(self, request, response):
         import oboe
-        if not oboe.Context.isValid(): return response
+        if not oboe.Context.isValid():
+            return response
         try:
             evt = oboe.Context.createEvent()
             evt.addInfo('Layer', 'django')
             evt.addInfo('Label', 'exit')
-            reporter = oboe.reporter().sendReport(evt)
+            oboe.reporter().sendReport(evt)
             response['X-Trace'] = oboe.Context.toString()
             oboe.Context.clear()
         except Exception, e:
@@ -87,7 +93,8 @@ class OboeDjangoMiddleware(object):
 
     def process_exception(self, request, exception):
         import oboe
-        if not oboe.Context.isValid(): return
+        if not oboe.Context.isValid():
+            return
         try:
             oboe.Context.log_error(exception=exception)
         except Exception, e:
@@ -98,15 +105,17 @@ def middleware_hooks(module, objname):
     try:
         # wrap middleware callables we want to wrap
         cls = getattr(module, objname, None)
-        if not cls: return
+        if not cls:
+            return
         for method in ['process_request',
                        'process_view',
                        'process_response',
                        'process_template_response',
                        'process_exception']:
             fn = getattr(cls, method, None)
-            if not fn: continue
-            wrapfn = fn.im_func if hasattr(fn, 'im_func') else fn
+            if not fn:
+                continue
+            wrapfn = fn.im_func if hasattr(fn, 'im_func') else fn # XXX Not Python2.4-friendly
             profile_name = '%s.%s.%s' % (module.__name__, objname, method)
             setattr(cls, method,
                     oboe.Context.profile_function(profile_name)(wrapfn))
@@ -120,7 +129,8 @@ def on_load_middleware():
 
     # protect middleware wrapping: only a single thread proceeds
     global load_middleware_lock         # lock gets overwritten as None after init
-    if not load_middleware_lock: return # already initialized? abort
+    if not load_middleware_lock:        # already initialized? abort
+        return
     mwlock = load_middleware_lock
     mwlock.acquire()                    # acquire global lock
     if not load_middleware_lock:        # check again
@@ -132,12 +142,14 @@ def on_load_middleware():
         # middleware hooks
         from django.conf import settings
         for i in settings.MIDDLEWARE_CLASSES:
-            if i.startswith('oboe'): continue
+            if i.startswith('oboe'):
+                continue
             dot = i.rfind('.')
-            if dot < 0 or dot+1 == len(i): continue
+            if dot < 0 or dot+1 == len(i):
+                continue
             objname = i[dot+1:]
             imports.whenImported(i[:dot],
-                                 functools.partial(middleware_hooks, objname=objname))
+                                 functools.partial(middleware_hooks, objname=objname))  # XXX Not Python2.4-friendly
 
         # ORM
         import oboe
@@ -155,15 +167,15 @@ def on_load_middleware():
         elif type(settings.MIDDLEWARE_CLASSES) is list:
             settings.MIDDLEWARE_CLASSES = ['oboeware.djangoware.OboeDjangoMiddleware'] + settings.MIDDLEWARE_CLASSES
         else:
-            print >> sys.stderr, "Oboe error: thought MIDDLEWARE_CLASSES would be either a tuple or a list, got " + str(type(settings.MIDDLEWARE_CLASSES))
+            print >> sys.stderr, "Oboe error: thought MIDDLEWARE_CLASSES would be either a tuple or a list, got " + \
+                str(type(settings.MIDDLEWARE_CLASSES))
 
     finally: # release instrumentation lock
         mwlock.release()
 
 def install_oboe_middleware(module):
-    from functools import wraps
     def base_handler_wrapper(func):
-        @wraps(func)
+        @functools.wraps(func)  # XXX Not Python2.4-friendly
         def wrap_method(*f_args, **f_kwargs):
             on_load_middleware()
             return func(*f_args, **f_kwargs)
@@ -182,10 +194,9 @@ def install_oboe_middleware(module):
         print >> sys.stderr, "Oboe error:", str(e)
 
 try:
-    import functools
     imports.whenImported('django.core.handlers.base', install_oboe_middleware)
     # phone home
     oninit.report_layer_init(layer='django')
 except ImportError, e:
+    # gracefully disable tracing if Tracelytics oboeware not present
     print >> sys.stderr, "[oboe] Unable to instrument app and middleware: %s" % e
-    pass # gracefully disable tracing if Tracelytics oboeware not present

@@ -1,6 +1,8 @@
-# Copyright (C) 2012 by Tracelytics, Inc.
-# All rights reserved.
+""" Tracelytics instrumentation API for Python.
 
+Copyright (C) 2012 by Tracelytics, Inc.
+All rights reserved.
+"""
 from oboe_ext import *
 
 import inspect
@@ -11,6 +13,8 @@ import traceback as tb
 
 # defaultdict not implemented before 2.5
 from backport import defaultdict
+
+from decorator import decorator
 
 __version__ = '0.5.0'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
@@ -52,7 +56,8 @@ def log(cls, layer, label, backtrace=False, **kwargs):
         kwargs: extra key/value pairs to add to event
 
     """
-    if not Context.isValid(): return
+    if not Context.isValid():
+        return
     evt = Context.createEvent()
     if backtrace:
         kwargs['Backtrace'] = _str_backtrace()
@@ -85,7 +90,7 @@ def log_error(cls, exception=None, err_class=None, err_msg=None, backtrace=True)
     rep = reporter()
     return rep.sendReport(evt)
 
-def log_exception(cls, msg=None, exc_info=None):
+def log_exception(cls, msg=None, exc_info=None, backtrace=True):
     """Report the message with exception information included. This should only
     be called from an exception handler, unless exc_info is provided."""
 
@@ -113,13 +118,12 @@ def trace(cls, layer='Python', xtr_hdr=None, kvs=None):
         xtr_hdr: optional, incoming x-trace header if available
         kvs: optional, dictionary of additional key/value pairs to report
     """
-    from decorator import decorator
 
     def _trace_wrapper(func, *f_args, **f_kwargs):
         _start_trace(layer, xtr_hdr, kvs)
         try:
             res = func(*f_args, **f_kwargs)
-        except Exception, e:
+        except Exception:
             # log exception and re-raise
             Context.log_exception()
             raise
@@ -134,7 +138,7 @@ def trace(cls, layer='Python', xtr_hdr=None, kvs=None):
     def decorate_with_trace(f):
         if getattr(f, '_oboe_wrapped', False):   # has this function already been wrapped?
             return f                             # then pass through
-        return decorator(_trace_wrapper, f) # otherwise wrap function f with wrapper
+        return decorator(_trace_wrapper, f)      # otherwise wrap function f with wrapper
 
     return decorate_with_trace
 
@@ -176,6 +180,7 @@ def _end_trace(layer, kvs=None):
     Context.clear()
 
 def _function_signature(func):
+    """Returns a string representation of the function signature of the given func."""
     name = func.__name__
     (args, varargs, keywords, defaults) = inspect.getargspec(func)
     argstrings = []
@@ -399,8 +404,7 @@ def profile_function(cls, profile_name,
     # return decorator function with arguments to profile_function() baked in
     return decorate_with_profile_function
 
-def log_method(cls, layer='Python',
-               store_return=False, store_args=False, callback=None, profile=False, **entry_kvs):
+def log_method(cls, layer='Python', store_return=False, store_args=False, callback=None, profile=False, **entry_kvs):
     """Wrap a method for tracing with the Tracelytics Oboe library.
         as opposed to profile_function, this decorator gives the method its own layer
 
@@ -419,8 +423,6 @@ def log_method(cls, layer='Python',
           exception is thrown, then reraises.
 
     """
-    from decorator import decorator
-
     # run-time event-reporting function, called at each invocation of func(f_args, f_kwargs)
     def _log_method_wrapper(func, *f_args, **f_kwargs):
         if not Context.isValid():            # tracing not enabled?

@@ -1,6 +1,8 @@
-# Copyright (C) 2011 by Tracelytics, Inc.
-# All rights reserved.
+""" Tracelytics instrumentation for httplib2.
 
+Copyright (C) 2011 by Tracelytics, Inc.
+All rights reserved.
+"""
 import sys
 import oboe
 from  urlparse import urlparse
@@ -11,7 +13,7 @@ def wrap(module):
     try:
         real_request = module.Http.request
         from functools import wraps
-        @wraps(module.Http.request)
+        @wraps(module.Http.request) # XXX Not Python2.4-friendly
         def wrapped_request(self, uri, method="GET", body=None, headers=None, redirections=5, connection_type=None):
             if not headers:
                 headers = {}
@@ -19,7 +21,7 @@ def wrap(module):
                 evt = oboe.Context.createEvent()
                 info = urlparse(uri)
                 evt.addInfo('IsService', 'yes')
-                evt.addInfo('RemoteProtocol', info.scheme if info.scheme != '' else 'http')
+                evt.addInfo('RemoteProtocol', info.scheme if info.scheme != '' else 'http') # XXX Not Python2.4-friendly
                 evt.addInfo('RemoteHost', info.netloc)
 
                 path = info.path
@@ -31,7 +33,7 @@ def wrap(module):
 
                 evt.addInfo('Layer', HTTPLIB2_LAYER)
                 evt.addInfo('Label', 'entry')
-                reporter = oboe.reporter().sendReport(evt)
+                oboe.reporter().sendReport(evt)
                 response = None
                 try:
                     if not 'X-Trace' in headers:
@@ -39,13 +41,13 @@ def wrap(module):
                     response = real_request(self, uri, method=method, body=body,
                                             headers=headers, redirections=redirections,
                                             connection_type=connection_type)
-                except Exception, exc:
+                except Exception:
                     oboe.Context.log_exception()
-                finally:
+                finally: # XXX Not Python2.4-friendly
                     evt = oboe.Context.createEvent()
                     evt.addInfo('Layer', HTTPLIB2_LAYER)
                     evt.addInfo('Label', 'exit')
-                    reporter = oboe.reporter().sendReport(evt)
+                    oboe.reporter().sendReport(evt)
                 return response
             else:
                 return real_request(self, uri, method=method, body=body,

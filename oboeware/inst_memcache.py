@@ -1,6 +1,8 @@
-# Copyright (C) 2011 by Tracelytics, Inc.
-# All rights reserved.
+""" Tracelytics instrumentation for memcache client module.
 
+Copyright (C) 2011 by Tracelytics, Inc.
+All rights reserved.
+"""
 import sys
 import oboe
 import socket
@@ -27,6 +29,7 @@ MC_COMMANDS = set(('get', 'get_multi',
 MC_LAYER = 'memcache'
 
 def wrap_mc_method(func, f_args, f_kwargs, return_val, funcname=None):
+    """Pulls the operation and (for get) whether a key was found, on each public method."""
     kvs = {}
     if funcname in MC_COMMANDS:
         kvs['KVOp'] = funcname
@@ -35,10 +38,14 @@ def wrap_mc_method(func, f_args, f_kwargs, return_val, funcname=None):
         kvs['KVHit'] = int(return_val != None)
     return kvs
 
-# peeks into internals
 def wrap_get_server(func):
+    """ Wrapper for memcache._get_server, to read remote host on all ops.
+
+    This relies on the module internals, and just sends an info event when this
+    function is called.
+    """
     from functools import wraps
-    @wraps(func)
+    @wraps(func) # XXX Not Python2.4-friendly
     def wrapper(*f_args, **f_kwargs):
         ret = func(*f_args, **f_kwargs)
         try:
@@ -53,27 +60,28 @@ def wrap_get_server(func):
             oboe.Context.log(MC_LAYER, 'info', **args)
         except Exception, e:
             print >> sys.stderr, "Oboe error: %s" % e
-        finally:
-            return ret
+        return ret
     return wrapper
 
 def wrap(module):
     try:
         # wrap middleware callables we want to wrap
         cls = getattr(module, 'Client', None)
-        if not cls: return
+        if not cls:
+            return
         for method in MC_COMMANDS:
             fn = getattr(cls, method, None)
             if not fn:
                 raise Exception('method %s not found in %s' % (method, module))
             args = { 'layer': MC_LAYER,
                      'store_return': False,
-                     'callback': partial(wrap_mc_method, funcname=method),
+                     'callback': partial(wrap_mc_method, funcname=method), # XXX Not Python2.4-friendly
                      'Class': module.__name__ + '.Client',
                      'Function': method,
                      'backtrace': True,
                      }
 
+            # XXX Not Python2.4-friendly
             wrapfn = fn.im_func if hasattr(fn, 'im_func') else fn # wrap unbound instance method
             setattr(cls, method, oboe.Context.log_method(**args)(wrapfn))
 

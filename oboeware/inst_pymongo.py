@@ -1,6 +1,8 @@
-# Copyright (C) 2012 by Tracelytics, Inc.
-# All rights reserved.
+""" Tracelytics instrumentation for pymongo (MongoDB client).
 
+Copyright (C) 2012 by Tracelytics, Inc.
+All rights reserved.
+"""
 import socket
 import sys
 
@@ -332,6 +334,7 @@ def wrap_class(cls, class_name, class_method_inst):
                  'Action': '%s.%s' % (class_name, method),
                }
         args.update(method_log_args)
+        # XXX Not Python2.4-friendly
         wrapfn = fn.im_func if hasattr(fn, 'im_func') else fn # wrap unbound instance method
         setattr(cls, method, oboe.Context.log_method(**args)(wrapfn))
 

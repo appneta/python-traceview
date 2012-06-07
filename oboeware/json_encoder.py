@@ -1,8 +1,7 @@
-# Copyright (C) 2012 by Tracelytics, Inc.
-# All rights reserved.
+""" Handles JSON conversion for various object types that may be found in queries
 
-"""
-Handles JSON conversion for various object types that may be found in queries
+Copyright (C) 2012 by Tracelytics, Inc.
+All rights reserved.
 """
 try:
     import json

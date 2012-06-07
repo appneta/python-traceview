@@ -2,7 +2,7 @@
 # (c) 2011 Tracelytics, Inc.
 import oboe
 
-class OboeContextManager:
+class OboeContextManager(object):
     """ A context manager (for the "with" statement) that sets and
         clears the context when entered, storing the metadata in an
         object passed by the constructor.  E.g.:
