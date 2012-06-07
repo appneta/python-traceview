@@ -58,7 +58,7 @@ class OboeDjangoMiddleware(object):
             evt.addInfo('Layer', 'django')
             evt.addInfo('Label', 'entry')
             oboe.reporter().sendReport(evt)
-        except Exception as e:
+        except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
 
     def process_view(self, request, view_func, view_args, view_kwargs):
@@ -72,7 +72,7 @@ class OboeDjangoMiddleware(object):
             evt.addInfo('Controller', view_func.__module__)
             evt.addInfo('Action', view_func.__name__ if hasattr(view_func, '__name__') else None)
             oboe.reporter().sendReport(evt)
-        except Exception as e:
+        except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
 
     def process_response(self, request, response):
@@ -86,7 +86,7 @@ class OboeDjangoMiddleware(object):
             oboe.reporter().sendReport(evt)
             response['X-Trace'] = oboe.Context.toString()
             oboe.Context.clear()
-        except Exception as e:
+        except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
         return response
 
@@ -96,7 +96,7 @@ class OboeDjangoMiddleware(object):
             return
         try:
             oboe.Context.log_error(exception=exception)
-        except Exception as e:
+        except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
 
 def middleware_hooks(module, objname):
@@ -118,7 +118,7 @@ def middleware_hooks(module, objname):
             profile_name = '%s.%s.%s' % (module.__name__, objname, method)
             setattr(cls, method,
                     oboe.Context.profile_function(profile_name)(wrapfn))
-    except Exception as e:
+    except Exception, e:
         print >> sys.stderr, "Oboe error:", str(e)
 
 load_middleware_lock = threading.Lock()
@@ -186,17 +186,17 @@ def install_oboe_middleware(module):
         try:
             if cls.OBOE_MIDDLEWARE_LOADER:
                 return
-        except Exception as e:
+        except Exception, e:
             cls.OBOE_MIDDLEWARE_LOADER = True
         fn = getattr(cls, 'load_middleware', None)
         setattr(cls, 'load_middleware', base_handler_wrapper(fn))
-    except Exception as e:
+    except Exception, e:
         print >> sys.stderr, "Oboe error:", str(e)
 
 try:
     imports.whenImported('django.core.handlers.base', install_oboe_middleware)
     # phone home
     oninit.report_layer_init(layer='django')
-except ImportError as e:
+except ImportError, e:
     # gracefully disable tracing if Tracelytics oboeware not present
     print >> sys.stderr, "[oboe] Unable to instrument app and middleware: %s" % e
