@@ -81,7 +81,13 @@ load-plugins=
 #         pass us the right args, then we can turn this back on.
 # W0403 - Warns about relative imports. We haven't defined a package root for
 #         worker modules, so fixing these errors breaks a bunch of behavior.
-disable=I0011,W0603,W0142,R0201,R0921,W0703,C0103,W0212,R0912,R0914,W0221,R0903,R0904,W0105,C0324,W0622,W0403
+# W0613 - Warns about unused args. Since we frequently override function behavior,
+#         we don't always use all args, and that's fine.
+# W0621 - Warns about redefining names from the outer scope. Almost all modules include
+#         a try/finally block at the bottom with an Exception called e at the bottom.
+#         Re-using this variable name is fine, so in this repo, this hurts more than
+#         it helps.
+disable=I0011,W0603,W0142,R0201,R0921,W0703,C0103,W0212,R0912,R0914,W0221,R0903,R0904,W0105,C0324,W0622,W0403,W0613,W0621
 
 
 [REPORTS]
