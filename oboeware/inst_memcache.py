@@ -29,6 +29,7 @@ MC_COMMANDS = set(('get', 'get_multi',
 MC_LAYER = 'memcache'
 
 def wrap_mc_method(func, f_args, f_kwargs, return_val, funcname=None):
+    """Pulls the operation and (for get) whether a key was found, on each public method."""
     kvs = {}
     if funcname in MC_COMMANDS:
         kvs['KVOp'] = funcname
@@ -37,8 +38,12 @@ def wrap_mc_method(func, f_args, f_kwargs, return_val, funcname=None):
         kvs['KVHit'] = int(return_val != None)
     return kvs
 
-# peeks into internals
 def wrap_get_server(func):
+    """ Wrapper for memcache._get_server, to read remote host on all ops.
+
+    This relies on the module internals, and just sends an info event when this
+    function is called.
+    """
     from functools import wraps
     @wraps(func)
     def wrapper(*f_args, **f_kwargs):
