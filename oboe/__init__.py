@@ -483,6 +483,8 @@ def log_method(cls, layer='Python', store_return=False, store_args=False, callba
     def decorate_with_log_method(f):
         if getattr(f, '_oboe_wrapped', False):   # has this function already been wrapped?
             return f                             # then pass through
+        if hasattr(f, 'im_func'):                # Is this a bound method of an object
+            f = f.im_func                        # then wrap the unbound method
         return decorator(_log_method_wrapper, f) # otherwise wrap function f with wrapper
 
     # return decorator function with arguments to log_method() baked in
