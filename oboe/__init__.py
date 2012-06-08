@@ -3,13 +3,13 @@
 Copyright (C) 2012 by Tracelytics, Inc.
 All rights reserved.
 """
-from oboe_ext import *
+from oboe_ext import Context, Event, UdpReporter
 
 import inspect
 import random
 import sys
 import types
-import traceback as tb
+import traceback
 
 # defaultdict not implemented before 2.5
 from backport import defaultdict
@@ -40,9 +40,9 @@ except ImportError:
 
 def _str_backtrace(backtrace=None):
     if backtrace:
-        return "".join(tb.format_tb(backtrace))
+        return "".join(traceback.format_tb(backtrace))
     else:
-        return "".join(tb.format_stack()[:-1])
+        return "".join(traceback.format_stack()[:-1])
 
 def log(cls, layer, label, backtrace=False, **kwargs):
     """Report an individual tracing event.
@@ -170,12 +170,14 @@ def _start_trace(layer, xtr_hdr=None, kvs=None):
     elif Context.isValid() and tracing_mode != 'never':
         evt = Context.createEvent()
 
-    if not Context.isValid(): return
+    if not Context.isValid():
+        return
     _log_event(evt, layer, 'entry', kvs)
 
 def _end_trace(layer, kvs=None):
     """ Marks the end of a trace.  Clears oboe.Context to reset tracing state. """
-    if not Context.isValid(): return
+    if not Context.isValid():
+        return
     evt = Context.createEvent()
     _log_event(evt, layer, 'exit', kvs)
     Context.clear()
@@ -262,7 +264,8 @@ class profile_block(object):
 
         # exception?
         if exc_type:
-            Context.log(None, 'error', ErrorClass=exc_type.__name__, ErrorMsg=str(exc_val), backtrace=_str_backtrace(exc_tb))
+            Context.log(None, 'error', ErrorClass=exc_type.__name__, ErrorMsg=str(exc_val),
+                        backtrace=_str_backtrace(exc_tb))
 
         # build exit event
         exit_kvs = {}
@@ -273,8 +276,8 @@ class profile_block(object):
 
         Context.log(None, 'profile_exit', **exit_kvs)
 
-def profile_function(cls, profile_name,
-                   store_args=False, store_return=False, store_backtrace=False, profile=False, callback=None, **entry_kvs):
+def profile_function(cls, profile_name, store_args=False, store_return=False, store_backtrace=False,
+                     profile=False, callback=None, **entry_kvs):
     """Wrap a method for tracing and profiling with the Tracelytics Oboe library.
 
           profile_name: the profile name to use when reporting.
@@ -297,8 +300,6 @@ def profile_function(cls, profile_name,
           exception is thrown, then reraises.
 
     """
-    from decorator import decorator
-
     # run-time event-reporting function, called at each invocation of func(f_args, f_kwargs)
     def _profile_wrapper(func, *f_args, **f_kwargs):
         if not Context.isValid():            # tracing not enabled?
@@ -499,7 +500,7 @@ def _Event_addInfo_safe(func):
     def wrapped(*args, **kw):
         try: # call SWIG-generated Event.addInfo (from oboe_ext.py)
             return func(*args, **kw)
-        except NotImplementedError, e: # unrecognized type passed to addInfo SWIG binding
+        except NotImplementedError: # unrecognized type passed to addInfo SWIG binding
             # args: [self, KeyName, Value]
             if len(args) == 3 and isinstance(args[1], basestring):
                 # report this error
