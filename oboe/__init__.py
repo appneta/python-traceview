@@ -64,28 +64,27 @@ def log(cls, layer, label, backtrace=False, **kwargs):
 
     _log_event(evt, layer, label, kvs=kwargs)
 
-def log_error(cls, exception=None, err_class=None, err_msg=None, backtrace=True):
-    """Report an error from python exception or from specified message.
+def log_error(cls, err_class, err_msg, store_backtrace=True, backtrace=None):
+    """Report a custom error.
 
-        requires either exception to be set to a python Exception object,
-        or err_class and err_msg to be set to strings describing the
-        class of the error and the message for this particular instance of it.
+    This is for logging errors that are not associated with python exceptions --
+    framework 404s, missing data, etc.
 
+    Arguments:
+        `err_class` - The class of error, e.g., the name of an exception class.
+        `err_msg` - The full description of the error.
+        `store_backtrace` [optional] - Whether to send a backtrace. Defaults to True.
+        `backtrace` [optional] - The backtrace to report this error on. Defaults to the caller.
     """
-    if not Context.isValid(): return
-    if not exception and not err_class: return
+    if not Context.isValid():
+        return
     evt = Context.createEvent()
     evt.addInfo('Label', 'error')
-    if backtrace:
-        _, _, tb = sys.exc_info()
-        evt.addInfo('Backtrace', _str_backtrace(tb))
+    if store_backtrace:
+        evt.addInfo('Backtrace', _str_backtrace(backtrace))
 
-    if exception:
-        evt.addInfo('ErrorClass', exception.__class__.__name__)
-        evt.addInfo('ErrorMsg', str(exception))
-    else:
-        evt.addInfo('ErrorClass', err_class)
-        evt.addInfo('ErrorMsg', err_msg)
+    evt.addInfo('ErrorClass', err_class)
+    evt.addInfo('ErrorMsg', err_msg)
 
     rep = reporter()
     return rep.sendReport(evt)
