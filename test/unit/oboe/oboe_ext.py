@@ -1,4 +1,7 @@
-""" mock obo_ext """
+""" This is a mock oboe_ext for use with instrumentation unit tests.  We force
+this version to get added before the 'real' oboe_ext by doing a
+sys.path.insert(0, ...) (see base.py), which is not nearly as elegant as
+dependency injection but gets the job done. """
 
 listeners = []
 

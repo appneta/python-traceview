@@ -11,6 +11,7 @@ class TestMemcacheMemcache(unittest.TestCase):
     moduleName = 'memcache'
 
     def __init__(self, *args, **kwargs):
+        self.moduleName = self.__class__.moduleName
         self.lib = __import__(self.__class__.moduleName)
         super(TestMemcacheMemcache, self).__init__(*args, **kwargs)
 
@@ -37,17 +38,61 @@ class TestMemcacheMemcache(unittest.TestCase):
     #     #print '\n'.join(['%10s: %s' % (ev.name, ev.props) for ev in events])
     #     self.assertEqual(13, len(events))
 
-    def test_set(self):
-        """ test set """
-        oboe = TestListener()
-        c = self.client()
-        c.set('testset', '5')
-        events = oboe.get_events()
-        self.print_events(events)
+    def assertHasEntryAndExit(self, oboe):
         self.assertEqual(1, len(oboe.get_events(lambda ev: 'Backtrace' in ev.props and ev.props['Label'] == 'entry')))
-        self.assertEqual(1, len(oboe.get_events(lambda ev: 'RemoteHost' in ev.props and ev.props['Label'] == 'info')))
         self.assertEqual(1, len(oboe.get_events(lambda ev: 'KVOp' in ev.props and ev.props['Label'] == 'exit')))
-        self.assertEqual(3, len(events))
+        return 2
+
+    def assertHasRemoteHost(self, oboe):
+        # this is not supported in pylibmc
+        supported_libs = set([ 'memcache' ])
+        if self.moduleName not in supported_libs:
+            return 0
+        self.assertEqual(1, len(oboe.get_events(lambda ev: 'RemoteHost' in ev.props and ev.props['Label'] == 'info')))
+        return 1
+
+    def feature_supported_by(self, *supported_libs):
+        if self.moduleName not in set(supported_libs):
+            self.skipTest('feature not supported by %s' % self.moduleName)
+
+    def test_set(self):
+        """ test set: c.set('key', 'value') """
+        oboe = TestListener()
+        self.client().set('test1', '5')
+        num = self.assertHasEntryAndExit(oboe)
+        num += self.assertHasRemoteHost(oboe)
+        self.assertEqual(num, len(oboe.get_events()))
+
+    def test_setter(self):
+        """ test setter: c['key'] = 'value' """
+        self.feature_supported_by('pylibmc')
+        oboe = TestListener()
+        self.client()['test2'] = '5'
+        num = self.assertHasEntryAndExit(oboe)
+        num += self.assertHasRemoteHost(oboe)
+        self.assertEqual(num, len(oboe.get_events()))
+
+    def test_get(self):
+        """ test get: c.get('key') """
+        oboe = TestListener()
+        self.client().get('test3')
+        num = self.assertHasEntryAndExit(oboe)
+        num += self.assertHasRemoteHost(oboe)
+        self.assertEqual(num, len(oboe.get_events()))
+
+    def test_getter(self):
+        """ test get: c.get('key') """
+        self.feature_supported_by('pylibmc')
+        TEST_VALUE = 'dsfsdfdsf'
+        self.client()['test4'] = TEST_VALUE
+        oboe = TestListener()
+        value = self.client()['test4']
+        self.assertEqual(value, TEST_VALUE)
+        num = self.assertHasEntryAndExit(oboe)
+        num += self.assertHasRemoteHost(oboe)
+        self.assertEqual(num, len(oboe.get_events()))
+
+
 
 class TestMemcachePylibmc(TestMemcacheMemcache):
     moduleName = 'pylibmc'

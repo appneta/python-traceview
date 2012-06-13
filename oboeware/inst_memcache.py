@@ -69,7 +69,6 @@ def wrap_get_server(func):
 
 def dynamic_wrap(fn):
     def call_me(*args, **kwargs):
-        print 'called me: %s %s' % (args, kwargs)
         return fn(*args, **kwargs)
     return call_me
 
