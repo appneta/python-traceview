@@ -28,9 +28,6 @@ MC_COMMANDS = set(('get', 'get_multi',
 
 MC_LAYER = 'memcache'
 
-class DontCatchMe(Exception):
-    pass
-
 # pylint: disable-msg=W0613
 def wrap_mc_method(func, f_args, f_kwargs, return_val, funcname=None):
     """Pulls the operation and (for get) whether a key was found, on each public method."""
@@ -68,6 +65,10 @@ def wrap_get_server(func):
     return wrapper
 
 def dynamic_wrap(fn):
+    from functools import wraps
+    # We explicity pass assigned to wraps; this skips __module__ from the
+    # default list, which doesn't exist for the functions from pylibmc.
+    @wraps(fn, assigned=('__name__', '__doc__'))
     def wrapped(*args, **kwargs):
         return fn(*args, **kwargs)
     return wrapped
