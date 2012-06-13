@@ -91,8 +91,8 @@ class UdpReporter:
     def __init__(self, host, port):
         pass
     def sendReport(self, event):
-        for listener_func in listeners:
-            listener_func(event)
+        for listener in listeners:
+            listener.send(event)
 
 def UdpReporter_swigregister():
     raise Exception("Implement me!")
@@ -100,15 +100,14 @@ def UdpReporter_swigregister():
 class TestListener(object):
     def __init__(self):
         self.events = []
-        listeners.append(self.listener_func)
+        self.listeners = listeners
+        listeners.append(self)
 
-    def listener_func(self, event):
+    def send(self, event):
         self.events.append(event)
 
     def get_events(self, eventFilter=None):
-        rval = self.events
-        if eventFilter:
-            rval = [ev for ev in rval if eventFilter(ev)]
-        self.events = []
-        return rval
+        return [ev for ev in self.events if eventFilter(ev)] if eventFilter else self.events
 
+    def __del__(self):
+        self.listeners.remove(self)

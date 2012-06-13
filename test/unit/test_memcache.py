@@ -3,14 +3,17 @@
 import base
 base.force_local_oboeware()
 base.enable_mock_oboe()
-from mock.oboe.oboe_ext import TestListener
+from oboe.oboe_ext import TestListener
 import inst_memcache
+import unittest
 
-class TestMemcacheBase(object):
-    moduleName = None
+class TestMemcacheMemcache(unittest.TestCase):
+    moduleName = 'memcache'
+
     def __init__(self, *args, **kwargs):
-        self.oboe = TestListener()
+        print 'module: %s' % self.__class__.moduleName
         self.lib = __import__(self.__class__.moduleName)
+        super(TestMemcacheMemcache, self).__init__(*args, **kwargs)
 
     def client(self):
         return self.lib.Client(["127.0.0.1:5679"])
@@ -37,8 +40,15 @@ class TestMemcacheBase(object):
 
     def test_set(self):
         """ test set """
+        oboe = TestListener()
         c = self.client()
         c.set('testset', '5')
-        events = self.oboe.get_events()
+        events = oboe.get_events()
         self.assertEqual(3, len(events))
         self.print_events(events)
+
+class TestMemcachePylibmc(TestMemcacheMemcache):
+    moduleName = 'pylibmc'
+
+if __name__ == '__main__':
+    unittest.main()
