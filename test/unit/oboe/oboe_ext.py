@@ -3,6 +3,8 @@ this version to get added before the 'real' oboe_ext by doing a
 sys.path.insert(0, ...) (see base.py), which is not nearly as elegant as
 dependency injection but gets the job done. """
 
+import os
+
 listeners = []
 
 class Context:
@@ -11,7 +13,7 @@ class Context:
 
     @classmethod
     def clear(cls):
-        raise Exception("Implement me!")
+        cls.task_id = None
 
     @classmethod
     def copy(cls):
@@ -31,7 +33,7 @@ class Context:
 
     @classmethod
     def init(cls):
-        pass
+        cls.is_valid = True
 
     @classmethod
     def isValid(cls):
@@ -43,7 +45,7 @@ class Context:
 
     @classmethod
     def startTrace(cls):
-        raise Exception("Implement me!")
+        cls.task_id = os.urandom(20)
 
     @classmethod
     def swigregister(cls):
@@ -100,7 +102,7 @@ class UdpReporter:
 def UdpReporter_swigregister():
     raise Exception("Implement me!")
 
-class TestListener(object):
+class OboeListener(object):
     def __init__(self):
         self.events = []
         self.listeners = listeners
@@ -109,8 +111,14 @@ class TestListener(object):
     def send(self, event):
         self.events.append(event)
 
-    def get_events(self, eventFilter=None):
-        return [ev for ev in self.events if eventFilter(ev)] if eventFilter else self.events
+    def get_events(self, filter=None):
+        return [ev for ev in self.events if filter(ev)] if filter else self.events
+
+    def pop_events(self, filter=None):
+        matched = self.get_events(filter)
+        for match in matched:
+            self.events.remove(match)
+        return matched
 
     def __del__(self):
         self.listeners.remove(self)

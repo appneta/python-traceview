@@ -79,6 +79,9 @@ def wrap(module):
         if not cls:
             return
         for method in MC_COMMANDS:
+            # delete_multi delegates to delete in pylibmc, so don't instrument it
+            if method == 'delete_multi' and module.__name__ == 'pylibmc':
+                continue
             fn = getattr(cls, method, None)
             if not fn:
                 raise Exception('method %s not found in %s' % (method, module))
