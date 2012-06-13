@@ -4,14 +4,13 @@ import base
 base.force_local_oboeware()
 base.enable_mock_oboe()
 from oboe.oboe_ext import TestListener
-import inst_memcache
+import inst_memcache # pylint: disable-msg=W0611
 import unittest
 
 class TestMemcacheMemcache(unittest.TestCase):
     moduleName = 'memcache'
 
     def __init__(self, *args, **kwargs):
-        print 'module: %s' % self.__class__.moduleName
         self.lib = __import__(self.__class__.moduleName)
         super(TestMemcacheMemcache, self).__init__(*args, **kwargs)
 
@@ -44,8 +43,11 @@ class TestMemcacheMemcache(unittest.TestCase):
         c = self.client()
         c.set('testset', '5')
         events = oboe.get_events()
-        self.assertEqual(3, len(events))
         self.print_events(events)
+        self.assertEqual(1, len(oboe.get_events(lambda ev: 'Backtrace' in ev.props and ev.props['Label'] == 'entry')))
+        self.assertEqual(1, len(oboe.get_events(lambda ev: 'RemoteHost' in ev.props and ev.props['Label'] == 'info')))
+        self.assertEqual(1, len(oboe.get_events(lambda ev: 'KVOp' in ev.props and ev.props['Label'] == 'exit')))
+        self.assertEqual(3, len(events))
 
 class TestMemcachePylibmc(TestMemcacheMemcache):
     moduleName = 'pylibmc'

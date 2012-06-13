@@ -28,6 +28,10 @@ MC_COMMANDS = set(('get', 'get_multi',
 
 MC_LAYER = 'memcache'
 
+class DontCatchMe(Exception):
+    pass
+
+# pylint: disable-msg=W0613
 def wrap_mc_method(func, f_args, f_kwargs, return_val, funcname=None):
     """Pulls the operation and (for get) whether a key was found, on each public method."""
     kvs = {}
@@ -63,6 +67,12 @@ def wrap_get_server(func):
         return ret
     return wrapper
 
+def dynamic_wrap(fn):
+    def call_me(*args, **kwargs):
+        print 'called me: %s %s' % (args, kwargs)
+        return fn(*args, **kwargs)
+    return call_me
+
 def wrap(module):
     try:
         # wrap middleware callables we want to wrap
@@ -80,19 +90,22 @@ def wrap(module):
                      'Function': method,
                      'backtrace': True,
                      }
-
+            # print '%s.%s %s' % (module.__name__, method, fn)
             # XXX Not Python2.4-friendly
-            wrapfn = fn.im_func if hasattr(fn, 'im_func') else fn # wrap unbound instance method
+            wrapfn = fn.im_func if hasattr(fn, 'im_func') else dynamic_wrap(fn) # wrap unbound instance method
             setattr(cls, method, oboe.Context.log_method(**args)(wrapfn))
 
         # per-key memcache host hook
-        fn = getattr(cls, '_get_server', None)
-        setattr(cls, '_get_server', wrap_get_server(fn))
+        if hasattr(cls, '_get_server'):
+            fn = getattr(cls, '_get_server', None)
+            setattr(cls, '_get_server', wrap_get_server(fn))
+
     except Exception, e:
         print >> sys.stderr, "Oboe error:", str(e)
 
-try:
-    import memcache
-    wrap(memcache)
-except ImportError, e:
-    pass
+for mod_name in ['memcache', 'pylibmc']:
+    try:
+        mod = __import__(mod_name)
+        wrap(mod)
+    except ImportError, ex:
+        pass
