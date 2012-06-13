@@ -68,9 +68,9 @@ def wrap_get_server(func):
     return wrapper
 
 def dynamic_wrap(fn):
-    def call_me(*args, **kwargs):
+    def wrapped(*args, **kwargs):
         return fn(*args, **kwargs)
-    return call_me
+    return wrapped
 
 def wrap(module):
     try:

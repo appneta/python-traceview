@@ -172,6 +172,74 @@ class TestMemcacheMemcache(unittest.TestCase):
         self.assertHasRemoteHost(trace)
         self.assertNoExtraEvents(trace)
 
+    def test_replace(self):
+        """ test replace: client.replace('key', 'new_value') """
+        self.client().set(TEMP_TEST_KEY, TEMP_TEST_VALUE)
+        trace = Trace()
+        self.client().replace(TEMP_TEST_KEY, TEMP_TEST_VALUE_2)
+        self.assertHasEntryAndExit(trace, op='replace')
+        self.assertHasRemoteHost(trace)
+        self.assertNoExtraEvents(trace)
+
+    def test_incr(self):
+        """ test incr: client.incr('key') """
+        self.client().set(TEMP_TEST_KEY, 3)
+        trace = Trace()
+        value = self.client().incr(TEMP_TEST_KEY)
+        self.assertEqual(4, value)
+        self.assertHasEntryAndExit(trace, op='incr')
+        self.assertHasRemoteHost(trace)
+        self.assertNoExtraEvents(trace)
+
+    def test_decr(self):
+        """ test decr: client.decr('key') """
+        self.client().set(TEMP_TEST_KEY, 3)
+        trace = Trace()
+        value = self.client().decr(TEMP_TEST_KEY)
+        self.assertEqual(2, value)
+        self.assertHasEntryAndExit(trace, op='decr')
+        self.assertHasRemoteHost(trace)
+        self.assertNoExtraEvents(trace)
+
+    def test_append(self):
+        """ test append: client.append('key') """
+        self.client().set(TEMP_TEST_KEY, TEMP_TEST_VALUE)
+        trace = Trace()
+        self.client().append(TEMP_TEST_KEY, TEMP_TEST_VALUE_2)
+        self.assertHasEntryAndExit(trace, op='append')
+        self.assertHasRemoteHost(trace)
+        self.assertNoExtraEvents(trace)
+        value = self.client().get(TEMP_TEST_KEY)
+        self.assertEqual(value, TEMP_TEST_VALUE + TEMP_TEST_VALUE_2)
+
+    def test_prepend(self):
+        """ test prepend: client.prepend('key') """
+        self.client().set(TEMP_TEST_KEY, TEMP_TEST_VALUE)
+        trace = Trace()
+        self.client().prepend(TEMP_TEST_KEY, TEMP_TEST_VALUE_2)
+        self.assertHasEntryAndExit(trace, op='prepend')
+        self.assertHasRemoteHost(trace)
+        self.assertNoExtraEvents(trace)
+        value = self.client().get(TEMP_TEST_KEY)
+        self.assertEqual(value, TEMP_TEST_VALUE_2 + TEMP_TEST_VALUE)
+
+    def test_cas(self):
+        """ test cas: client.cas('key', 'value') """
+        # This is supported by pylibmc >= 1.2.0, too, but I think it might
+        # require a newer version of libmemcached than I have, I think.  It
+        # currently tells me "gets without cas behavior"
+        self.feature_supported_by('memcache')
+        self.client().set(TEMP_TEST_KEY, 1)
+        value = self.client().gets(TEMP_TEST_KEY)
+        trace = Trace()
+        result = self.client().cas(TEMP_TEST_KEY, value + 1)
+        self.assertEqual(True, result)
+        self.assertHasEntryAndExit(trace, op='cas')
+        self.assertHasRemoteHost(trace, num=2)
+        self.assertNoExtraEvents(trace)
+        value = self.client().get(TEMP_TEST_KEY)
+        self.assertEqual(value, 2)
+
 class TestMemcachePylibmc(TestMemcacheMemcache):
     moduleName = 'pylibmc'
 
