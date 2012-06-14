@@ -26,7 +26,6 @@ MC_COMMANDS = set(('get', 'get_multi',
                    'delete', 'delete_multi',
                    'append', 'cas', 'prepend', 'gets'))
 
-# pylint: disable-msg=W0613
 def wrap_mc_method(func, f_args, f_kwargs, return_val, funcname=None):
     """Pulls the operation and (for get) whether a key was found, on each public method."""
     kvs = {}
@@ -91,7 +90,6 @@ def wrap(layer_name, module):
                      'Function': method,
                      'backtrace': True,
                      }
-            # print '%s.%s %s' % (module.__name__, method, fn)
             # XXX Not Python2.4-friendly
             wrapfn = fn.im_func if hasattr(fn, 'im_func') else dynamic_wrap(fn) # wrap unbound instance method
             setattr(cls, method, oboe.Context.log_method(**args)(wrapfn))
