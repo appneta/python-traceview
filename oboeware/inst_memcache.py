@@ -24,7 +24,7 @@ MC_COMMANDS = set(('get', 'get_multi',
                    'set', 'add', 'replace', 'set_multi',
                    'incr', 'decr',
                    'delete', 'delete_multi',
-                   'append', 'cas', 'prepend'))
+                   'append', 'cas', 'prepend', 'gets'))
 
 # pylint: disable-msg=W0613
 def wrap_mc_method(func, f_args, f_kwargs, return_val, funcname=None):

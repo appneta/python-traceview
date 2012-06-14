@@ -58,6 +58,8 @@ class Context:
 class Event:
     def __init__(self):
         self.props = {}
+    def __repr__(self):
+        return 'Trace(%s)' % self.props
     def addInfo(self, name, value):
         self.props[name] = value
     def addEdge(self, *args):
@@ -102,6 +104,8 @@ class UdpReporter:
 def UdpReporter_swigregister():
     raise Exception("Implement me!")
 
+# these are not really oboe pieces, but more a mock tracelyzer:
+
 class OboeListener(object):
     def __init__(self):
         self.events = []
@@ -111,11 +115,14 @@ class OboeListener(object):
     def send(self, event):
         self.events.append(event)
 
-    def get_events(self, filter=None):
-        return [ev for ev in self.events if filter(ev)] if filter else self.events
+    def get_events(self, *filters):
+        events = self.events
+        for _filter in filters:
+            events = [ev for ev in events if _filter(ev)]
+        return events
 
-    def pop_events(self, filter=None):
-        matched = self.get_events(filter)
+    def pop_events(self, *filters):
+        matched = self.get_events(*filters)
         for match in matched:
             self.events.remove(match)
         return matched
