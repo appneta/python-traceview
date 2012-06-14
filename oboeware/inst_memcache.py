@@ -26,8 +26,6 @@ MC_COMMANDS = set(('get', 'get_multi',
                    'delete', 'delete_multi',
                    'append', 'cas', 'prepend'))
 
-MC_LAYER = 'memcache'
-
 # pylint: disable-msg=W0613
 def wrap_mc_method(func, f_args, f_kwargs, return_val, funcname=None):
     """Pulls the operation and (for get) whether a key was found, on each public method."""
@@ -39,7 +37,7 @@ def wrap_mc_method(func, f_args, f_kwargs, return_val, funcname=None):
         kvs['KVHit'] = int(return_val != None)
     return kvs
 
-def wrap_get_server(func):
+def wrap_get_server(layer_name, func):
     """ Wrapper for memcache._get_server, to read remote host on all ops.
 
     This relies on the module internals, and just sends an info event when this
@@ -58,7 +56,7 @@ def wrap_get_server(func):
                 elif host.family == socket.AF_UNIX:
                     args['RemoteHost'] = 'localhost'
 
-            oboe.Context.log(MC_LAYER, 'info', **args)
+            oboe.Context.log(layer_name, 'info', **args)
         except Exception, e:
             print >> sys.stderr, "Oboe error: %s" % e
         return ret
@@ -73,7 +71,7 @@ def dynamic_wrap(fn):
         return fn(*args, **kwargs)
     return wrapped
 
-def wrap(module):
+def wrap(layer_name, module):
     try:
         # wrap middleware callables we want to wrap
         cls = getattr(module, 'Client', None)
@@ -86,10 +84,10 @@ def wrap(module):
             fn = getattr(cls, method, None)
             if not fn:
                 raise Exception('method %s not found in %s' % (method, module))
-            args = { 'layer': MC_LAYER,
+            args = { 'layer': layer_name,
                      'store_return': False,
                      'callback': partial(wrap_mc_method, funcname=method), # XXX Not Python2.4-friendly
-                     'Class': module.__name__ + '.Client',
+                     'Class': layer_name + '.Client',
                      'Function': method,
                      'backtrace': True,
                      }
@@ -101,14 +99,14 @@ def wrap(module):
         # per-key memcache host hook
         if hasattr(cls, '_get_server'):
             fn = getattr(cls, '_get_server', None)
-            setattr(cls, '_get_server', wrap_get_server(fn))
+            setattr(cls, '_get_server', wrap_get_server(layer_name, fn))
 
     except Exception, e:
         print >> sys.stderr, "Oboe error:", str(e)
 
-for mod_name in ['memcache', 'pylibmc']:
+for module_name in ['memcache', 'pylibmc']:
     try:
-        mod = __import__(mod_name)
-        wrap(mod)
+        mod = __import__(module_name)
+        wrap(module_name, mod)
     except ImportError, ex:
         pass

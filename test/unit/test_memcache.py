@@ -240,8 +240,26 @@ class TestMemcacheMemcache(unittest.TestCase):
         value = self.client().get(TEMP_TEST_KEY)
         self.assertEqual(value, 2)
 
+# memcache: http://www.tummy.com/Community/software/python-memcached/
+# - originally developed by Evan Martin, later maintained by Sean Reifschneider
+
+# pylibmc: http://pypi.python.org/pypi/pylibmc
+# - authored by Ludvig Ericson
+
 class TestMemcachePylibmc(TestMemcacheMemcache):
     moduleName = 'pylibmc'
+
+# ## other libraries listed at http://code.google.com/p/memcached/wiki/Clients#Python
+# python-libmemcached:
+#   http://code.google.com/p/python-libmemcached/ author: davies.liu?
+# cmemcache:
+#   http://gijsbert.org/cmemcache/index.html author: Gijsbert de Haan
+# django cache:
+#   https://docs.djangoproject.com/en/dev/topics/cache/
+# twisted memcache support:
+#   http://twistedmatrix.com/documents/current/api/twisted.protocols.memcache.html
+
+
 
 if __name__ == '__main__':
     unittest.main()
