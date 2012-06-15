@@ -9,59 +9,46 @@ from  urlparse import urlparse
 
 HTTPLIB2_LAYER = 'httplib2'
 
-def wrap(module):
-    try:
-        real_request = module.Http.request
-        from functools import wraps
-        @wraps(module.Http.request) # XXX Not Python2.4-friendly
-        def wrapped_request(self, uri, method="GET", body=None, headers=None, redirections=5, connection_type=None):
-            if not headers:
-                headers = {}
-            if oboe.Context.isValid():
-                evt = oboe.Context.createEvent()
-                info = urlparse(uri)
-                evt.addInfo('IsService', 'yes')
-                evt.addInfo('RemoteProtocol', info.scheme if info.scheme != '' else 'http') # XXX Not Python2.4-friendly
-                evt.addInfo('RemoteHost', info.netloc)
+def wrap_request_before(func, f_args, f_kwargs):
+    if len(f_args) > 5:
+        headers = f_args[4]
+        from_f_args = True
+    else:
+        headers = f_kwargs['headers']
+        from_f_args = False
+    if headers is None:
+        headers = {}
+    if not 'X-Trace' in headers:
+        headers['X-Trace'] = oboe.Context.toString()
+    if from_f_args:
+        f_args = list(f_args)
+        f_args[4] = headers
+    else:
+        f_kwargs['headers'] = headers
+    return f_args, f_kwargs, {}
 
-                path = info.path
-                if path == '':
-                    path = '/'
-                if info.query != '':
-                    path += '?' + info.query
-                evt.addInfo('ServiceArg', path)
+def wrap_request_after(func, f_args, f_kwargs, res):
+    info = urlparse(f_args[1])
+    path = info.path
+    if path == '':
+        path = '/'
+    if info.query != '':
+        path += '?' + info.query
 
-                evt.addInfo('Layer', HTTPLIB2_LAYER)
-                evt.addInfo('Label', 'entry')
-                oboe.reporter().sendReport(evt)
-                response = None
-                try:
-                    if not 'X-Trace' in headers:
-                        headers['X-Trace'] = oboe.Context.toString()
-                    response = real_request(self, uri, method=method, body=body,
-                                            headers=headers, redirections=redirections,
-                                            connection_type=connection_type)
-                except Exception:
-                    oboe.Context.log_exception()
-                finally: # XXX Not Python2.4-friendly
-                    evt = oboe.Context.createEvent()
-                    evt.addInfo('Layer', HTTPLIB2_LAYER)
-                    evt.addInfo('Label', 'exit')
-                    oboe.reporter().sendReport(evt)
-                return response
-            else:
-                return real_request(self, uri, method=method, body=body,
-                                    headers=headers, redirections=redirections,
-                                    connection_type=connection_type)
-
-        setattr(module.Http,'request', wrapped_request)
-
-    except Exception, e:
-        print >> sys.stderr, "Oboe error:", str(e)
+    return {'IsService': 'yes',
+            'RemoteProtocol': info.scheme if info.scheme != '' else 'http', # XXX Not Python2.4-friendly
+            'RemoteHost': info.netloc,
+            'ServiceArg': path}
 
 try:
     import httplib2
-    wrap(httplib2)
+    try:
+        wrapper = oboe.Context.log_method(HTTPLIB2_LAYER,
+                                          before_callback=wrap_request_before,
+                                          callback=wrap_request_after)
+        setattr(httplib2.Http, 'request', wrapper(httplib2.Http.request))
+    except Exception, e:
+        print >> sys.stderr, "Oboe error:", str(e)
 except ImportError, e:
     pass
 
