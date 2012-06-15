@@ -83,16 +83,13 @@ def wrap(layer_name, module):
             fn = getattr(cls, method, None)
             if not fn:
                 raise Exception('method %s not found in %s' % (method, module))
-            args = { 'layer': layer_name,
-                     'store_return': False,
-                     'callback': partial(wrap_mc_method, funcname=method), # XXX Not Python2.4-friendly
-                     'Class': layer_name + '.Client',
-                     'Function': method,
-                     'backtrace': True,
-                     }
-            # XXX Not Python2.4-friendly
-            wrapfn = fn.im_func if hasattr(fn, 'im_func') else dynamic_wrap(fn) # wrap unbound instance method
-            setattr(cls, method, oboe.Context.log_method(**args)(wrapfn))
+            wrapper = oboe.Context.log_method(layer_name,
+                                              # XXX Not Python2.4-friendly
+                                              callback=partial(wrap_mc_method, funcname=method),
+                                              backtrace=True,
+                                              Class=layer_name + '.Client',
+                                              Function=method)
+            setattr(cls, method, wrapper(fn))
 
         # per-key memcache host hook
         if hasattr(cls, '_get_server'):
