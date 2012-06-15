@@ -406,7 +406,8 @@ def profile_function(cls, profile_name, store_args=False, store_return=False, st
     # return decorator function with arguments to profile_function() baked in
     return decorate_with_profile_function
 
-def log_method(cls, layer='Python', store_return=False, store_args=False, callback=None, profile=False, **entry_kvs):
+def log_method(cls, layer='Python', store_return=False, store_args=False,
+               before_callback=None, callback=None, profile=False, **entry_kvs):
     """Wrap a method for tracing with the Tracelytics Oboe library.
         as opposed to profile_function, this decorator gives the method its own layer
 
@@ -415,6 +416,10 @@ def log_method(cls, layer='Python', store_return=False, store_args=False, callba
           store_return: report the return value
 
           store_args: report the arguments to this function
+
+          before_callback: if set, calls this function before the wrapped
+          function is called. This function can change the args and kwargs, and
+          can return K/V pairs to be reported in the entry event.
 
           callback: if set, calls this function after the wrapped
           function returns, which examines the function, arguments,
@@ -431,6 +436,11 @@ def log_method(cls, layer='Python', store_return=False, store_args=False, callba
             return func(*f_args, **f_kwargs) # pass through to func right away
         if store_args:
             entry_kvs.update( {'args' : f_args, 'kwargs': f_kwargs} )
+        if before_callback:
+            before_res = before_callback(func, f_args, f_kwargs)
+            if before_res:
+                f_args, f_kwargs, extra_entry_kvs = before_res
+                entry_kvs.update(extra_entry_kvs)
 
         # log entry event
         Context.log(layer, 'entry', **entry_kvs)
