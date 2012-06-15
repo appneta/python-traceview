@@ -28,7 +28,7 @@ def wrap(module, class_name, methods):
         for method_name in methods:
             method = getattr(cls, method_name, None)
             if method:
-                setattr(cls, method_name, decorate(method.im_func))
+                setattr(cls, method_name, decorate(method))
 
 try:
     import sqlalchemy.engine.default as sad

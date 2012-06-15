@@ -335,8 +335,7 @@ def wrap_class(cls, class_name, class_method_inst):
                }
         args.update(method_log_args)
         # XXX Not Python2.4-friendly
-        wrapfn = fn.im_func if hasattr(fn, 'im_func') else fn # wrap unbound instance method
-        setattr(cls, method, oboe.Context.log_method(**args)(wrapfn))
+        setattr(cls, method, oboe.Context.log_method(**args)(fn))
 
 def wrap(module):
     """ wrap pymongo module, adding instrumentation to core classes """
