@@ -1,3 +1,7 @@
+0.5.2
+ - Add instrumentation for pylibmc
+ - pylint codebase
+
 0.5.1
  - Add instrumentation for urllib3 and requests
  - Add monkey-patched version of sqlalchemy instrumentation; should be compatible with all 7.x versions
