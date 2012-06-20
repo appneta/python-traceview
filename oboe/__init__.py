@@ -316,29 +316,18 @@ def profile_function(profile_name, store_args=False, store_return=False, store_b
             entry_kvs['Class'] = func.im_class.__name__
 
         # get filename, line number, etc, and cache in wrapped function to avoid overhead
-        try:
-            if not hasattr(func, '_oboe_file'):
-                setattr(func, '_oboe_file', inspect.getsourcefile(func))
-        except Exception, e:
-            setattr(func, '_oboe_file', None)
+        def cache(name, value_func):
+            try:
+                if not hasattr(func, name):
+                    setattr(func, name, value_func())
+            except Exception:
+                setattr(func, name, None)
 
-        try:
-            if not hasattr(func, '_oboe_line_number'):
-                setattr(func, '_oboe_line_number', inspect.getsourcelines(func)[1])
-        except Exception, e:
-            setattr(func, '_oboe_line_number', None)
-
-        try:
-            if not hasattr(func, '_oboe_module'):
-                setattr(func, '_oboe_module', inspect.getmodule(func).__name__)
-        except Exception, e:
-            setattr(func, '_oboe_module', None)
-
-        try:
-            if not hasattr(func, '_oboe_signature'):
-                setattr(func, '_oboe_signature', _function_signature(func))
-        except Exception, e:
-            setattr(func, '_oboe_signature', None)
+        cache('_oboe_file', lambda: inspect.getsourcefile(func))
+        cache('_oboe_file', lambda: inspect.getsourcefile(func))
+        cache('_oboe_line_number', lambda: inspect.getsourcelines(func)[1])
+        cache('_oboe_module', lambda: inspect.getmodule(func).__name__)
+        cache('_oboe_signature', lambda: _function_signature(func))
 
         # prepare data for reporting oboe event
         entry_kvs.update({'Language': 'python',
