@@ -44,6 +44,16 @@ def _str_backtrace(backtrace=None):
     else:
         return "".join(traceback.format_stack()[:-1])
 
+def _get_profile_info(p):
+    """Retursn a sorted set of stats from a cProfile instance."""
+    sio = cStringIO.StringIO()
+    s = pstats.Stats(p, stream=sio)
+    s.sort_stats('time')
+    s.print_stats(15)
+    stats = sio.getvalue()
+    sio.close()
+    return stats
+
 def log(layer, label, backtrace=False, **kwargs):
     """Report an individual tracing event.
 
@@ -255,12 +265,7 @@ class profile_block(object):
         # end profiling
         stats = None
         if self.use_cprofile and found_cprofile and self.p:
-            sio = cStringIO.StringIO()
-            s = pstats.Stats(self.p, stream=sio)
-            s.sort_stats('time')
-            s.print_stats(15)
-            stats = sio.getvalue()
-            sio.close()
+            stats = _get_profile_info(self.p)
 
         # exception?
         if exc_type:
@@ -356,12 +361,7 @@ def profile_function(profile_name, store_args=False, store_return=False, store_b
             if profile and found_cprofile: # use cProfile?
                 p = cProfile.Profile()
                 res = p.runcall(func, *f_args, **f_kwargs) # call func via cProfile
-                sio = cStringIO.StringIO()
-                s = pstats.Stats(p, stream=sio)
-                s.sort_stats('time')
-                s.print_stats(15)
-                stats = sio.getvalue()
-                sio.close()
+                stats = _get_profile_info(p)
             else: # don't use cProfile, call func directly
                 res = func(*f_args, **f_kwargs)
         except Exception, e:
@@ -453,12 +453,7 @@ def log_method(layer='Python', store_return=False, store_args=False,
             if profile and found_cprofile: # use cProfile?
                 p = cProfile.Profile()
                 res = p.runcall(func, *f_args, **f_kwargs) # call func via cProfile
-                sio = cStringIO.StringIO()
-                s = pstats.Stats(p, stream=sio)
-                s.sort_stats('time')
-                s.print_stats(15)
-                stats = sio.getvalue()
-                sio.close()
+                stats = _get_profile_info(p)
             else: # don't use cProfile, call func directly
                 res = func(*f_args, **f_kwargs)
         except Exception, e:
