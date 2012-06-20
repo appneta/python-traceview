@@ -5,11 +5,11 @@ All rights reserved.
 """
 
 import oboe
-import sys, os
+import sys
 
 MODULE_INIT_REPORTED = False
 
-class OboeMiddleware:
+class OboeMiddleware(object):
     def __init__(self, app, oboe_config, layer="wsgi", profile=False):
         """
         Takes the app that we're wrapping, as well as a dictionary with oboe
@@ -23,12 +23,6 @@ class OboeMiddleware:
         self.oboe_config = oboe_config
         self.layer = layer
         self.profile = profile
-
-        if self.profile:
-            try:
-                import cStringIO, cProfile, pstats
-            except ImportError:
-                self.profile = False
 
         if self.oboe_config.get('oboe.tracing_mode'):
             oboe.config['tracing_mode'] = self.oboe_config['oboe.tracing_mode']
@@ -83,7 +77,7 @@ class OboeMiddleware:
             if 'QUERY_STRING' in environ:
                 evt.addInfo("Query-String", environ['QUERY_STRING'])
 
-            reporter = oboe.reporter().sendReport(evt)
+            oboe.reporter().sendReport(evt)
 
             endEvt = oboe.Context.createEvent()
 
@@ -98,16 +92,23 @@ class OboeMiddleware:
                 endEvt.addInfo("Status", status.split(' ', 1)[0])
                 if exc_info:
                     import traceback as tb
-                    (t, exc, trace) = exc_info
+                    _t, exc, trace = exc_info
                     endEvt.addInfo("ErrorMsg", str(exc))
                     endEvt.addInfo("ErrorClass", exc.__class__.__name__)
                     endEvt.addInfo("Backtrace", "".join(tb.format_list(tb.extract_tb(trace))))
             start_response(status, headers)
-            if self.profile: return response_body.append
+            if self.profile:
+                return response_body.append
 
         stats = None
         result = None
         try:
+            if self.profile:
+                try:
+                    import cStringIO, cProfile, pstats # XXX test cProfile and pstats exist
+                except ImportError:
+                    self.profile = False
+
             if self.profile:
                 def runapp():
                     appiter = self.wrapped_app(environ, wrapped_start_response)
@@ -115,7 +116,6 @@ class OboeMiddleware:
                     if hasattr(appiter, 'close'):
                         appiter.close()
 
-                import cStringIO, cProfile, pstats # XXX test cProfile and pstats exist
                 p = cProfile.Profile()
                 p.runcall(runapp)
                 body = ''.join(response_body)
@@ -130,7 +130,7 @@ class OboeMiddleware:
             else:
                 result = self.wrapped_app(environ, wrapped_start_response)
 
-        except Exception, e:
+        except Exception:
             self.send_end(tracing_mode, endEvt, environ, True, layer=self.layer)
             raise
 
@@ -151,7 +151,7 @@ class OboeMiddleware:
                 evt.addInfo("Profile", stats)
             if threw_error:
                 import traceback as tb
-                (t, exc, trace) = sys.exc_info()
+                _t, exc, trace = sys.exc_info()
                 endEvt.addInfo("ErrorMsg", str(exc))
                 endEvt.addInfo("ErrorClass", exc.__class__.__name__)
                 evt.addInfo("Backtrace", "".join(tb.format_list(tb.extract_tb(trace))))
@@ -161,4 +161,4 @@ class OboeMiddleware:
                 if k in set(("controller", "action")):
                     evt.addInfo(str(k).capitalize(), str(v))
 
-            reporter = oboe.reporter().sendReport(evt)
+            oboe.reporter().sendReport(evt)
