@@ -44,7 +44,7 @@ def _str_backtrace(backtrace=None):
     else:
         return "".join(traceback.format_stack()[:-1])
 
-def log(cls, layer, label, backtrace=False, **kwargs):
+def log(layer, label, backtrace=False, **kwargs):
     """Report an individual tracing event.
 
         layer: layer name, None for "same as current"
@@ -64,7 +64,7 @@ def log(cls, layer, label, backtrace=False, **kwargs):
 
     _log_event(evt, layer, label, kvs=kwargs)
 
-def log_error(cls, err_class, err_msg, store_backtrace=True, backtrace=None):
+def log_error(err_class, err_msg, store_backtrace=True, backtrace=None):
     """Report a custom error.
 
     This is for logging errors that are not associated with python exceptions --
@@ -89,7 +89,7 @@ def log_error(cls, err_class, err_msg, store_backtrace=True, backtrace=None):
     rep = reporter()
     return rep.sendReport(evt)
 
-def log_exception(cls, msg=None, store_backtrace=True):
+def log_exception(msg=None, store_backtrace=True):
     """Report the message with exception information included. This should only
     be called from an exception handler, unless exc_info is provided."""
 
@@ -110,7 +110,7 @@ def log_exception(cls, msg=None, store_backtrace=True):
 
     return reporter().sendReport(evt)
 
-def trace(cls, layer='Python', xtr_hdr=None, kvs=None):
+def trace(layer='Python', xtr_hdr=None, kvs=None):
     """ Decorator to begin a new trace on a block of code.  Takes
         into account oboe.config['tracing_mode'] as well as
         oboe.config['sample_rate'], so may not always start a trace.
@@ -276,7 +276,7 @@ class profile_block(object):
 
         Context.log(None, 'profile_exit', **exit_kvs)
 
-def profile_function(cls, profile_name, store_args=False, store_return=False, store_backtrace=False,
+def profile_function(profile_name, store_args=False, store_return=False, store_backtrace=False,
                      profile=False, callback=None, **entry_kvs):
     """Wrap a method for tracing and profiling with the Tracelytics Oboe library.
 
@@ -408,7 +408,7 @@ def profile_function(cls, profile_name, store_args=False, store_return=False, st
     # return decorator function with arguments to profile_function() baked in
     return decorate_with_profile_function
 
-def log_method(cls, layer='Python', store_return=False, store_args=False,
+def log_method(layer='Python', store_return=False, store_args=False,
                before_callback=None, callback=None, profile=False, **entry_kvs):
     """Wrap a method for tracing with the Tracelytics Oboe library.
         as opposed to profile_function, this decorator gives the method its own layer
@@ -525,6 +525,10 @@ def _Event_addInfo_safe(func):
                 elif hasattr(args[2], '__repr__'):
                     return func(args[0], args[1], repr(args[2]))
     return wrapped
+
+###############################################################################
+# Backwards compatability
+###############################################################################
 
 setattr(Event, 'addInfo', _Event_addInfo_safe(getattr(Event, 'addInfo')))
 setattr(Context, log.__name__, types.MethodType(log, Context))
