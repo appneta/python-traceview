@@ -55,7 +55,7 @@ def wrap_get_server(layer_name, func):
                 elif host.family == socket.AF_UNIX:
                     args['RemoteHost'] = 'localhost'
 
-            oboe.Context.log(layer_name, 'info', **args)
+            oboe.log(layer_name, 'info', **args)
         except Exception, e:
             print >> sys.stderr, "Oboe error: %s" % e
         return ret
@@ -83,12 +83,12 @@ def wrap(layer_name, module):
             fn = getattr(cls, method, None)
             if not fn:
                 raise Exception('method %s not found in %s' % (method, module))
-            wrapper = oboe.Context.log_method(layer_name,
-                                              # XXX Not Python2.4-friendly
-                                              callback=partial(wrap_mc_method, funcname=method),
-                                              backtrace=True,
-                                              Class=layer_name + '.Client',
-                                              Function=method)
+            wrapper = oboe.log_method(layer_name,
+                                      # XXX Not Python2.4-friendly
+                                      callback=partial(wrap_mc_method, funcname=method),
+                                      backtrace=True,
+                                      Class=layer_name + '.Client',
+                                      Function=method)
             setattr(cls, method, wrapper(fn))
 
         # per-key memcache host hook

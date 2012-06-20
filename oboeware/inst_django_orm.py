@@ -55,7 +55,7 @@ def wrap(module):
         if getattr(cursor_method, '_oboe_wrapped', False):
             return
 
-        oboe_wrapper = oboe.Context.log_method('djangoORM', callback=wrap_execute)
+        oboe_wrapper = oboe.log_method('djangoORM', callback=wrap_execute)
         setattr(CursorOboeWrapper, 'execute', oboe_wrapper(CursorOboeWrapper.execute))
         setattr(CursorOboeWrapper, 'executemany', oboe_wrapper(CursorOboeWrapper.executemany))
 

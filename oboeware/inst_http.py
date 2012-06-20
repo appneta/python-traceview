@@ -16,7 +16,7 @@ def wrap_request_before(func, f_args, f_kwargs, header_position):
     if headers is None:
         headers = {}
     if not 'X-Trace' in headers:
-        headers['X-Trace'] = oboe.Context.toString()
+        headers['X-Trace'] = oboe.toString()
     if from_f_args:
         f_args = list(f_args)
         f_args[header_position] = headers

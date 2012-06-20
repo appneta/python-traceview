@@ -335,7 +335,7 @@ def wrap_class(cls, class_name, class_method_inst):
                }
         args.update(method_log_args)
         # XXX Not Python2.4-friendly
-        setattr(cls, method, oboe.Context.log_method(PYMONGO_LAYER, **args)(fn))
+        setattr(cls, method, oboe.log_method(PYMONGO_LAYER, **args)(fn))
 
 def wrap(module):
     """ wrap pymongo module, adding instrumentation to core classes """

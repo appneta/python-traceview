@@ -96,7 +96,7 @@ class OboeDjangoMiddleware(object):
         if not oboe.Context.isValid():
             return
         try:
-            oboe.Context.log_exception()
+            oboe.log_exception()
         except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
 
@@ -117,7 +117,7 @@ def middleware_hooks(module, objname):
                 continue
             profile_name = '%s.%s.%s' % (module.__name__, objname, method)
             setattr(cls, method,
-                    oboe.Context.profile_function(profile_name)(fn))
+                    oboe.profile_function(profile_name)(fn))
     except Exception, e:
         print >> sys.stderr, "Oboe error:", str(e)
 
