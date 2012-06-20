@@ -11,7 +11,7 @@ oboe.config['tracing_mode'] = 'always'
 import inst_memcache # pylint: disable-msg=W0611
 import unittest
 
-class Trace:
+class Trace(object):
     """ Mock trace.  Listens directly to events in mock oboe_ext. """
     def __init__(self):
         self.oboe = OboeListener()
@@ -28,8 +28,13 @@ class Trace:
     def __exit__(self, type, value, traceback):
         self._end_trace()
     def events(self, *filters):
+        """ Returns all events matching the filters passed """
         return self.oboe.get_events(*filters)
     def pop_events(self, *filters):
+        """ Returns all events matching the filters passed,
+        and also removes those events from the Trace so that
+        they will not be returned by future calls to
+        pop_events or events. """
         return self.oboe.pop_events(*filters)
 
 MODULE_NAMES = set([ 'memcache', 'pylibmc' ])
@@ -43,7 +48,7 @@ TEMP_TEST_VALUE = 'oqwefhf'
 TEMP_TEST_KEY_2 = 'ilufhweeewr'
 TEMP_TEST_VALUE_2 = 'sdgsergerg'
 
-# Filters for assertions re: inspecting events in traces
+# Filters for assertions re: inspecting Events in Traces
 
 def _and(*filters):
     def wrapped(*args, **kwargs):
@@ -70,6 +75,15 @@ is_exit_event = label_is('exit')
 
 
 class TestMemcacheMemcache(unittest.TestCase):
+    """ This class contains tests not just for python-memcached
+    but for other python memcache clients as well.  Other clients
+    should inherit from this and set moduleName to their own
+    module name.
+
+    For anything that is not supported by a particular library,
+    see the feature_supported_by method.
+
+    """
     moduleName = 'memcache'
 
     def __init__(self, *args, **kwargs):

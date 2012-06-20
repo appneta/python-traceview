@@ -7,9 +7,11 @@ import os
 
 listeners = []
 
-class Context:
+from exceptions import NotImplementedError
+
+class Context(object):
     def __init__(self):
-        raise Exception("Implement me!")
+        raise NotImplementedError
 
     @classmethod
     def clear(cls):
@@ -17,7 +19,7 @@ class Context:
 
     @classmethod
     def copy(cls):
-        raise Exception("Implement me!")
+        raise NotImplementedError
 
     @classmethod
     def createEvent(cls):
@@ -25,11 +27,11 @@ class Context:
 
     @classmethod
     def fromString(cls):
-        raise Exception("Implement me!")
+        raise NotImplementedError
 
     @classmethod
     def get(cls):
-        raise Exception("Implement me!")
+        raise NotImplementedError
 
     @classmethod
     def init(cls):
@@ -41,7 +43,7 @@ class Context:
 
     @classmethod
     def set(cls):
-        raise Exception("Implement me!")
+        raise NotImplementedError
 
     @classmethod
     def startTrace(cls):
@@ -49,13 +51,13 @@ class Context:
 
     @classmethod
     def swigregister(cls):
-        raise Exception("Implement me!")
+        raise NotImplementedError
 
     @classmethod
     def toString(cls):
-        raise Exception("Implement me!")
+        raise NotImplementedError
 
-class Event:
+class Event(object):
     def __init__(self):
         self.props = {}
     def __repr__(self):
@@ -63,38 +65,38 @@ class Event:
     def addInfo(self, name, value):
         self.props[name] = value
     def addEdge(self, *args):
-        raise Exception("Implement me!")
+        raise NotImplementedError
     def getMetadata(self):
-        raise Exception("Implement me!")
+        raise NotImplementedError
     def metadataString(self):
-        raise Exception("Implement me!")
+        raise NotImplementedError
     def startTrace(self):
-        raise Exception("Implement me!")
+        raise NotImplementedError
 
 def Event_swigregister():
-    raise Exception("Implement me!")
+    raise NotImplementedError
 
-class FileReporter:
+class FileReporter(object):
     def __init__(self):
-        raise Exception("Implement me!")
+        raise NotImplementedError
 
 def FileReporter_swigregister():
-    raise Exception("Implement me!")
+    raise NotImplementedError
 
-class Metadata:
+class Metadata(object):
     def __init__(self):
-        raise Exception("Implement me!")
+        raise NotImplementedError
 
 def Metadata_fromString():
-    raise Exception("Implement me!")
+    raise NotImplementedError
 
 def Metadata_makeRandom():
-    raise Exception("Implement me!")
+    raise NotImplementedError
 
 def Metadata_swigregister():
-    raise Exception("Implement me!")
+    raise NotImplementedError
 
-class UdpReporter:
+class UdpReporter(object):
     def __init__(self, host, port):
         pass
     def sendReport(self, event):
@@ -102,7 +104,7 @@ class UdpReporter:
             listener.send(event)
 
 def UdpReporter_swigregister():
-    raise Exception("Implement me!")
+    raise NotImplementedError
 
 # these are not really oboe pieces, but more a mock tracelyzer:
 
@@ -116,12 +118,17 @@ class OboeListener(object):
         self.events.append(event)
 
     def get_events(self, *filters):
+        """ Returns all events matching the filters passed """
         events = self.events
         for _filter in filters:
             events = [ev for ev in events if _filter(ev)]
         return events
 
     def pop_events(self, *filters):
+        """ Returns all events matching the filters passed,
+        and also removes those events from the Trace so that
+        they will not be returned by future calls to
+        pop_events or events. """
         matched = self.get_events(*filters)
         for match in matched:
             self.events.remove(match)
