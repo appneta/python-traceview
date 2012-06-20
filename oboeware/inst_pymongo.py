@@ -328,14 +328,13 @@ def wrap_class(cls, class_name, class_method_inst):
         fn = getattr(cls, method, None)
         if not fn:
             raise Exception('method %s not found in %s' % (method, cls.__name__))
-        args = { 'layer': PYMONGO_LAYER,
-                 'Class': '%s.%s' % (cls.__module__, cls.__name__),
+        args = { 'Class': '%s.%s' % (cls.__module__, cls.__name__),
                  'Function': method,
                  'Action': '%s.%s' % (class_name, method),
                }
         args.update(method_log_args)
         # XXX Not Python2.4-friendly
-        setattr(cls, method, oboe.Context.log_method(**args)(fn))
+        setattr(cls, method, oboe.Context.log_method(PYMONGO_LAYER, **args)(fn))
 
 def wrap(module):
     """ wrap pymongo module, adding instrumentation to core classes """
