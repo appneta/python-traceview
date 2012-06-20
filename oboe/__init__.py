@@ -54,7 +54,7 @@ def _get_profile_info(p):
     sio.close()
     return stats
 
-def log(layer, label, backtrace=False, **kwargs):
+def log(layer, label, backtrace=False, metadata=None, **kwargs):
     """Report an individual tracing event.
 
         layer: layer name, None for "same as current"
@@ -66,15 +66,17 @@ def log(layer, label, backtrace=False, **kwargs):
         kwargs: extra key/value pairs to add to event
 
     """
-    if not Context.isValid():
+    if not metadata:
+        metadata = Context
+    if not metadata.isValid():
         return
-    evt = Context.createEvent()
+    evt = metadata.createEvent()
     if backtrace:
         kwargs['Backtrace'] = _str_backtrace()
 
     _log_event(evt, layer, label, kvs=kwargs)
 
-def log_error(err_class, err_msg, store_backtrace=True, backtrace=None):
+def log_error(err_class, err_msg, store_backtrace=True, backtrace=None, metadata=None):
     """Report a custom error.
 
     This is for logging errors that are not associated with python exceptions --
@@ -86,9 +88,11 @@ def log_error(err_class, err_msg, store_backtrace=True, backtrace=None):
         `store_backtrace` [optional] - Whether to send a backtrace. Defaults to True.
         `backtrace` [optional] - The backtrace to report this error on. Defaults to the caller.
     """
-    if not Context.isValid():
+    if not metadata:
+        metadata = Context
+    if not metadata.isValid():
         return
-    evt = Context.createEvent()
+    evt = metadata.createEvent()
     evt.addInfo('Label', 'error')
     if store_backtrace:
         evt.addInfo('Backtrace', _str_backtrace(backtrace))
@@ -99,20 +103,21 @@ def log_error(err_class, err_msg, store_backtrace=True, backtrace=None):
     rep = reporter()
     return rep.sendReport(evt)
 
-def log_exception(msg=None, store_backtrace=True):
+def log_exception(msg=None, store_backtrace=True, metadata=None):
     """Report the message with exception information included. This should only
     be called from an exception handler, unless exc_info is provided."""
-
-    if not Context.isValid():
+    if not metadata:
+        metadata = Context
+    if not metadata.isValid():
         return
 
     typ, val, tb = sys.exc_info()
     if typ is None:
-        raise Exception('log_exception should only be called from an exception context (e.g., except: block)')
+        raise Exception('log_exception should only be called from an exception metadata (e.g., except: block)')
     if msg is None:
         msg = str(val)
 
-    evt = Context.createEvent()
+    evt = metadata.createEvent()
     evt.addInfo('Label', 'error')
     evt.addInfo('Backtrace', _str_backtrace(tb))
     evt.addInfo('ErrorClass', typ.__name__)
@@ -120,7 +125,7 @@ def log_exception(msg=None, store_backtrace=True):
 
     return reporter().sendReport(evt)
 
-def trace(layer='Python', xtr_hdr=None, kvs=None):
+def trace(layer='Python', xtr_hdr=None, kvs=None, metadata=None):
     """ Decorator to begin a new trace on a block of code.  Takes
         into account oboe.config['tracing_mode'] as well as
         oboe.config['sample_rate'], so may not always start a trace.
@@ -129,17 +134,18 @@ def trace(layer='Python', xtr_hdr=None, kvs=None):
         xtr_hdr: optional, incoming x-trace header if available
         kvs: optional, dictionary of additional key/value pairs to report
     """
-
+    if not metadata:
+        metadata = Context
     def _trace_wrapper(func, *f_args, **f_kwargs):
-        _start_trace(layer, xtr_hdr, kvs)
+        _start_trace(metadata, layer, xtr_hdr, kvs)
         try:
             res = func(*f_args, **f_kwargs)
         except Exception:
             # log exception and re-raise
-            Context.log_exception()
+            log_exception(metadata=metadata)
             raise
         finally:
-            _end_trace(layer)
+            _end_trace(metadata, layer)
 
         return res # return output of func(*f_args, **f_kwargs)
 
@@ -165,32 +171,36 @@ def _log_event(evt, layer, label, kvs=None):
     rep = reporter()
     return rep.sendReport(evt)
 
-def _start_trace(layer, xtr_hdr=None, kvs=None):
+def _start_trace(metadata, layer, xtr_hdr=None, kvs=None):
     """ Begin a new trace.  Takes into account oboe.config['tracing_mode'] and
         oboe.config['sample_rate'], so may not always start a trace. """
+    if not metadata:
+        metadata = Context
 
     tracing_mode = config.get('tracing_mode')
     sample_rate = config.get('sample_rate')
 
-    if not Context.isValid() and xtr_hdr and tracing_mode in ['always', 'through']:
-        Context.fromString(xtr_hdr)
+    if not metadata.isValid() and xtr_hdr and tracing_mode in ['always', 'through']:
+        metadata.fromString(xtr_hdr)
 
-    if not Context.isValid() and tracing_mode == 'always' and random.random() < sample_rate:
-        evt = Context.startTrace()
-    elif Context.isValid() and tracing_mode != 'never':
-        evt = Context.createEvent()
+    if not metadata.isValid() and tracing_mode == 'always' and random.random() < sample_rate:
+        evt = metadata.startTrace()
+    elif metadata.isValid() and tracing_mode != 'never':
+        evt = metadata.createEvent()
 
-    if not Context.isValid():
+    if not metadata.isValid():
         return
     _log_event(evt, layer, 'entry', kvs)
 
-def _end_trace(layer, kvs=None):
+def _end_trace(metadata, layer, kvs=None):
     """ Marks the end of a trace.  Clears oboe.Context to reset tracing state. """
-    if not Context.isValid():
+    if not metadata:
+        metadata = Context
+    if not metadata.isValid():
         return
-    evt = Context.createEvent()
+    evt = metadata.createEvent()
     _log_event(evt, layer, 'exit', kvs)
-    Context.clear()
+    metadata.clear()
 
 def _function_signature(func):
     """Returns a string representation of the function signature of the given func."""
@@ -229,14 +239,17 @@ class profile_block(object):
           Reports an error event between entry and exit if an
           exception is thrown, then reraises.
     """
-    def __init__(self, profile_name, profile=False, store_backtrace=False):
+    def __init__(self, profile_name, profile=False, store_backtrace=False, metadata=None):
+        if not metadata:
+            metadata = Context
         self.profile_name = profile_name
         self.use_cprofile = profile
         self.backtrace = store_backtrace
         self.p = None # possible cProfile.Profile() instance
+        self.metadata = metadata
 
     def __enter__(self):
-        if not Context.isValid():
+        if not self.metadata.isValid():
             return
 
         # build entry event
@@ -251,7 +264,7 @@ class profile_block(object):
                       'Signature': ''}
         if self.backtrace:
             entry_kvs['Backtrace'] = _str_backtrace()
-        Context.log(None, 'profile_entry', **entry_kvs)
+        log(None, 'profile_entry', metadata=self.metadata, **entry_kvs)
 
         # begin profiling
         if self.use_cprofile and found_cprofile:
@@ -259,7 +272,7 @@ class profile_block(object):
             self.p.enable(subcalls=True)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if not Context.isValid():
+        if not self.metadata.isValid():
             return
 
         # end profiling
@@ -269,8 +282,8 @@ class profile_block(object):
 
         # exception?
         if exc_type:
-            Context.log(None, 'error', ErrorClass=exc_type.__name__, ErrorMsg=str(exc_val),
-                        backtrace=_str_backtrace(exc_tb))
+            log(None, 'error', ErrorClass=exc_type.__name__, ErrorMsg=str(exc_val),
+                backtrace=_str_backtrace(exc_tb), metadata=self.metadata)
 
         # build exit event
         exit_kvs = {}
@@ -279,10 +292,10 @@ class profile_block(object):
         exit_kvs['Language'] = 'python'
         exit_kvs['ProfileName'] = self.profile_name
 
-        Context.log(None, 'profile_exit', **exit_kvs)
+        log(None, 'profile_exit', metadata=self.metadata, **exit_kvs)
 
 def profile_function(profile_name, store_args=False, store_return=False, store_backtrace=False,
-                     profile=False, callback=None, **entry_kvs):
+                     profile=False, callback=None, metadata=None, **entry_kvs):
     """Wrap a method for tracing and profiling with the Tracelytics Oboe library.
 
           profile_name: the profile name to use when reporting.
@@ -305,9 +318,12 @@ def profile_function(profile_name, store_args=False, store_return=False, store_b
           exception is thrown, then reraises.
 
     """
+    if not metadata:
+        metadata = Context
+
     # run-time event-reporting function, called at each invocation of func(f_args, f_kwargs)
     def _profile_wrapper(func, *f_args, **f_kwargs):
-        if not Context.isValid():            # tracing not enabled?
+        if not metadata.isValid():            # tracing not enabled?
             return func(*f_args, **f_kwargs) # pass through to func right away
         if store_args:
             entry_kvs.update({'Args': f_args, 'kwargs': f_kwargs })
@@ -331,18 +347,18 @@ def profile_function(profile_name, store_args=False, store_return=False, store_b
 
         # prepare data for reporting oboe event
         entry_kvs.update({'Language': 'python',
-                       'ProfileName': profile_name,
-                       'File': getattr(func, '_oboe_file'),
-                       'LineNumber': getattr(func, '_oboe_line_number'),
-                       'Module': getattr(func, '_oboe_module'),
-                       'FunctionName': getattr(func, '__name__'),
-                       'Signature': getattr(func, '_oboe_signature')})
+                          'ProfileName': profile_name,
+                          'File': getattr(func, '_oboe_file'),
+                          'LineNumber': getattr(func, '_oboe_line_number'),
+                          'Module': getattr(func, '_oboe_module'),
+                          'FunctionName': getattr(func, '__name__'),
+                          'Signature': getattr(func, '_oboe_signature')})
 
         if store_backtrace:
             entry_kvs['Backtrace'] = _str_backtrace()
 
         # log entry event for this profiled function
-        Context.log(None, 'profile_entry', **entry_kvs)
+        log(None, 'profile_entry', metadata=metadata, **entry_kvs)
 
         res = None   # return value of wrapped function
         stats = None # cProfile statistics, if enabled
@@ -355,7 +371,7 @@ def profile_function(profile_name, store_args=False, store_return=False, store_b
                 res = func(*f_args, **f_kwargs)
         except Exception, e:
             # log exception and re-raise
-            Context.log(None, 'error', ErrorClass=e.__class__.__name__, ErrorMsg=str(e))
+            log(None, 'error', ErrorClass=e.__class__.__name__, ErrorMsg=str(e), metadata=metadata)
             raise
         finally:
             # prepare data for reporting exit event
@@ -380,7 +396,7 @@ def profile_function(profile_name, store_args=False, store_return=False, store_b
             exit_kvs['ProfileName'] = profile_name
 
             # log exit event
-            Context.log(None, 'profile_exit', **exit_kvs)
+            log(None, 'profile_exit', metadata=metadata, **exit_kvs)
 
         return res # return output of func(*f_args, **f_kwargs)
 
@@ -398,7 +414,7 @@ def profile_function(profile_name, store_args=False, store_return=False, store_b
     return decorate_with_profile_function
 
 def log_method(layer='Python', store_return=False, store_args=False,
-               before_callback=None, callback=None, profile=False, **entry_kvs):
+               before_callback=None, callback=None, profile=False, metadata=None, **entry_kvs):
     """Wrap a method for tracing with the Tracelytics Oboe library.
         as opposed to profile_function, this decorator gives the method its own layer
 
@@ -421,9 +437,12 @@ def log_method(layer='Python', store_return=False, store_args=False,
           exception is thrown, then reraises.
 
     """
+    if not metadata:
+        metadata = Context
+
     # run-time event-reporting function, called at each invocation of func(f_args, f_kwargs)
     def _log_method_wrapper(func, *f_args, **f_kwargs):
-        if not Context.isValid():            # tracing not enabled?
+        if not metadata.isValid():            # tracing not enabled?
             return func(*f_args, **f_kwargs) # pass through to func right away
         if store_args:
             entry_kvs.update( {'args' : f_args, 'kwargs': f_kwargs} )
@@ -434,7 +453,7 @@ def log_method(layer='Python', store_return=False, store_args=False,
                 entry_kvs.update(extra_entry_kvs)
 
         # log entry event
-        Context.log(layer, 'entry', **entry_kvs)
+        log(layer, 'entry', metadata=metadata, **entry_kvs)
 
         res = None   # return value of wrapped function
         stats = None # cProfile statistics, if enabled
@@ -447,7 +466,7 @@ def log_method(layer='Python', store_return=False, store_args=False,
                 res = func(*f_args, **f_kwargs)
         except Exception, e:
             # log exception and re-raise
-            Context.log(layer, 'error', ErrorClass=e.__class__.__name__, Message=str(e))
+            log(layer, 'error', ErrorClass=e.__class__.__name__, Message=str(e), metadata=metadata)
             raise
         finally:
             # prepare data for reporting exit event
@@ -469,7 +488,7 @@ def log_method(layer='Python', store_return=False, store_args=False,
                 exit_kvs['Profile'] = stats
 
             # log exit event
-            Context.log(layer, 'exit', **exit_kvs)
+            log(layer, 'exit', metadata=metadata, **exit_kvs)
 
         return res # return output of func(*f_args, **f_kwargs)
 
