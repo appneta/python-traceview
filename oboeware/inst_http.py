@@ -25,7 +25,7 @@ def wrap_request_before(func, f_args, f_kwargs, header_position):
     return f_args, f_kwargs, {}
 
 def wrap_request_after(func, f_args, f_kwargs, res, uri_position):
-    info = urlparse(f_args[1])
+    info = urlparse(f_args[uri_position])
     path = info.path
     if path == '':
         path = '/'
