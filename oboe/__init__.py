@@ -137,7 +137,7 @@ def trace(layer='Python', xtr_hdr=None, kvs=None, metadata=None):
     if not metadata:
         metadata = Context
     def _trace_wrapper(func, *f_args, **f_kwargs):
-        start_trace(metadata, layer, xtr_hdr, kvs)
+        start_trace(layer, metadata, xtr_hdr, kvs)
         try:
             res = func(*f_args, **f_kwargs)
         except Exception:
@@ -145,7 +145,7 @@ def trace(layer='Python', xtr_hdr=None, kvs=None, metadata=None):
             log_exception(metadata=metadata)
             raise
         finally:
-            end_trace(metadata, layer)
+            end_trace(layer, metadata)
 
         return res # return output of func(*f_args, **f_kwargs)
 
