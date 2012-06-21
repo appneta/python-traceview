@@ -326,21 +326,8 @@ def profile_function(profile_name, store_args=False, store_return=False, store_b
           exception is thrown, then reraises.
 
     """
-    if not metadata:
-        metadata = Context
-    if not entry_kvs:
-        entry_kvs = {}
 
-    # run-time event-reporting function, called at each invocation of func(f_args, f_kwargs)
-    def _profile_wrapper(func, *f_args, **f_kwargs):
-        if not metadata.isValid():            # tracing not enabled?
-            return func(*f_args, **f_kwargs) # pass through to func right away
-        if store_args:
-            entry_kvs.update({'Args': f_args, 'kwargs': f_kwargs })
-
-        if 'im_class' in dir(func):          # is func an instance method?
-            entry_kvs['Class'] = func.im_class.__name__
-
+    def before(func, f_args, f_kwargs):
         # get filename, line number, etc, and cache in wrapped function to avoid overhead
         def cache(name, value_func):
             try:
@@ -355,80 +342,37 @@ def profile_function(profile_name, store_args=False, store_return=False, store_b
         cache('_oboe_module', lambda: inspect.getmodule(func).__name__)
         cache('_oboe_signature', lambda: _function_signature(func))
 
-        # prepare data for reporting oboe event
-        entry_kvs.update({'Language': 'python',
-                          'ProfileName': profile_name,
-                          'File': getattr(func, '_oboe_file'),
-                          'LineNumber': getattr(func, '_oboe_line_number'),
-                          'Module': getattr(func, '_oboe_module'),
-                          'FunctionName': getattr(func, '__name__'),
-                          'Signature': getattr(func, '_oboe_signature')})
+        return {'Language': 'python',
+                'ProfileName': profile_name,
+                'File': getattr(func, '_oboe_file'),
+                'LineNumber': getattr(func, '_oboe_line_number'),
+                'Module': getattr(func, '_oboe_module'),
+                'FunctionName': getattr(func, '__name__'),
+                'Signature': getattr(func, '_oboe_signature')}
 
-        if store_backtrace:
-            entry_kvs['Backtrace'] = _str_backtrace()
+    def after(func, f_args, f_kwargs, res):
 
-        # log entry event for this profiled function
-        log(None, 'profile_entry', metadata=metadata, kvs=entry_kvs)
+        return {'Language': 'python',
+                'ProfileName': profile_name}
 
-        res = None   # return value of wrapped function
-        stats = None # cProfile statistics, if enabled
-        try:
-            if profile and found_cprofile: # use cProfile?
-                p = cProfile.Profile()
-                res = p.runcall(func, *f_args, **f_kwargs) # call func via cProfile
-                stats = _get_profile_info(p)
-            else: # don't use cProfile, call func directly
-                res = func(*f_args, **f_kwargs)
-        except Exception:
-            # log exception and re-raise
-            log_exception(metadata=metadata)
-            raise
-        finally:
-            # prepare data for reporting exit event
-            exit_kvs = {}
+    # Do function passed in here expect to be bound (have im_func/im_class)?
 
-            # call the callback function, if set, and merge its return
-            # values with the exit event's reporting data
-            if callback and callable(callback):
-                cb_kvs = callback(func, f_args, f_kwargs, res)
-                if cb_kvs:
-                    exit_kvs.update(cb_kvs)
+    return log_method(None,
+                      store_return=store_return,
+                      store_args=store_args,
+                      store_backtrace=True,
+                      before_callback=before,
+                      callback=after,
+                      profile=profile,
+                      metadata=metadata,
+                      entry_kvs=entry_kvs)
 
-            # (optionally) report return value
-            if store_return:
-                exit_kvs['ReturnValue'] = res
-
-            # (optionally) report profiler results
-            if profile and stats:
-                exit_kvs['Profile'] = stats
-
-            exit_kvs['Language'] = 'python'
-            exit_kvs['ProfileName'] = profile_name
-
-            # log exit event
-            log(None, 'profile_exit', metadata=metadata, kvs=exit_kvs)
-
-        return res # return output of func(*f_args, **f_kwargs)
-
-    _profile_wrapper._oboe_wrapped = True      # mark our wrapper for protection below
-
-    # instrumentation helper decorator, called to add wrapper at "decorate" time
-    def decorate_with_profile_function(f):
-        if getattr(f, '_oboe_wrapped', False): # has this function already been wrapped?
-            return f                           # then pass through
-        if hasattr(f, 'im_func'):              # Is this a bound method of an object
-            f = f.im_func                      # then wrap the unbound method
-        return decorator(_profile_wrapper, f)  # otherwise wrap function f with wrapper
-
-    # return decorator function with arguments to profile_function() baked in
-    return decorate_with_profile_function
-
-def log_method(layer='Python', store_return=False, store_args=False,
+def log_method(layer, store_return=False, store_args=False, store_backtrace=False,
                before_callback=None, callback=None, profile=False, metadata=None, entry_kvs=None):
     """Wrap a method for tracing with the Tracelytics Oboe library.
         as opposed to profile_function, this decorator gives the method its own layer
 
-          layer: the layer to use when reporting
+          layer: the layer to use when reporting. If none, this layer will be a profile.
 
           store_return: report the return value
 
@@ -463,9 +407,17 @@ def log_method(layer='Python', store_return=False, store_args=False,
             if before_res:
                 f_args, f_kwargs, extra_entry_kvs = before_res
                 entry_kvs.update(extra_entry_kvs)
+        if store_backtrace:
+            entry_kvs['Backtrace'] = _str_backtrace()
+        # is func an instance method?
+        if 'im_class' in dir(func):
+            entry_kvs['Class'] = func.im_class.__name__
 
         # log entry event
-        log(layer, 'entry', metadata=metadata, **entry_kvs)
+        if layer is None:
+            log(layer, 'profile_entry', metadata=metadata, **entry_kvs)
+        else:
+            log(layer, 'entry', metadata=metadata, **entry_kvs)
 
         res = None   # return value of wrapped function
         stats = None # cProfile statistics, if enabled
@@ -500,7 +452,10 @@ def log_method(layer='Python', store_return=False, store_args=False,
                 exit_kvs['Profile'] = stats
 
             # log exit event
-            log(layer, 'exit', metadata=metadata, **exit_kvs)
+            if layer is None:
+                log(layer, 'profile_exit', metadata=metadata, **exit_kvs)
+            else:
+                log(layer, 'exit', metadata=metadata, **exit_kvs)
 
         return res # return output of func(*f_args, **f_kwargs)
 
