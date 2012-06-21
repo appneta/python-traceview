@@ -291,8 +291,7 @@ class profile_block(object):
 
         # exception?
         if exc_type:
-            log(None, 'error', ErrorClass=exc_type.__name__, ErrorMsg=str(exc_val),
-                backtrace=_str_backtrace(exc_tb), metadata=self.metadata)
+            log_exception(metadata=self.metadata)
 
         # build exit event
         exit_kvs = {}
@@ -380,9 +379,9 @@ def profile_function(profile_name, store_args=False, store_return=False, store_b
                 stats = _get_profile_info(p)
             else: # don't use cProfile, call func directly
                 res = func(*f_args, **f_kwargs)
-        except Exception, e:
+        except Exception:
             # log exception and re-raise
-            log(None, 'error', ErrorClass=e.__class__.__name__, ErrorMsg=str(e), metadata=metadata)
+            log_exception(metadata=metadata)
             raise
         finally:
             # prepare data for reporting exit event
@@ -477,9 +476,9 @@ def log_method(layer='Python', store_return=False, store_args=False,
                 stats = _get_profile_info(p)
             else: # don't use cProfile, call func directly
                 res = func(*f_args, **f_kwargs)
-        except Exception, e:
+        except Exception:
             # log exception and re-raise
-            log(layer, 'error', ErrorClass=e.__class__.__name__, Message=str(e), metadata=metadata)
+            log_exception(metadata=metadata)
             raise
         finally:
             # prepare data for reporting exit event
