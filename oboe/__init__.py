@@ -543,10 +543,46 @@ def _Event_addInfo_safe(func):
 ###############################################################################
 
 setattr(Event, 'addInfo', _Event_addInfo_safe(getattr(Event, 'addInfo')))
-setattr(Context, log.__name__, types.MethodType(log, Context))
-setattr(Context, log_error.__name__, types.MethodType(log_error, Context))
-setattr(Context, log_exception.__name__, types.MethodType(log_exception, Context))
-setattr(Context, log_method.__name__, types.MethodType(log_method, Context))
-setattr(Context, trace.__name__, types.MethodType(trace, Context))
-setattr(Context, profile_function.__name__, types.MethodType(profile_function, Context))
-setattr(Context, profile_block.__name__, profile_block)
+
+def context_log(cls, layer, label, backtrace=False, **kwargs):
+    log(layer, label, backtrace=backtrace, metadata=Context, **kwargs)
+
+def context_log_error(cls, exception=None, err_class=None, err_msg=None, backtrace=True):
+    if exception:
+        err_class = exception.__class__.__name__
+        err_msg = str(exception)
+    store_backtrace = False
+    if backtrace:
+        _, _, tb = sys.exc_info()
+        store_backtrace = True
+    return log_error(err_class, err_msg, store_backtrace=store_backtrace, backtrace=tb, metadata=Context)
+
+def context_log_exception(cls, msg=None, exc_info=None, backtrace=True):
+    typ, val, tb = exc_info or sys.exc_info()
+    if msg is None:
+        msg = str(val)
+    return log_error(typ.__name__, msg, store_backtrace=backtrace, backtrace=tb, metadata=Context)
+
+def context_trace(cls, layer='Python', xtr_hdr=None, kvs=None):
+    return trace(layer, metadata=Context, xtr_hdr=kvs, kvs=kvs)
+
+def context_profile_function(cls, profile_name, store_args=False, store_return=False, store_backtrace=False,
+                             profile=False, callback=None, **entry_kvs):
+    return profile_function(profile_name, store_args=False, store_return=False, store_backtrace=False,
+                            profile=False, callback=None, metadata=Context, **entry_kvs)
+
+def context_log_method(cls, layer='Python', store_return=False, store_args=False,
+                       callback=None, profile=False, **entry_kvs):
+    return log_method(layer, store_return=store_return, store_args=store_args,
+                      callback=callback, profile=profile, metadata=Context, **entry_kvs)
+
+def context_profile_block(profile_name, profile=False, store_backtrace=False):
+    return profile_block(profile_name, profile=profile, store_backtrace=store_backtrace)
+
+setattr(Context, log.__name__, types.MethodType(context_log, Context))
+setattr(Context, log_error.__name__, types.MethodType(context_log_error, Context))
+setattr(Context, log_exception.__name__, types.MethodType(context_log_exception, Context))
+setattr(Context, log_method.__name__, types.MethodType(context_log_method, Context))
+setattr(Context, trace.__name__, types.MethodType(context_trace, Context))
+setattr(Context, profile_function.__name__, types.MethodType(context_profile_function, Context))
+setattr(Context, profile_block.__name__, context_profile_block)
