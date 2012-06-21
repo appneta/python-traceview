@@ -17,7 +17,7 @@ try:
         after_cb = functools.partial(wrap_request_after, uri_position=1)
         wrapper = oboe.log_method(HTTPLIB2_LAYER,
                                   before_callback=before_cb,
-                                  acallback=after_cb)
+                                  callback=after_cb)
         setattr(httplib2.Http, 'request', wrapper(httplib2.Http.request))
     except Exception, e:
         print >> sys.stderr, "Oboe error:", str(e)
