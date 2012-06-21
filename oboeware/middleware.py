@@ -6,6 +6,9 @@ All rights reserved.
 
 import oboe
 import sys
+from loader import load_inst_modules
+import oninit
+import traceback as tb
 
 MODULE_INIT_REPORTED = False
 
@@ -34,13 +37,11 @@ class OboeMiddleware(object):
             oboe.config['reporter_port'] = self.oboe_config['oboe.reporter_port']
 
         # load pluggaable instrumentation
-        from loader import load_inst_modules
         load_inst_modules()
 
         # phone home
         global MODULE_INIT_REPORTED
         if not MODULE_INIT_REPORTED:
-            import oninit
             oninit.report_layer_init()
             MODULE_INIT_REPORTED = True
 
@@ -91,7 +92,6 @@ class OboeMiddleware(object):
                 headers.append(("X-Trace", endEvt.metadataString()))
                 endEvt.addInfo("Status", status.split(' ', 1)[0])
                 if exc_info:
-                    import traceback as tb
                     _t, exc, trace = exc_info
                     endEvt.addInfo("ErrorMsg", str(exc))
                     endEvt.addInfo("ErrorClass", exc.__class__.__name__)
@@ -150,7 +150,6 @@ class OboeMiddleware(object):
             if stats:
                 evt.addInfo("Profile", stats)
             if threw_error:
-                import traceback as tb
                 _t, exc, trace = sys.exc_info()
                 endEvt.addInfo("ErrorMsg", str(exc))
                 endEvt.addInfo("ErrorClass", exc.__class__.__name__)

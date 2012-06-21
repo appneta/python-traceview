@@ -6,7 +6,7 @@ All rights reserved.
 import sys
 import oboe
 import socket
-from functools import partial
+from functools import partial, wraps
 
 # memcache.Client methods (from docstring)
 # Setup: __init__, set_servers, forget_dead_hosts, disconnect_all, debuglog
@@ -42,7 +42,6 @@ def wrap_get_server(layer_name, func):
     This relies on the module internals, and just sends an info event when this
     function is called.
     """
-    from functools import wraps
     @wraps(func) # XXX Not Python2.4-friendly
     def wrapper(*f_args, **f_kwargs):
         ret = func(*f_args, **f_kwargs)
@@ -62,7 +61,6 @@ def wrap_get_server(layer_name, func):
     return wrapper
 
 def dynamic_wrap(fn):
-    from functools import wraps
     # We explicity pass assigned to wraps; this skips __module__ from the
     # default list, which doesn't exist for the functions from pylibmc.
     @wraps(fn, assigned=('__name__', '__doc__'))
