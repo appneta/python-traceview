@@ -7,6 +7,7 @@
 # django middleware for passing values to oboe
 __all__ = ("OboeDjangoMiddleware", "install_oboe_instrumentation")
 
+import oboe
 from oboeware import imports
 from oboeware import oninit
 import sys, threading, functools
@@ -28,19 +29,10 @@ class OboeWSGIHandler(object):
 
 class OboeDjangoMiddleware(object):
 
-    def __init__(self):
-        try:
-            import oboe
-        except ImportError:
-            print >> sys.stderr, "[oboeware] Can't import oboe, disabling OboeDjangoMiddleware"
-            from django.core.exceptions import MiddlewareNotUsed
-            raise MiddlewareNotUsed
-
     def _singleline(self, e): # some logs like single-line errors better
         return str(e).replace('\n', ' ').replace('\r', ' ')
 
     def process_request(self, request):
-        import oboe
         xtr_hdr = request.META.get("HTTP_X-Trace", request.META.get("HTTP_X_TRACE"))
         tracing_mode = oboe.config.get('tracing_mode')
 
@@ -58,7 +50,6 @@ class OboeDjangoMiddleware(object):
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        import oboe
         if not oboe.Context.isValid():
             return
         try:
@@ -70,7 +61,6 @@ class OboeDjangoMiddleware(object):
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
 
     def process_response(self, request, response):
-        import oboe
         if not oboe.Context.isValid():
             return response
         try:
@@ -80,14 +70,12 @@ class OboeDjangoMiddleware(object):
         return response
 
     def process_exception(self, request, exception):
-        import oboe
         try:
             oboe.log_exception()
         except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
 
 def middleware_hooks(module, objname):
-    import oboe
     try:
         # wrap middleware callables we want to wrap
         cls = getattr(module, objname, None)
@@ -137,7 +125,6 @@ def on_load_middleware():
                                  functools.partial(middleware_hooks, objname=objname))  # XXX Not Python2.4-friendly
 
         # ORM
-        import oboe
         if oboe.config['inst_enabled']['django_orm']:
             from oboeware import inst_django_orm
             imports.whenImported('django.db.backends', inst_django_orm.wrap)
