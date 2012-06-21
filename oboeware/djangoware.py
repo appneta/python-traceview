@@ -47,17 +47,13 @@ class OboeDjangoMiddleware(object):
         if not oboe.Context.isValid() and xtr_hdr and tracing_mode in ['always', 'through']:
             oboe.Context.fromString(xtr_hdr)
 
-        if not oboe.Context.isValid() and tracing_mode == "always":
-            evt = oboe.Context.startTrace()
-        elif oboe.Context.isValid() and tracing_mode != 'never':
-            evt = oboe.Context.createEvent()
-
-        if not oboe.Context.isValid():
-            return
         try:
-            evt.addInfo('Layer', 'django')
-            evt.addInfo('Label', 'entry')
-            oboe.reporter().sendReport(evt)
+            if not oboe.Context.isValid():
+                return
+            if not oboe.Context.isValid() and tracing_mode == "always":
+                oboe.start_trace('django')
+            elif oboe.Context.isValid() and tracing_mode != 'never':
+                oboe.log('django', 'entry')
         except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
 
@@ -66,13 +62,10 @@ class OboeDjangoMiddleware(object):
         if not oboe.Context.isValid():
             return
         try:
-            evt = oboe.Context.createEvent()
-            evt.addInfo('Layer', 'django')
-            evt.addInfo('Label', 'process_view')
-            evt.addInfo('Controller', view_func.__module__)
-            # XXX Not Python2.4-friendly
-            evt.addInfo('Action', view_func.__name__ if hasattr(view_func, '__name__') else None)
-            oboe.reporter().sendReport(evt)
+            kvs = {'Controller': view_func.__module__,
+                   # XXX Not Python2.4-friendly
+                   'Action': view_func.__name__ if hasattr(view_func, '__name__') else None}
+            oboe.log('django', 'process_view', kvs=kvs)
         except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
 
@@ -81,20 +74,13 @@ class OboeDjangoMiddleware(object):
         if not oboe.Context.isValid():
             return response
         try:
-            evt = oboe.Context.createEvent()
-            evt.addInfo('Layer', 'django')
-            evt.addInfo('Label', 'exit')
-            oboe.reporter().sendReport(evt)
-            response['X-Trace'] = oboe.Context.toString()
-            oboe.Context.clear()
+            response['X-Trace'] = oboe.end_trace('django')
         except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
         return response
 
     def process_exception(self, request, exception):
         import oboe
-        if not oboe.Context.isValid():
-            return
         try:
             oboe.log_exception()
         except Exception, e:

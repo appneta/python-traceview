@@ -137,7 +137,7 @@ def trace(layer='Python', xtr_hdr=None, kvs=None, metadata=None):
     if not metadata:
         metadata = Context
     def _trace_wrapper(func, *f_args, **f_kwargs):
-        _start_trace(metadata, layer, xtr_hdr, kvs)
+        start_trace(metadata, layer, xtr_hdr, kvs)
         try:
             res = func(*f_args, **f_kwargs)
         except Exception:
@@ -145,7 +145,7 @@ def trace(layer='Python', xtr_hdr=None, kvs=None, metadata=None):
             log_exception(metadata=metadata)
             raise
         finally:
-            _end_trace(metadata, layer)
+            end_trace(metadata, layer)
 
         return res # return output of func(*f_args, **f_kwargs)
 
@@ -171,9 +171,12 @@ def _log_event(evt, layer, label, kvs=None):
     rep = reporter()
     return rep.sendReport(evt)
 
-def _start_trace(metadata, layer, xtr_hdr=None, kvs=None):
+def start_trace(layer, metadata=None, xtr_hdr=None, kvs=None):
     """ Begin a new trace.  Takes into account oboe.config['tracing_mode'] and
-        oboe.config['sample_rate'], so may not always start a trace. """
+        oboe.config['sample_rate'], so may not always start a trace.
+
+        Returns the metadata as a string.
+        """
     if not metadata:
         metadata = Context
 
@@ -191,16 +194,22 @@ def _start_trace(metadata, layer, xtr_hdr=None, kvs=None):
     if not metadata.isValid():
         return
     _log_event(evt, layer, 'entry', kvs)
+    return metadata.toString()
 
-def _end_trace(metadata, layer, kvs=None):
-    """ Marks the end of a trace.  Clears oboe.Context to reset tracing state. """
+def end_trace(layer, metadata=None, kvs=None):
+    """ Marks the end of a trace.  Clears oboe.Context to reset tracing state.
+
+        Returns the metadata as a string.
+    """
     if not metadata:
         metadata = Context
     if not metadata.isValid():
         return
     evt = metadata.createEvent()
     _log_event(evt, layer, 'exit', kvs)
+    metadata_str = metadata.toString()
     metadata.clear()
+    return metadata_str
 
 def _function_signature(func):
     """Returns a string representation of the function signature of the given func."""
