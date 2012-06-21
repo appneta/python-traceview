@@ -83,6 +83,7 @@ def wrap(layer_name, module):
                 raise Exception('method %s not found in %s' % (method, module))
             kvs = {'Class': layer_name + '.Client',
                    'Function': method}
+            wrapfn = fn if hasattr(fn, 'im_func') else dynamic_wrap(fn)
             wrapper = oboe.log_method(layer_name,
                                       # XXX Not Python2.4-friendly
                                       callback=partial(wrap_mc_method, funcname=method),
