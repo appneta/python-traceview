@@ -86,7 +86,6 @@ def wrap(layer_name, module):
             wrapper = oboe.log_method(layer_name,
                                       # XXX Not Python2.4-friendly
                                       callback=partial(wrap_mc_method, funcname=method),
-                                      backtrace=True,
                                       entry_kvs=kvs)
             setattr(cls, method, wrapper(fn))
 
