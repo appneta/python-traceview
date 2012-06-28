@@ -71,16 +71,16 @@ class Context(object):
         """
 
         tracing_mode = config['tracing_mode']
+        md = None
         if xtr and tracing_mode in ['always', 'through']:
             # Continuing a trace from another, external, layer
             md = Metadata.fromString(xtr)
-        else:
-            # Possibly starting a new trace
-            md = Metadata.makeRandom()
 
         if xtr:
             evt = md.createEvent()
         elif tracing_mode == 'always' and random.random() < config['sample_rate']:
+            if not md:
+                md = Metadata.makeRandom()
             evt = SwigEvent.startTrace(md)
         else:
             evt = None
@@ -91,13 +91,17 @@ class Context(object):
         self.report(event)
 
     def create_event(self, label, layer):
-        return Event(self._md.createEvent(), label, layer)
+        if self.is_valid():
+            return Event(self._md.createEvent(), label, layer)
+        else:
+            return NullEvent()
 
     def report(self, event):
-        reporter().sendReport(event._evt, self._md)
+        if self.is_valid() and event.is_valid():
+            reporter().sendReport(event._evt, self._md)
 
     def is_valid(self):
-        return self._md.isValid()
+        return self._md and self._md.isValid()
 
 
 class Event(object):
@@ -116,7 +120,7 @@ class Event(object):
     def add_backtrace(self, backtrace=None):
         pass
     def is_valid(self):
-        return False
+        return True
 
 class NullEvent(object):
 
