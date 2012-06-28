@@ -3,7 +3,7 @@
 Copyright (C) 2012 by Tracelytics, Inc.
 All rights reserved.
 """
-from oboe_ext import Context, Event, UdpReporter
+from oboe_ext import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
 
 import inspect
 import random
@@ -28,9 +28,114 @@ config['reporter_port'] = 7831          # last two options
 
 config['inst_enabled'] = defaultdict(lambda: True)
 
-Context.init()
+SwigContext.init()
 
 reporter_instance = None
+
+###############################################################################
+# Low-level Public API
+###############################################################################
+
+class OboeException(Exception):
+    pass
+
+class Context(object):
+    # Basically a wrapper around the swig Metadata
+
+    def __init__(self, md):
+        self._md = md
+
+    # For interacting with the thread-local Context
+
+    @classmethod
+    def get_default(cls):
+        """Returns the Context currently stored as the thread-local default."""
+        return cls(SwigContext.copy())
+
+    def set_as_default(self):
+        """Sets this object as the thread-local default Context."""
+        SwigContext.set(self._md)
+
+    @classmethod
+    def clear_default(cls):
+        """Removes the current thread-local Context."""
+        SwigContext.clear()
+
+    # For starting/stopping traces
+
+    @classmethod
+    def start_trace(cls, layer, xtr=None):
+        """Returns a Context and a start event.
+
+        Takes sampling into account -- may return an (invalid Context, event) pair.
+        """
+
+        tracing_mode = config['tracing_mode']
+        if xtr and tracing_mode in ['always', 'through']:
+            # Continuing a trace from another, external, layer
+            md = Metadata.fromString(xtr)
+        else:
+            # Possibly starting a new trace
+            md = Metadata.makeRandom()
+
+        if xtr:
+            evt = md.createEvent()
+        elif tracing_mode == 'always' and random.random() < config['sample_rate']:
+            evt = SwigEvent.startTrace(md)
+        else:
+            evt = None
+
+        return cls(md), Event(evt, 'entry', layer) if evt else NullEvent()
+
+    def end_trace(self, event): # Reports the last event in a trace
+        self.report(event)
+
+    def create_event(self, label, layer):
+        return Event(self._md.createEvent(), label, layer)
+
+    def report(self, event):
+        reporter().sendReport(event._evt, self._md)
+
+    def is_valid(self):
+        return self._md.isValid()
+
+
+class Event(object):
+
+    def __init__(self, raw_evt, label, layer):
+        self._evt = raw_evt
+        self._evt.addInfo('Label', label)
+        self._evt.addInfo('Layer', layer)
+
+    def add_edge(self, event):
+        pass
+    def add_edge_str(self, op_id):
+        pass
+    def add_info(self, key, value):
+        pass
+    def add_backtrace(self, backtrace=None):
+        pass
+    def is_valid(self):
+        return False
+
+class NullEvent(object):
+
+    def __init__(self):
+        pass
+    def add_edge(self, event):
+        pass
+    def add_edge_str(self, op_id):
+        pass
+    def add_info(self, key, value):
+        pass
+    def add_backtrace(self, backtrace=None):
+        pass
+    def is_valid(self):
+        return False
+
+###############################################################################
+# High-level Public API
+###############################################################################
 
 try:
     import cStringIO, cProfile, pstats
