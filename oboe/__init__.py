@@ -147,12 +147,6 @@ try:
 except ImportError:
     found_cprofile = False
 
-def _str_backtrace(backtrace=None):
-    if backtrace:
-        return "".join(traceback.format_tb(backtrace))
-    else:
-        return "".join(traceback.format_stack()[:-1])
-
 def _get_profile_info(p):
     """Retursn a sorted set of stats from a cProfile instance."""
     sio = cStringIO.StringIO()
@@ -163,76 +157,167 @@ def _get_profile_info(p):
     sio.close()
     return stats
 
-def log(layer, label, backtrace=False, metadata=None, kvs=None):
-    """Report an individual tracing event.
-
-        layer: layer name, None for "same as current"
-
-        label: label of event
-
-        backtrace: gather a backtrace?
-
-        kwargs: extra key/value pairs to add to event
-
-    """
-    if not metadata:
-        metadata = Context
-    if not metadata.isValid():
-        return
-    evt = metadata.createEvent()
+def _str_backtrace(backtrace=None):
     if backtrace:
-        kvs['Backtrace'] = _str_backtrace()
+        return "".join(traceback.format_tb(backtrace))
+    else:
+        return "".join(traceback.format_stack()[:-1])
 
-    _log_event(evt, layer, label, kvs=kvs)
+def _log_event(evt, keys=None, store_backtrace=True, backtrace=None):
+    if keys is None:
+        keys = {}
 
-def log_error(err_class, err_msg, store_backtrace=True, backtrace=None, metadata=None):
-    """Report a custom error.
+    for k, v in keys.items():
+        evt.add_info(k, v)
 
-    This is for logging errors that are not associated with python exceptions --
-    framework 404s, missing data, etc.
+    if store_backtrace:
+        evt.add_info('Backtrace', _str_backtrace(backtrace))
+
+    ctx = Context.get_default()
+    ctx.report(evt)
+
+def log(label, layer, keys=None, store_backtrace=True, backtrace=None):
+    """Report a single tracing event.
 
     Arguments:
-        `err_class` - The class of error, e.g., the name of an exception class.
-        `err_msg` - The full description of the error.
-        `store_backtrace` [optional] - Whether to send a backtrace. Defaults to True.
-        `backtrace` [optional] - The backtrace to report this error on. Defaults to the caller.
+    - `label`: 'entry', 'exit', 'info', or 'error'
+    - `layer`: The layer name
+    - `keys`: A optional dictionary of key-value pairs to report.
+    - `store_backtrace`: Whether to report a backtrace. Default: True
+    - `backtrace`: The backtrace to report. Default: this call.
     """
-    if not metadata:
-        metadata = Context
-    if not metadata.isValid():
+    ctx = Context.get_default()
+    if not ctx.is_valid():
         return
-    evt = metadata.createEvent()
-    evt.addInfo('Label', 'error')
-    if store_backtrace:
-        evt.addInfo('Backtrace', _str_backtrace(backtrace))
+    evt = ctx.create_event(label, layer)
+    _log_event(evt, keys=keys)
 
-    evt.addInfo('ErrorClass', err_class)
-    evt.addInfo('ErrorMsg', err_msg)
+def start_trace(layer, xtr=None, keys=None, store_backtrace=True, backtrace=None):
+    """Start a new trace, or continue one from an external layer.
 
-    rep = reporter()
-    return rep.sendReport(evt)
-
-def log_exception(msg=None, store_backtrace=True, metadata=None):
-    """Report the message with exception information included. This should only
-    be called from an exception handler, unless exc_info is provided."""
-    if not metadata:
-        metadata = Context
-    if not metadata.isValid():
+    Arguments:
+    - `layer`: The layer name of the root of the trace.
+    - `xtr`: The X-Trace ID to continue this trace with.
+    - `keys`: An optional dictionary of key-value pairs to report.
+    - `store_backtrace`: Whether to report a backtrace. Default: True
+    - `backtrace`: The backtrace to report. Default: this call.
+    """
+    ctx, evt = Context.start_trace(layer, xtr=xtr)
+    if not ctx.is_valid():
         return
+    ctx.set_as_default()
+    _log_event(evt, keys=keys, store_backtrace=store_backtrace, backtrace=backtrace)
 
+def end_trace(layer, keys=None):
+    """End a trace, reporting a final event.
+
+    This will end a trace locally, but if the X-Trace ID is (somehow) reported
+    externally, other processes can continue this trace.
+
+    Arguments:
+    - `layer`: The layer name of the final layer.
+    - `keys`: An optional dictionary of key-value pairs to report.
+    """
+    ctx = Context.get_default()
+    if not ctx.is_valid():
+        return
+    evt = ctx.create_event('exit', layer)
+    _log_event(evt, keys=keys, store_backtrace=False)
+    Context.clear_default()
+
+def log_entry(layer, keys=None, store_backtrace=True, backtrace=None):
+    """Report the first event of a new layer.
+
+    Arguments:
+    - `layer`: The layer name.
+    - `keys`: An optional dictionary of key-value pairs to report.
+    - `store_backtrace`: Whether to report a backtrace. Default: True
+    - `backtrace`: The backtrace to report. Default: this call.
+    """
+    ctx = Context.get_default()
+    if not ctx.is_valid():
+        return
+    evt = ctx.create_event('entry', layer)
+    _log_event(evt, keys=keys, store_backtrace=store_backtrace, backtrace=backtrace)
+
+def log_error(err_class, err_msg, store_backtrace=True, backtrace=None):
+    """Report an error event.
+
+    Arguments:
+    - `err_class`: The class of error to report, e.g., the name of the Exception.
+    - `err_msg`: The specific error that occurred.
+    - `store_backtrace`: Whether to report a backtrace. Default: True
+    - `backtrace`: The backtrace to report. Default: this call.
+    """
+    ctx = Context.get_default()
+    if not ctx.is_valid():
+        return
+    evt = ctx.create_event('error', None)
+    keys = {'ErrorClass': err_class,
+            'ErrorMsg': err_msg}
+    _log_event(evt, keys=keys, store_backtrace=store_backtrace, backtrace=backtrace)
+
+def log_exception(msg=None, store_backtrace=True):
+    """Report the last thrown exception as an error
+
+    Arguments:
+    - `msg`: An optional message, to override err_msg. Defaults to str(Exception).
+    - `store_backtrace`: Whether to store the Exception backtrace.
+    """
     typ, val, tb = sys.exc_info()
     if typ is None:
-        raise Exception('log_exception should only be called from an exception metadata (e.g., except: block)')
+        raise OboeException('log_exception should only be called from an exception context (e.g., except: block)')
     if msg is None:
         msg = str(val)
 
-    evt = metadata.createEvent()
-    evt.addInfo('Label', 'error')
-    evt.addInfo('Backtrace', _str_backtrace(tb))
-    evt.addInfo('ErrorClass', typ.__name__)
-    evt.addInfo('ErrorMsg', msg)
+    if store_backtrace:
+        backtrace = _str_backtrace(tb)
+    else:
+        backtrace = None
 
-    return reporter().sendReport(evt)
+    log_error(typ.__name__, msg, store_backtrace=store_backtrace, backtrace=backtrace)
+
+def log_exit(layer, keys=None, store_backtrace=True, backtrace=None):
+    """Report the last event of the current layer.
+
+    Arguments:
+    - `layer`: The layer name.
+    - `keys`: An optional dictionary of key-value pairs to report.
+    - `store_backtrace`: Whether to report a backtrace. Default: True
+    - `backtrace`: The backtrace to report. Default: this call.
+    """
+    ctx = Context.get_default()
+    if not ctx.is_valid():
+        return
+    evt = ctx.create_event('exit', layer)
+    _log_event(evt, keys=keys, store_backtrace=store_backtrace, backtrace=backtrace)
+
+###############################################################################
+# Python-specific functions
+###############################################################################
+
+def _function_signature(func):
+    """Returns a string representation of the function signature of the given func."""
+    name = func.__name__
+    (args, varargs, keywords, defaults) = inspect.getargspec(func)
+    argstrings = []
+    if defaults:
+        first = len(args)-len(defaults)
+        argstrings = args[:first]
+        for i in range(first, len(args)):
+            d = defaults[i-first]
+            if isinstance(d, str):
+                d = "'"+d+"'"
+            else:
+                d = str(d)
+            argstrings.append(args[i]+'='+d)
+    else:
+        argstrings = args
+    if varargs:
+        argstrings.append('*'+varargs)
+    if keywords:
+        argstrings.append('**'+keywords)
+    return name+'('+', '.join(argstrings)+')'
 
 def trace(layer='Python', xtr_hdr=None, kvs=None, metadata=None):
     """ Decorator to begin a new trace on a block of code.  Takes
