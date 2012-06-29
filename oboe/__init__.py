@@ -122,11 +122,11 @@ class Event(object):
         self._evt.addInfo('Label', label)
         self._evt.addInfo('Layer', layer)
 
-    def add_edge(self, event):
-        raise NotImplementedError()
+    def add_edge(self, ctx):
+        self._evt.addEdge(ctx._md)
 
-    def add_edge_str(self, op_id):
-        raise NotImplementedError()
+    def add_edge_str(self, xtr):
+        self._evt.addEdgeStr(xtr)
 
     def add_info(self, key, value):
         self._evt.addInfo(key, value)
