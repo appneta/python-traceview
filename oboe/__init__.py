@@ -297,6 +297,10 @@ def log_exit(layer, keys=None, store_backtrace=True, backtrace=None):
     evt = ctx.create_event('exit', layer)
     _log_event(evt, keys=keys, store_backtrace=store_backtrace, backtrace=backtrace)
 
+def last_id():
+    """Returns a string representation the last event reported."""
+    return str(Context.get_default())
+
 ###############################################################################
 # Python-specific functions
 ###############################################################################
