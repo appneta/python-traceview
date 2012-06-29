@@ -106,6 +106,8 @@ class Context(object):
     def is_valid(self):
         return self._md and self._md.isValid()
 
+    def __str__(self):
+        return self._md.toString()
 
 class Event(object):
 
@@ -274,7 +276,7 @@ def log_exception(msg=None, store_backtrace=True):
         msg = str(val)
 
     if store_backtrace:
-        backtrace = _str_backtrace(tb)
+        backtrace = tb
     else:
         backtrace = None
 
@@ -389,7 +391,7 @@ class profile_block(object):
                       'Signature': ''}
         if self.backtrace:
             entry_kvs['Backtrace'] = _str_backtrace()
-        log(None, 'profile_entry', keys=entry_kvs)
+        log('profile_entry', None, keys=entry_kvs)
 
         # begin profiling
         if self.use_cprofile and found_cprofile:
@@ -416,7 +418,7 @@ class profile_block(object):
         exit_kvs['Language'] = 'python'
         exit_kvs['ProfileName'] = self.profile_name
 
-        log(None, 'profile_exit', keys=exit_kvs)
+        log('profile_exit', None, keys=exit_kvs)
 
 def profile_function(profile_name, store_args=False, store_return=False, store_backtrace=False,
                      profile=False, callback=None, entry_kvs=None):
@@ -528,9 +530,9 @@ def log_method(layer, store_return=False, store_args=False, store_backtrace=Fals
 
         # log entry event
         if layer is None:
-            log(layer, 'profile_entry', **entry_kvs)
+            log('profile_entry', layer, keys=entry_kvs)
         else:
-            log(layer, 'entry', **entry_kvs)
+            log('entry', layer, keys=entry_kvs)
 
         res = None   # return value of wrapped function
         stats = None # cProfile statistics, if enabled
@@ -566,9 +568,9 @@ def log_method(layer, store_return=False, store_args=False, store_backtrace=Fals
 
             # log exit event
             if layer is None:
-                log(layer, 'profile_exit', **exit_kvs)
+                log('profile_exit', layer, keys=exit_kvs)
             else:
-                log(layer, 'exit', **exit_kvs)
+                log('exit', layer, keys=exit_kvs)
 
         return res # return output of func(*f_args, **f_kwargs)
 
