@@ -83,6 +83,10 @@ class OboeDjangoMiddleware(object):
         try:
             evt = oboe.Context.createEvent()
             evt.addInfo('Layer', 'django')
+            evt.addInfo('HTTP-Host', request.META['HTTP_HOST'])
+            evt.addInfo('Method', request.META['REQUEST_METHOD'])
+            evt.addInfo('URL', request.build_absolute_uri())
+            evt.addInfo('Status', response.status_code)
             evt.addInfo('Label', 'exit')
             oboe.reporter().sendReport(evt)
             response['X-Trace'] = oboe.Context.toString()

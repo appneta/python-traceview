@@ -82,7 +82,8 @@ def wrap(layer_name, module):
                 continue
             fn = getattr(cls, method, None)
             if not fn:
-                raise Exception('method %s not found in %s' % (method, module))
+                # this method does not exist for this module/version
+                continue
             args = { 'layer': layer_name,
                      'store_return': False,
                      'callback': partial(wrap_mc_method, funcname=method), # XXX Not Python2.4-friendly
