@@ -39,6 +39,12 @@ reporter_instance = None
 class OboeException(Exception):
     pass
 
+def _str_backtrace(backtrace=None):
+    if backtrace:
+        return "".join(traceback.format_tb(backtrace))
+    else:
+        return "".join(traceback.format_stack()[:-1])
+
 class Context(object):
     # Basically a wrapper around the swig Metadata
 
@@ -117,13 +123,17 @@ class Event(object):
         self._evt.addInfo('Layer', layer)
 
     def add_edge(self, event):
-        pass
+        raise NotImplementedError()
+
     def add_edge_str(self, op_id):
-        pass
+        raise NotImplementedError()
+
     def add_info(self, key, value):
-        pass
+        self._evt.addInfo(key, value)
+
     def add_backtrace(self, backtrace=None):
-        pass
+        self.add_info('Backtrace', _str_backtrace(backtrace))
+
     def is_valid(self):
         return True
 
@@ -162,12 +172,6 @@ def _get_profile_info(p):
     sio.close()
     return stats
 
-def _str_backtrace(backtrace=None):
-    if backtrace:
-        return "".join(traceback.format_tb(backtrace))
-    else:
-        return "".join(traceback.format_stack()[:-1])
-
 def _log_event(evt, keys=None, store_backtrace=True, backtrace=None):
     if keys is None:
         keys = {}
@@ -176,7 +180,7 @@ def _log_event(evt, keys=None, store_backtrace=True, backtrace=None):
         evt.add_info(k, v)
 
     if store_backtrace:
-        evt.add_info('Backtrace', _str_backtrace(backtrace))
+        evt.add_backtrace(backtrace)
 
     ctx = Context.get_default()
     ctx.report(evt)
