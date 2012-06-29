@@ -50,7 +50,7 @@ class Context(object):
     @classmethod
     def get_default(cls):
         """Returns the Context currently stored as the thread-local default."""
-        return cls(SwigContext.copy())
+        return cls(SwigContext)
 
     def set_as_default(self):
         """Sets this object as the thread-local default Context."""
@@ -98,7 +98,10 @@ class Context(object):
 
     def report(self, event):
         if self.is_valid() and event.is_valid():
-            reporter().sendReport(event._evt, self._md)
+            if self._md == SwigContext:
+                reporter().sendReport(event._evt)
+            else:
+                reporter().sendReport(event._evt, self._md)
 
     def is_valid(self):
         return self._md and self._md.isValid()
