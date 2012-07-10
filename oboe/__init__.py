@@ -570,7 +570,7 @@ def log_method(layer, store_return=False, store_args=False, store_backtrace=Fals
 
             # (optionally) report profiler results
             if profile and stats:
-                exit_kvs['Profile'] = stats
+                exit_kvs['ProfileStats'] = stats
 
             # log exit event
             if layer is None:
