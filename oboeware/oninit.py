@@ -11,6 +11,6 @@ def report_layer_init(layer="wsgi"):
     """ Send a fake trace showing the initialization and version of this layer's
         instrumentation. """
     # Use logs instead of start/end_trace to avoid sampling
-    oboe.log(layer, "entry", kvs={"__Init": 1, "PyVersion": sys.version})
+    oboe.log(layer, "entry", keys={"__Init": 1, "PyVersion": sys.version})
     oboe.log(layer, "exit")
-    oboe.Context.clear()
+    oboe.Context.clear_default()
