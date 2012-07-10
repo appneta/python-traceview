@@ -466,13 +466,14 @@ def profile_function(profile_name, store_args=False, store_return=False, store_b
         cache('_oboe_module', lambda: inspect.getmodule(func).__name__)
         cache('_oboe_signature', lambda: _function_signature(func))
 
-        return {'Language': 'python',
+        keys = {'Language': 'python',
                 'ProfileName': profile_name,
                 'File': getattr(func, '_oboe_file'),
                 'LineNumber': getattr(func, '_oboe_line_number'),
                 'Module': getattr(func, '_oboe_module'),
                 'FunctionName': getattr(func, '__name__'),
                 'Signature': getattr(func, '_oboe_signature')}
+        return f_args, f_kwargs, keys
 
     def after(func, f_args, f_kwargs, res):
 
@@ -484,7 +485,7 @@ def profile_function(profile_name, store_args=False, store_return=False, store_b
     return log_method(None,
                       store_return=store_return,
                       store_args=store_args,
-                      store_backtrace=True,
+                      store_backtrace=store_backtrace,
                       before_callback=before,
                       callback=after,
                       profile=profile,
@@ -536,9 +537,9 @@ def log_method(layer, store_return=False, store_args=False, store_backtrace=Fals
 
         # log entry event
         if layer is None:
-            log('profile_entry', layer, keys=entry_kvs)
+            log('profile_entry', layer, keys=entry_kvs, store_backtrace=False)
         else:
-            log('entry', layer, keys=entry_kvs)
+            log('entry', layer, keys=entry_kvs, store_backtrace=False)
 
         res = None   # return value of wrapped function
         stats = None # cProfile statistics, if enabled
@@ -574,9 +575,9 @@ def log_method(layer, store_return=False, store_args=False, store_backtrace=Fals
 
             # log exit event
             if layer is None:
-                log('profile_exit', layer, keys=exit_kvs)
+                log('profile_exit', layer, keys=exit_kvs, store_backtrace=False)
             else:
-                log('exit', layer, keys=exit_kvs)
+                log('exit', layer, keys=exit_kvs, store_backtrace=False)
 
         return res # return output of func(*f_args, **f_kwargs)
 
