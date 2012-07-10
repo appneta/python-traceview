@@ -105,9 +105,9 @@ class Context(object):
     def report(self, event):
         if self.is_valid() and event.is_valid():
             if self._md == SwigContext:
-                reporter().sendReport(event._evt)
+                _reporter().sendReport(event._evt)
             else:
-                reporter().sendReport(event._evt, self._md)
+                _reporter().sendReport(event._evt, self._md)
 
     def is_valid(self):
         return self._md and self._md.isValid()
@@ -594,7 +594,7 @@ def log_method(layer, store_return=False, store_args=False, store_backtrace=Fals
     # return decorator function with arguments to log_method() baked in
     return decorate_with_log_method
 
-def reporter():
+def _reporter():
     global reporter_instance
 
     if not reporter_instance:
