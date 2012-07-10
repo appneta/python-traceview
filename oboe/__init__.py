@@ -397,9 +397,7 @@ class profile_block(object):
                       'Module': '',
                       'FunctionName': '',
                       'Signature': ''}
-        if self.backtrace:
-            entry_kvs['Backtrace'] = _str_backtrace()
-        log('profile_entry', None, keys=entry_kvs)
+        log('profile_entry', None, keys=entry_kvs, store_backtrace=self.backtrace)
 
         # begin profiling
         if self.use_cprofile and found_cprofile:
@@ -426,7 +424,7 @@ class profile_block(object):
         exit_kvs['Language'] = 'python'
         exit_kvs['ProfileName'] = self.profile_name
 
-        log('profile_exit', None, keys=exit_kvs)
+        log('profile_exit', None, keys=exit_kvs, store_backtrace=self.backtrace)
 
 def profile_function(profile_name, store_args=False, store_return=False, store_backtrace=False,
                      profile=False, callback=None, entry_kvs=None):
