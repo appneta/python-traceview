@@ -220,7 +220,7 @@ def start_trace(layer, xtr=None, keys=None, store_backtrace=True, backtrace=None
 def end_trace(layer, keys=None):
     """End a trace, reporting a final event.
 
-    This will end a trace locally, but if the X-Trace ID is (somehow) reported
+    This will end a trace locally. If the X-Trace ID returned here is reported
     externally, other processes can continue this trace.
 
     Arguments:
@@ -232,7 +232,9 @@ def end_trace(layer, keys=None):
         return
     evt = ctx.create_event('exit', layer)
     _log_event(evt, keys=keys, store_backtrace=False)
+    ctx_id = last_id()
     Context.clear_default()
+    return ctx_id
 
 def log_entry(layer, keys=None, store_backtrace=True, backtrace=None):
     """Report the first event of a new layer.
