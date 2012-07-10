@@ -199,7 +199,7 @@ def log(label, layer, keys=None, store_backtrace=True, backtrace=None):
     if not ctx.is_valid():
         return
     evt = ctx.create_event(label, layer)
-    _log_event(evt, keys=keys)
+    _log_event(evt, keys=keys, store_backtrace=store_backtrace, backtrace=backtrace)
 
 def start_trace(layer, xtr=None, keys=None, store_backtrace=True, backtrace=None):
     """Start a new trace, or continue one from an external layer.
