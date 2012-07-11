@@ -47,29 +47,44 @@ class OboeMiddleware(object):
 
     def __call__(self, environ, start_response):
         xtr_hdr = environ.get("HTTP_X-Trace", environ.get("HTTP_X_TRACE"))
-        endEvt = None
+        evt, endEvt = None, None
 
         tracing_mode = oboe.config.get('tracing_mode')
 
-        # get some HTTP details from WSGI vars
-        # http://www.wsgi.org/en/latest/definitions.html
-        entry_kvs = {}
-        for hosthdr in ("HTTP_HOST", "HTTP_X_HOST", "HTTP_X_FORWARDED_HOST", "SERVER_NAME"):
-            if hosthdr in environ:
-                entry_kvs["HTTP-Host"] = environ[hosthdr]
-                break
-        if 'PATH_INFO' in environ:
-            entry_kvs["URL"] = environ['PATH_INFO']
-        if 'REQUEST_METHOD' in environ:
-            entry_kvs["Method"] = environ['REQUEST_METHOD']
-        if 'QUERY_STRING' in environ:
-            entry_kvs["Query-String"] = environ['QUERY_STRING']
-
-        # start_trace checks for existing context: pylons errors with debug=false result in
+        # Check for existing context: pylons errors with debug=false result in
         # a second wsgi entry.  Using the existing context is favorable in
         # that case.
-        oboe.start_trace(self.layer, xtr_hdr, kvs=entry_kvs)
-        add_header = oboe.Context.isValid() and tracing_mode != 'never'
+        if not oboe.Context.isValid() and xtr_hdr and tracing_mode in ['always', 'through']:
+            oboe.Context.fromString(xtr_hdr)
+
+        if not oboe.Context.isValid() and tracing_mode == "always":
+            evt = oboe.Context.startTrace()
+        elif oboe.Context.isValid() and tracing_mode != 'never':
+            evt = oboe.Context.createEvent()
+
+        if oboe.Context.isValid() and tracing_mode != 'never':
+            evt.addInfo("Layer", self.layer)
+            evt.addInfo("Label", "entry")
+            # get some HTTP details from WSGI vars
+            # http://www.wsgi.org/en/latest/definitions.html
+            for hosthdr in ("HTTP_HOST", "HTTP_X_HOST", "HTTP_X_FORWARDED_HOST", "SERVER_NAME"):
+                if hosthdr in environ:
+                    evt.addInfo("HTTP-Host", environ[hosthdr])
+                    break
+            if 'PATH_INFO' in environ:
+                evt.addInfo("URL", environ['PATH_INFO'])
+            if 'REQUEST_METHOD' in environ:
+                evt.addInfo("Method", environ['REQUEST_METHOD'])
+            if 'QUERY_STRING' in environ:
+                evt.addInfo("Query-String", environ['QUERY_STRING'])
+
+            oboe.reporter().sendReport(evt)
+
+            endEvt = oboe.Context.createEvent()
+
+            add_header = True
+        else:
+            add_header = False
 
         response_body = []
         def wrapped_start_response(status, headers, exc_info=None):
