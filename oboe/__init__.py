@@ -137,6 +137,9 @@ class Event(object):
     def is_valid(self):
         return True
 
+    def id(self):
+        return self._evt.metadataString()
+
 class NullEvent(object):
 
     def __init__(self):
@@ -151,6 +154,8 @@ class NullEvent(object):
         pass
     def is_valid(self):
         return False
+    def id(self):
+        return ''
 
 ###############################################################################
 # High-level Public API
