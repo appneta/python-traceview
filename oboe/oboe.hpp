@@ -170,13 +170,7 @@ public:
     }
 
     bool addEdgeStr(const std::string& val) {
-        if (memchr(val.data(), '\0', val.size())) {
-            char buf[64];
-            oboe_btoh((uint8_t *)val.data(), buf, val.size());
-            return oboe_event_add_edge_fromstr(this, buf, val.size() * 2) == 0;
-        } else {
-            return oboe_event_add_edge_fromstr(this, val.c_str(), val.size()) == 0;
-        }
+        return oboe_event_add_edge_fromstr(this, val.c_str(), val.size()) == 0;
     }
 
     Metadata* getMetadata() {
