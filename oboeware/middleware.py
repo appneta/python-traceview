@@ -47,55 +47,38 @@ class OboeMiddleware(object):
 
     def __call__(self, environ, start_response):
         xtr_hdr = environ.get("HTTP_X-Trace", environ.get("HTTP_X_TRACE"))
-        evt, endEvt = None, None
+        endEvt = None
 
-        tracing_mode = oboe.config.get('tracing_mode')
+        ctx, startEvt = oboe.Context.start_trace(self.layer, xtr=xtr_hdr)
 
-        # Check for existing context: pylons errors with debug=false result in
-        # a second wsgi entry.  Using the existing context is favorable in
-        # that case.
-        if not oboe.Context.isValid() and xtr_hdr and tracing_mode in ['always', 'through']:
-            oboe.Context.fromString(xtr_hdr)
-
-        if not oboe.Context.isValid() and tracing_mode == "always":
-            evt = oboe.Context.startTrace()
-        elif oboe.Context.isValid() and tracing_mode != 'never':
-            evt = oboe.Context.createEvent()
-
-        if oboe.Context.isValid() and tracing_mode != 'never':
-            evt.addInfo("Layer", self.layer)
-            evt.addInfo("Label", "entry")
+        if ctx.is_valid():
             # get some HTTP details from WSGI vars
             # http://www.wsgi.org/en/latest/definitions.html
             for hosthdr in ("HTTP_HOST", "HTTP_X_HOST", "HTTP_X_FORWARDED_HOST", "SERVER_NAME"):
                 if hosthdr in environ:
-                    evt.addInfo("HTTP-Host", environ[hosthdr])
+                    startEvt.add_info("HTTP-Host", environ[hosthdr])
                     break
             if 'PATH_INFO' in environ:
-                evt.addInfo("URL", environ['PATH_INFO'])
+                startEvt.add_info("URL", environ['PATH_INFO'])
             if 'REQUEST_METHOD' in environ:
-                evt.addInfo("Method", environ['REQUEST_METHOD'])
+                startEvt.add_info("Method", environ['REQUEST_METHOD'])
             if 'QUERY_STRING' in environ:
-                evt.addInfo("Query-String", environ['QUERY_STRING'])
+                startEvt.add_info("Query-String", environ['QUERY_STRING'])
 
-            oboe.reporter().sendReport(evt)
-
-            endEvt = oboe.Context.createEvent()
-
-            add_header = True
-        else:
-            add_header = False
+            ctx.report(startEvt)
+            endEvt = ctx.create_event('exit', self.layer)
+            ctx.set_as_default()
 
         response_body = []
         def wrapped_start_response(status, headers, exc_info=None):
-            if add_header:
-                headers.append(("X-Trace", endEvt.metadataString()))
-                endEvt.addInfo("Status", status.split(' ', 1)[0])
+            if ctx.is_valid():
+                headers.append(("X-Trace", endEvt.id()))
+                endEvt.add_info("Status", status.split(' ', 1)[0])
                 if exc_info:
                     _t, exc, trace = exc_info
-                    endEvt.addInfo("ErrorMsg", str(exc))
-                    endEvt.addInfo("ErrorClass", exc.__class__.__name__)
-                    endEvt.addInfo("Backtrace", "".join(tb.format_list(tb.extract_tb(trace))))
+                    endEvt.add_info("ErrorMsg", str(exc))
+                    endEvt.add_info("ErrorClass", exc.__class__.__name__)
+                    endEvt.add_info("Backtrace", "".join(tb.format_list(tb.extract_tb(trace))))
             start_response(status, headers)
             if self.profile:
                 return response_body.append
@@ -131,33 +114,30 @@ class OboeMiddleware(object):
                 result = self.wrapped_app(environ, wrapped_start_response)
 
         except Exception:
-            self.send_end(tracing_mode, endEvt, environ, True, layer=self.layer)
+            self.send_end(ctx, endEvt, environ, threw_error=True)
             raise
 
-        self.send_end(tracing_mode, endEvt, environ, layer=self.layer, stats=stats)
-        oboe.Context.clear()
+        self.send_end(ctx, endEvt, environ, stats=stats)
 
         return result
 
     @classmethod
-    def send_end(cls, tracing_mode, endEvt, environ, threw_error=None, layer="wsgi", stats=None):
-        if oboe.Context.isValid() and tracing_mode != 'never' and endEvt:
-            evt = endEvt
+    def send_end(cls, ctx, evt, environ, threw_error=None, stats=None):
+        if not ctx.is_valid():
+            return
 
-            evt.addEdge(oboe.Context.get())
-            evt.addInfo("Layer", layer)
-            evt.addInfo("Label", "exit")
-            if stats:
-                evt.addInfo("Profile", stats)
-            if threw_error:
-                _t, exc, trace = sys.exc_info()
-                endEvt.addInfo("ErrorMsg", str(exc))
-                endEvt.addInfo("ErrorClass", exc.__class__.__name__)
-                evt.addInfo("Backtrace", "".join(tb.format_list(tb.extract_tb(trace))))
+        evt.add_edge(ctx)
+        if stats:
+            evt.add_info("Profile", stats)
+        if threw_error:
+            _t, exc, trace = sys.exc_info()
+            evt.add_info("ErrorMsg", str(exc))
+            evt.add_info("ErrorClass", exc.__class__.__name__)
+            evt.add_info("Backtrace", "".join(tb.format_list(tb.extract_tb(trace))))
 
-            # gets controller, action
-            for k, v in  environ.get('wsgiorg.routing_args', [{},{}])[1].items():
-                if k in set(("controller", "action")):
-                    evt.addInfo(str(k).capitalize(), str(v))
+        # gets controller, action
+        for k, v in environ.get('wsgiorg.routing_args', [{},{}])[1].items():
+            if k in set(("controller", "action")):
+                evt.add_info(str(k).capitalize(), str(v))
 
-            oboe.reporter().sendReport(evt)
+        ctx.end_trace(evt)
