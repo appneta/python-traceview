@@ -54,7 +54,7 @@ def wrap_get_server(layer_name, func):
                 elif host.family == socket.AF_UNIX:
                     args['RemoteHost'] = 'localhost'
 
-            oboe.log(layer_name, 'info', kvs=args)
+            oboe.log(layer_name, 'info', keys=args)
         except Exception, e:
             print >> sys.stderr, "Oboe error: %s" % e
         return ret
@@ -88,7 +88,7 @@ def wrap(layer_name, module):
                                       # XXX Not Python2.4-friendly
                                       callback=partial(wrap_mc_method, funcname=method),
                                       entry_kvs=kvs)
-            setattr(cls, method, wrapper(fn))
+            setattr(cls, method, wrapper(wrapfn))
 
         # per-key memcache host hook
         if hasattr(cls, '_get_server'):
