@@ -114,6 +114,9 @@ class Context(object):
     def is_valid(self):
         return self._md and self._md.isValid()
 
+    def copy(self):
+        return self.__class__(self._md)
+
     def __str__(self):
         return self._md.toString()
 
