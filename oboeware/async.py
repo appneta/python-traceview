@@ -1,5 +1,6 @@
-# useful code for instrumenting asynchronous Python programs
-# (c) 2011 Tracelytics, Inc.
+""" useful code for instrumenting asynchronous Python programs
+# (c) 2012 Tracelytics, Inc.
+"""
 import oboe
 
 class OboeContextManager(object):
@@ -21,12 +22,13 @@ class OboeContextManager(object):
     def __enter__(self):
         ctx = getattr(self.obj, '_oboe_md', None)
         if ctx:
-            oboe.Context.set(ctx)
-        elif oboe.Context.isValid():
-            oboe.Context.clear()
+            ctx.set_default()
+        elif oboe.Context.get_default().is_valid():
+            oboe.Context.clear_default()
 
     def __exit__(self, type, value, tb):
-        if oboe.Context.isValid():
-            ctx = oboe.Context.copy()
+        default_ctx = oboe.Context.get_default()
+        if default_ctx.is_valid():
+            ctx = default_ctx.copy()
             setattr(self.obj, '_oboe_md', ctx)
-            oboe.Context.clear()
+            oboe.Context.clear_default()
