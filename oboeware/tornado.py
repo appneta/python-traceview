@@ -22,7 +22,7 @@ def RequestHandler_start(self):
         ev = md.createEvent()
     else:   # start a new trace
         md = oboe.Metadata.makeRandom()
-        ev = oboe.Event.startTrace(md)
+        ev = oboe.SwigEvent.startTrace(md)
 
     ev.addInfo("Layer", "tornado")
     ev.addInfo("Label", "entry")
@@ -32,7 +32,7 @@ def RequestHandler_start(self):
     ev.addInfo("URL", self.request.uri)
     ev.addInfo("Method", self.request.method)
     ev.addInfo("HTTP-Host", self.request.host)
-    ret = oboe.reporter().sendReport(ev, md) # sets md = ev.metadata
+    oboe._reporter().sendReport(ev, md) # sets md = ev.metadata
 
     # create & store finish event for reporting later
     self.request._oboe_md = md
@@ -53,10 +53,10 @@ def RequestHandler_finish(self):
         elif hasattr(self, '_status_code'): # older Tornado
             self.request._oboe_finish_ev.addInfo("Status", self._status_code)
 
-        if oboe.Context.isValid():
-            self.request._oboe_finish_ev.addEdge(oboe.Context.get())
+        if oboe.SwigContext.isValid():
+            self.request._oboe_finish_ev.addEdge(oboe.SwigContext.get())
 
-        oboe.reporter().sendReport(self.request._oboe_finish_ev, self.request._oboe_md)
+        oboe._reporter().sendReport(self.request._oboe_finish_ev, self.request._oboe_md)
 
         # clear the stored oboe event/metadata from the request object
         self.request._oboe_md = None
@@ -69,9 +69,9 @@ def AsyncHTTPClient_start(request):
     oboe.log("cURL", "entry", True, {'cURL_URL':request.url, 'Async':True})
     if hasattr(request, 'headers'):
         if (hasattr(request.headers, '__setitem__')): # could be dict or tornado.httputil.HTTPHeaders
-            request.headers['X-Trace'] = oboe.Context.toString() # add X-Trace header to outgoing request
+            request.headers['X-Trace'] = oboe.SwigContext.toString() # add X-Trace header to outgoing request
 
-    request._oboe_md = oboe.Context.copy()
+    request._oboe_md = oboe.SwigContext.copy()
 
 def AsyncHTTPClient_finish(request, callback=None, headers=None):
     """
@@ -100,14 +100,16 @@ def AsyncHTTPClient_finish(request, callback=None, headers=None):
 
     ev.addInfo("Layer", "cURL")
     ev.addInfo("Label", "exit")
-    oboe.reporter().sendReport(ev, mdobj._oboe_md) # increments metadata in mdobj
+    oboe._reporter().sendReport(ev, mdobj._oboe_md) # increments metadata in mdobj
 
 # used for wrapping stack contexts in Tornado v1.2 stack_context.py
 class OboeContextWrapper(object):
     def __init__(self, wrapped):
         self.wrapped = wrapped
-        if oboe.Context.isValid(): # get current context at wrap time (e.g. when preparing "done" callback for an async call)
-            self._oboe_md = oboe.Context.copy() # store wrap-time context for use at call time
+        # get current context at wrap time (e.g. when preparing "done" callback for an async call)
+        if oboe.SwigContext.isValid():
+            # store wrap-time context for use at call time
+            self._oboe_md = oboe.SwigContext.copy()
 
     def __call__(self, *args, **kwargs):
         with async.OboeContextManager(self): # uses self._oboe_md as context
