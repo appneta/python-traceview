@@ -10,6 +10,7 @@ oboe.config['tracing_mode'] = 'always'
 
 from oboeware import inst_memcache # pylint: disable-msg=W0611
 import unittest
+from distutils.version import LooseVersion # pylint: disable-msg=W0611
 
 class Trace(object):
     """ Mock trace.  Listens directly to events in mock oboe_ext. """
@@ -147,8 +148,16 @@ class TestMemcacheMemcache(unittest.TestCase):
         self.assertNoExtraEvents()
 
     def feature_supported_by(self, *supported_libs):
-        if self.moduleName not in set(supported_libs):
-            self.skipTest('feature not supported by %s' % self.moduleName)
+        """ Compare the version of the lib to the supported modules and versions
+        passed in.  Skip the test if it's not supported. """
+        supported = dict([m.split(' ', 1) if ' ' in m else (m, True) for m in supported_libs])
+        support = supported[self.moduleName] if self.moduleName in supported else False
+        if isinstance(support, str):
+            op = support.split()[0]
+            version = support.split()[1]
+            support = eval('LooseVersion("%s") %s LooseVersion("%s")' % (self.lib.__version__, op, version))
+        if not support:
+            self.skipTest('feature not supported by %s v%s' % (self.moduleName, self.lib.__version__))
 
     def test_set(self):
         """ test set: client.set('key', 'value') """
@@ -164,7 +173,7 @@ class TestMemcacheMemcache(unittest.TestCase):
 
     def test_setter(self):
         """ test setter: client['key'] = 'value' """
-        self.feature_supported_by('pylibmc')
+        self.feature_supported_by('pylibmc >= 1.2')
         with self.new_trace():
             self.client()['test2'] = '5'
         self.assertSimpleTrace(op='set')
@@ -185,7 +194,7 @@ class TestMemcacheMemcache(unittest.TestCase):
 
     def test_getter(self):
         """ test get: value = client['key'] """
-        self.feature_supported_by('pylibmc')
+        self.feature_supported_by('pylibmc >= 1.2')
         with self.new_trace():
             value = self.client()[TEST_KEY]
             self.assertEqual(value, TEST_VALUE)
@@ -209,7 +218,7 @@ class TestMemcacheMemcache(unittest.TestCase):
 
     def test_deleter(self):
         """ test deleter: del client['key'] """
-        self.feature_supported_by('pylibmc')
+        self.feature_supported_by('pylibmc >= 1.2')
         self.client().set(TEMP_TEST_KEY, TEMP_TEST_VALUE)
         with self.new_trace():
             del self.client()[TEMP_TEST_KEY]

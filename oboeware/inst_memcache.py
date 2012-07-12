@@ -80,7 +80,8 @@ def wrap(layer_name, module):
                 continue
             fn = getattr(cls, method, None)
             if not fn:
-                raise Exception('method %s not found in %s' % (method, module))
+                # this method does not exist for this module/version
+                continue
             kvs = {'Class': layer_name + '.Client',
                    'Function': method}
             wrapfn = fn if hasattr(fn, 'im_func') else dynamic_wrap(fn)

@@ -14,7 +14,7 @@ path=$(dirname "$here")
 
 base=$(cd $path && pwd)
 venv=/venv/lib/python2.7/site-packages
-export PYTHONPATH=$base$venv:$PYTHONPATH
+export PYTHONPATH=$base:$venv:$PYTHONPATH:/usr/lib/python2.7
 
 /venv/bin/pylint --rcfile=$path/.pylintrc $1
 
