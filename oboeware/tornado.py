@@ -7,6 +7,7 @@ All rights reserved.
 from __future__ import with_statement
 import oboe
 from oboeware import async
+import functools
 
 # instrumentation functions for tornado.web.RequestHandler
 def RequestHandler_start(self):
@@ -96,10 +97,21 @@ class OboeContextWrapper(object):
     def __init__(self, wrapped):
         self.wrapped = wrapped
         # get current context at wrap time (e.g. when preparing "done" callback for an async call)
-        if oboe.Context.get_default.is_valid():
+        if oboe.Context.get_default().is_valid():
             # store wrap-time context for use at call time
             self._oboe_ctx = oboe.SwigContext.copy()
 
     def __call__(self, *args, **kwargs):
         with async.OboeContextManager(self): # uses self._oboe_ctx as context
             return self.wrapped.__call__(*args, **kwargs)
+
+# replacement for _StackContextWrapper in Tornado v2.x stack_context.py
+class _StackContextWrapper(functools.partial):
+    def __init__(self, *args, **kwargs):
+        if oboe.Context.get_default().is_valid():
+            self._oboe_ctx = oboe.SwigContext.copy()
+        return super(_StackContextWrapper, self).__init__(*args, **kwargs)
+
+    def __call__(self, *args, **kwargs):
+        with async.OboeContextManager(self):
+            return super(_StackContextWrapper, self).__call__(*args, **kwargs)
