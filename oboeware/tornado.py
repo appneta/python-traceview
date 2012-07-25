@@ -42,11 +42,11 @@ def RequestHandler_finish(self):
         ev = self.request._oboe_finish_ev
         ctx = self.request._oboe_ctx
         if hasattr(self, 'get_status'): # recent Tornado
-            ev.addInfo("Status", self.get_status())
+            ev.add_info("Status", self.get_status())
         elif hasattr(self, '_status_code'): # older Tornado
-            ev.addInfo("Status", self._status_code)
+            ev.add_info("Status", self._status_code)
 
-        ev.addEdge(oboe.Context.get_default())
+        ev.add_edge(oboe.Context.get_default())
         ctx.report(ev)
 
     # clear the stored oboe event/metadata from the request object
