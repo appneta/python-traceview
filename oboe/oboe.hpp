@@ -173,10 +173,6 @@ public:
         return oboe_event_add_edge(this, md) == 0;
     }
 
-    bool addEdge(Context& ctx) {
-        return oboe_event_add_edge(this, ctx.get()) == 0;
-    }
-
     bool addEdgeStr(const std::string& val) {
         return oboe_event_add_edge_fromstr(this, val.c_str(), val.size()) == 0;
     }

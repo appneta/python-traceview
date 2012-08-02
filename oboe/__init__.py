@@ -128,7 +128,10 @@ class Event(object):
         self._evt.addInfo('Layer', layer)
 
     def add_edge(self, ctx):
-        self._evt.addEdge(ctx._md)
+        if ctx._md == SwigContext:
+            self._evt.addEdge(ctx._md.get())
+        else:
+            self._evt.addEdge(ctx._md)
 
     def add_edge_str(self, xtr):
         self._evt.addEdgeStr(xtr)
