@@ -1,3 +1,6 @@
+0.5.4
+ - pymongo: support JSON serialization of DBRefs, improved error handling
+
 0.5.3
  - don't log errors for undefined methods in older versions of memcache libraries
  - djangoware: gather URL, HTTP-Host, HTTP method, HTTP status information
