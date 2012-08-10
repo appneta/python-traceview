@@ -188,9 +188,9 @@ def install_oboe_middleware(module):
     try:
         cls = getattr(module, 'BaseHandler', None)
         try:
-            if cls.OBOE_MIDDLEWARE_LOADER:
+            if not cls or cls.OBOE_MIDDLEWARE_LOADER:
                 return
-        except Exception, e:
+        except AttributeError, e:
             cls.OBOE_MIDDLEWARE_LOADER = True
         fn = getattr(cls, 'load_middleware', None)
         setattr(cls, 'load_middleware', base_handler_wrapper(fn))
