@@ -1,3 +1,6 @@
+0.5.4.1
+ - Fix exception in Django middleware initialization when New Relic is already loaded
+
 0.5.4
  - pymongo: support JSON serialization of DBRefs, improved error handling
 
