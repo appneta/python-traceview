@@ -17,7 +17,7 @@ from backport import defaultdict
 
 from decorator import decorator
 
-__version__ = '1.1.0'
+__version__ = '1.0.9'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 
 # configuration defaults
