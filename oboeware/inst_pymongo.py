@@ -3,7 +3,6 @@
 Copyright (C) 2012 by Tracelytics, Inc.
 All rights reserved.
 """
-import socket
 import sys
 
 import oboe
@@ -29,7 +28,7 @@ def profile_find(func, args, kwargs, func_result):
 
 def profile_update(func, args, kwargs, func_result):
     """ Oboe callback for pymongo 'update' profiling """
-    (collection, query, doc, upsert, manipulate, safe, multi) = args[:7]
+    (collection, query, doc, _upsert, _manipulate, safe, multi) = args[:7]
 
     report_kvs = _profile_query(collection, query, op='update', safe=safe, result=func_result)
     report_kvs['Update_Document'] = _to_json(doc)
@@ -41,12 +40,13 @@ def profile_update(func, args, kwargs, func_result):
 
 def profile_insert(func, args, kwargs, func_result):
     """ Oboe callback for pymongo 'insert' profiling """
-    (collection, docs, manipulate, safe) = args[:4]
+    (collection, docs, _manipulate, safe) = args[:4]
     if isinstance(docs, dict):
         docs = [docs]
 
     # Only first doc is finger printed
-    report_kvs = _profile_query(collection, docs[0], op='insert', safe=safe, result=func_result, docs_affected=len(docs))
+    report_kvs = _profile_query(collection, docs[0], op='insert', safe=safe,
+                                result=func_result, docs_affected=len(docs))
 
     return report_kvs
 
@@ -323,20 +323,19 @@ CURSOR_METHOD_INST = {
 
 def wrap_class(cls, class_name, class_method_inst):
     """ wrap class methods with instrumentation calls """
-    if not cls: return
+    if not cls:
+        return
     for (method, method_log_args) in class_method_inst.iteritems():
         fn = getattr(cls, method, None)
         if not fn:
             raise Exception('method %s not found in %s' % (method, cls.__name__))
-        args = { 'layer': PYMONGO_LAYER,
-                 'Class': '%s.%s' % (cls.__module__, cls.__name__),
+        kvs = { 'Class': '%s.%s' % (cls.__module__, cls.__name__),
                  'Function': method,
                  'Action': '%s.%s' % (class_name, method),
                }
-        args.update(method_log_args)
+        kvs.update(method_log_args)
         # XXX Not Python2.4-friendly
-        wrapfn = fn.im_func if hasattr(fn, 'im_func') else fn # wrap unbound instance method
-        setattr(cls, method, oboe.Context.log_method(**args)(wrapfn))
+        setattr(cls, method, oboe.log_method(PYMONGO_LAYER, entry_kvs=kvs)(fn))
 
 def wrap(module):
     """ wrap pymongo module, adding instrumentation to core classes """

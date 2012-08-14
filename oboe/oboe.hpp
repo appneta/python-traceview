@@ -1,12 +1,13 @@
-// Copyright (c) 2012 by Tracelytics, Inc.
-// All rights reserved.
-
 #ifndef OBOE_HPP
 #define OBOE_HPP
 
 #include <string>
 #include <oboe/oboe.h>
 
+// oboe prefix added in liboboe 1.0
+#ifndef MAX_METADATA_PACK_LEN
+#define MAX_METADATA_PACK_LEN OBOE_MAX_METADATA_PACK_LEN
+#endif
 
 class Event;
 
@@ -170,6 +171,10 @@ public:
 
     bool addEdge(oboe_metadata_t *md) {
         return oboe_event_add_edge(this, md) == 0;
+    }
+
+    bool addEdgeStr(const std::string& val) {
+        return oboe_event_add_edge_fromstr(this, val.c_str(), val.size()) == 0;
     }
 
     Metadata* getMetadata() {

@@ -7,6 +7,7 @@
 # django middleware for passing values to oboe
 __all__ = ("OboeDjangoMiddleware", "install_oboe_instrumentation")
 
+import oboe
 from oboeware import imports
 from oboeware import oninit
 import sys, threading, functools
@@ -28,84 +29,47 @@ class OboeWSGIHandler(object):
 
 class OboeDjangoMiddleware(object):
 
-    def __init__(self):
-        try:
-            import oboe
-        except ImportError:
-            print >> sys.stderr, "[oboeware] Can't import oboe, disabling OboeDjangoMiddleware"
-            from django.core.exceptions import MiddlewareNotUsed
-            raise MiddlewareNotUsed
-
     def _singleline(self, e): # some logs like single-line errors better
         return str(e).replace('\n', ' ').replace('\r', ' ')
 
     def process_request(self, request):
-        import oboe
-        xtr_hdr = request.META.get("HTTP_X-Trace", request.META.get("HTTP_X_TRACE"))
-        tracing_mode = oboe.config.get('tracing_mode')
-
-        if not oboe.Context.isValid() and xtr_hdr and tracing_mode in ['always', 'through']:
-            oboe.Context.fromString(xtr_hdr)
-
-        if not oboe.Context.isValid() and tracing_mode == "always":
-            evt = oboe.Context.startTrace()
-        elif oboe.Context.isValid() and tracing_mode != 'never':
-            evt = oboe.Context.createEvent()
-
-        if not oboe.Context.isValid():
-            return
         try:
-            evt.addInfo('Layer', 'django')
-            evt.addInfo('Label', 'entry')
-            oboe.reporter().sendReport(evt)
+            xtr_hdr = request.META.get("HTTP_X-Trace", request.META.get("HTTP_X_TRACE"))
+            oboe.start_trace('django', xtr=xtr_hdr, store_backtrace=False)
         except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        import oboe
-        if not oboe.Context.isValid():
+        if not oboe.Context.get_default().is_valid():
             return
         try:
-            evt = oboe.Context.createEvent()
-            evt.addInfo('Layer', 'django')
-            evt.addInfo('Label', 'process_view')
-            evt.addInfo('Controller', view_func.__module__)
-            # XXX Not Python2.4-friendly
-            evt.addInfo('Action', view_func.__name__ if hasattr(view_func, '__name__') else None)
-            oboe.reporter().sendReport(evt)
+            kvs = {'Controller': view_func.__module__,
+                   # XXX Not Python2.4-friendly
+                   'Action': view_func.__name__ if hasattr(view_func, '__name__') else None}
+            oboe.log('django', 'process_view', keys=kvs, store_backtrace=False)
         except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
 
     def process_response(self, request, response):
-        import oboe
-        if not oboe.Context.isValid():
+        if not oboe.Context.get_default().is_valid():
             return response
         try:
-            evt = oboe.Context.createEvent()
-            evt.addInfo('Layer', 'django')
-            evt.addInfo('HTTP-Host', request.META['HTTP_HOST'])
-            evt.addInfo('Method', request.META['REQUEST_METHOD'])
-            evt.addInfo('URL', request.build_absolute_uri())
-            evt.addInfo('Status', response.status_code)
-            evt.addInfo('Label', 'exit')
-            oboe.reporter().sendReport(evt)
-            response['X-Trace'] = oboe.Context.toString()
-            oboe.Context.clear()
+            kvs = {'HTTP-Host': request.META['HTTP_HOST'],
+                   'Method': request.META['REQUEST_METHOD'],
+                   'URL': request.build_absolute_uri(),
+                   'Status': response.status_code}
+            response['X-Trace'] = oboe.end_trace('django', keys=kvs)
         except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
         return response
 
     def process_exception(self, request, exception):
-        import oboe
-        if not oboe.Context.isValid():
-            return
         try:
-            oboe.Context.log_error(exception=exception)
+            oboe.log_exception()
         except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
 
 def middleware_hooks(module, objname):
-    import oboe
     try:
         # wrap middleware callables we want to wrap
         cls = getattr(module, objname, None)
@@ -119,10 +83,9 @@ def middleware_hooks(module, objname):
             fn = getattr(cls, method, None)
             if not fn:
                 continue
-            wrapfn = fn.im_func if hasattr(fn, 'im_func') else fn # XXX Not Python2.4-friendly
             profile_name = '%s.%s.%s' % (module.__name__, objname, method)
             setattr(cls, method,
-                    oboe.Context.profile_function(profile_name)(wrapfn))
+                    oboe.profile_function(profile_name)(fn))
     except Exception, e:
         print >> sys.stderr, "Oboe error:", str(e)
 
@@ -156,7 +119,6 @@ def on_load_middleware():
                                  functools.partial(middleware_hooks, objname=objname))  # XXX Not Python2.4-friendly
 
         # ORM
-        import oboe
         if oboe.config['inst_enabled']['django_orm']:
             from oboeware import inst_django_orm
             imports.whenImported('django.db.backends', inst_django_orm.wrap)

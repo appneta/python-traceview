@@ -6,7 +6,7 @@ All rights reserved.
 import sys
 import oboe
 import socket
-from functools import partial
+from functools import partial, wraps
 
 # memcache.Client methods (from docstring)
 # Setup: __init__, set_servers, forget_dead_hosts, disconnect_all, debuglog
@@ -42,7 +42,6 @@ def wrap_get_server(layer_name, func):
     This relies on the module internals, and just sends an info event when this
     function is called.
     """
-    from functools import wraps
     @wraps(func) # XXX Not Python2.4-friendly
     def wrapper(*f_args, **f_kwargs):
         ret = func(*f_args, **f_kwargs)
@@ -55,14 +54,13 @@ def wrap_get_server(layer_name, func):
                 elif host.family == socket.AF_UNIX:
                     args['RemoteHost'] = 'localhost'
 
-            oboe.Context.log(layer_name, 'info', **args)
+            oboe.log(layer_name, 'info', keys=args)
         except Exception, e:
             print >> sys.stderr, "Oboe error: %s" % e
         return ret
     return wrapper
 
 def dynamic_wrap(fn):
-    from functools import wraps
     # We explicity pass assigned to wraps; this skips __module__ from the
     # default list, which doesn't exist for the functions from pylibmc.
     @wraps(fn, assigned=('__name__', '__doc__'))
@@ -84,16 +82,14 @@ def wrap(layer_name, module):
             if not fn:
                 # this method does not exist for this module/version
                 continue
-            args = { 'layer': layer_name,
-                     'store_return': False,
-                     'callback': partial(wrap_mc_method, funcname=method), # XXX Not Python2.4-friendly
-                     'Class': layer_name + '.Client',
-                     'Function': method,
-                     'backtrace': True,
-                     }
-            # XXX Not Python2.4-friendly
-            wrapfn = fn.im_func if hasattr(fn, 'im_func') else dynamic_wrap(fn) # wrap unbound instance method
-            setattr(cls, method, oboe.Context.log_method(**args)(wrapfn))
+            kvs = {'Class': layer_name + '.Client',
+                   'Function': method}
+            wrapfn = fn if hasattr(fn, 'im_func') else dynamic_wrap(fn)
+            wrapper = oboe.log_method(layer_name,
+                                      # XXX Not Python2.4-friendly
+                                      callback=partial(wrap_mc_method, funcname=method),
+                                      entry_kvs=kvs)
+            setattr(cls, method, wrapper(wrapfn))
 
         # per-key memcache host hook
         if hasattr(cls, '_get_server'):
