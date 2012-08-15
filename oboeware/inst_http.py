@@ -32,7 +32,20 @@ def wrap_request_after(func, f_args, f_kwargs, res, uri_position):
     if info.query != '':
         path += '?' + info.query
 
-    return {'IsService': 'yes',
-            'RemoteProtocol': info.scheme if info.scheme != '' else 'http', # XXX Not Python2.4-friendly
-            'RemoteHost': info.netloc,
-            'ServiceArg': path}
+    headers = None
+    if res:
+        if isinstance(res, tuple) and len(res) == 2:
+            # httplib2:
+            headers = res[0]
+        elif hasattr(res, 'headers'):
+            # urllib3:
+            headers = res.headers
+    edge_str = None
+    if headers:
+        edge_str = hasattr(headers, 'get') and headers.get('x-trace', None)
+
+    return ({'IsService': 'yes',
+             'RemoteProtocol': info.scheme if info.scheme != '' else 'http', # XXX Not Python2.4-friendly
+             'RemoteHost': info.netloc,
+             'ServiceArg': path},
+             edge_str)

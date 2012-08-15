@@ -185,7 +185,7 @@ def _get_profile_info(p):
     sio.close()
     return stats
 
-def _log_event(evt, keys=None, store_backtrace=True, backtrace=None):
+def _log_event(evt, keys=None, store_backtrace=True, backtrace=None, edge_str=None):
     if keys is None:
         keys = {}
 
@@ -195,10 +195,13 @@ def _log_event(evt, keys=None, store_backtrace=True, backtrace=None):
     if store_backtrace:
         evt.add_backtrace(backtrace)
 
+    if edge_str:
+        evt.add_edge_str(edge_str)
+
     ctx = Context.get_default()
     ctx.report(evt)
 
-def log(label, layer, keys=None, store_backtrace=True, backtrace=None):
+def log(label, layer, keys=None, store_backtrace=True, backtrace=None, edge_str=None):
     """Report a single tracing event.
 
     Arguments:
@@ -212,7 +215,7 @@ def log(label, layer, keys=None, store_backtrace=True, backtrace=None):
     if not ctx.is_valid():
         return
     evt = ctx.create_event(label, layer)
-    _log_event(evt, keys=keys, store_backtrace=store_backtrace, backtrace=backtrace)
+    _log_event(evt, keys=keys, store_backtrace=store_backtrace, backtrace=backtrace, edge_str=edge_str)
 
 def start_trace(layer, xtr=None, keys=None, store_backtrace=True, backtrace=None):
     """Start a new trace, or continue one from an external layer.
@@ -301,7 +304,7 @@ def log_exception(msg=None, store_backtrace=True):
 
     log_error(typ.__name__, msg, store_backtrace=store_backtrace, backtrace=backtrace)
 
-def log_exit(layer, keys=None, store_backtrace=True, backtrace=None):
+def log_exit(layer, keys=None, store_backtrace=True, backtrace=None, edge_str=None):
     """Report the last event of the current layer.
 
     Arguments:
@@ -314,7 +317,7 @@ def log_exit(layer, keys=None, store_backtrace=True, backtrace=None):
     if not ctx.is_valid():
         return
     evt = ctx.create_event('exit', layer)
-    _log_event(evt, keys=keys, store_backtrace=store_backtrace, backtrace=backtrace)
+    _log_event(evt, keys=keys, store_backtrace=store_backtrace, backtrace=backtrace, edge_str=edge_str)
 
 def last_id():
     """Returns a string representation the last event reported."""
@@ -572,11 +575,17 @@ def log_method(layer, store_return=False, store_args=False, store_backtrace=Fals
         finally:
             # prepare data for reporting exit event
             exit_kvs = {}
+            edge_str = None
 
             # call the callback function, if set, and merge its return
             # values with the exit event's reporting data
             if callback and callable(callback):
                 cb_ret = callback(func, f_args, f_kwargs, res)
+                # callback can optionally return a 2-tuple, where the
+                # second parameter is an additional edge to add to
+                # the exit event
+                if isinstance(cb_ret, tuple) and len(cb_ret) == 2:
+                    cb_ret, edge_str = cb_ret
                 if cb_ret:
                     exit_kvs.update(cb_ret)
 
@@ -590,9 +599,9 @@ def log_method(layer, store_return=False, store_args=False, store_backtrace=Fals
 
             # log exit event
             if layer is None:
-                log('profile_exit', layer, keys=exit_kvs, store_backtrace=False)
+                log('profile_exit', layer, keys=exit_kvs, store_backtrace=False, edge_str=edge_str)
             else:
-                log('exit', layer, keys=exit_kvs, store_backtrace=False)
+                log('exit', layer, keys=exit_kvs, store_backtrace=False, edge_str=edge_str)
 
         return res # return output of func(*f_args, **f_kwargs)
 
