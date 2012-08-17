@@ -25,7 +25,7 @@ def wrap_request_putrequest(func, f_args, f_kwargs):
 def wrap_request_endheaders(func, f_args, f_kwargs):
     if len(f_args) >= 1:
         self = f_args[0]
-        self.putheader('x-trace', oboe.last_id())
+        self.putheader('X-Trace', oboe.last_id())
     return f_args, f_kwargs, {}
 
 def wrap_request_getresponse(func, f_args, f_kwargs, res):
