@@ -696,16 +696,16 @@ def _old_context_profile_block(profile_name, profile=False, store_backtrace=Fals
     _log.warn('oboe.Context.profile_block is deprecated. Please use oboe.profile_block (and note signature change).')
     return profile_block(profile_name, profile=profile, store_backtrace=store_backtrace)
 
-def _old_context_to_string():
+def _old_context_to_string(cls):
     _log.warn('oboe.Context.toString is deprecated. Please use str(oboe.Context.get_default())')
     return str(Context.get_default())
 
-def _old_context_from_string(md_string):
+def _old_context_from_string(cls, md_string):
     _log.warn('oboe.Context.fromString is deprecated.')
     c = Context(md_string)
     c.set_as_default()
 
-def _old_context_is_valid():
+def _old_context_is_valid(cls):
     _log.warn('oboe.Context.isValid is deprecated. Please use oboe.Context.get_default().is_valid()')
     return Context.get_default().is_valid()
 
