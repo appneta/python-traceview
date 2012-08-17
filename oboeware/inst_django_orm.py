@@ -43,7 +43,7 @@ class CursorOboeWrapper(object):
         return iter(self.cursor)
 
     def execute(self, sql, params=()):
-        return self.cursor.execute(sql, params=params)
+        return self.cursor.execute(sql, params)
 
     def executemany(self, sql, param_list):
         return self.cursor.executemany(sql, param_list)
