@@ -207,12 +207,11 @@ def _log_event(evt, keys=None, store_backtrace=True, backtrace=None, edge_str=No
 def log(label, layer, keys=None, store_backtrace=True, backtrace=None, edge_str=None):
     """Report a single tracing event.
 
-    Arguments:
-    - `label`: 'entry', 'exit', 'info', or 'error'
-    - `layer`: The layer name
-    - `keys`: A optional dictionary of key-value pairs to report.
-    - `store_backtrace`: Whether to report a backtrace. Default: True
-    - `backtrace`: The backtrace to report. Default: this call.
+    :label: 'entry', 'exit', 'info', or 'error'
+    :layer: The layer name
+    :keys: A optional dictionary of key-value pairs to report.
+    :store_backtrace: Whether to report a backtrace. Default: True
+    :backtrace: The backtrace to report. Default: this call.
     """
     ctx = Context.get_default()
     if not ctx.is_valid():
@@ -223,12 +222,11 @@ def log(label, layer, keys=None, store_backtrace=True, backtrace=None, edge_str=
 def start_trace(layer, xtr=None, keys=None, store_backtrace=True, backtrace=None):
     """Start a new trace, or continue one from an external layer.
 
-    Arguments:
-    - `layer`: The layer name of the root of the trace.
-    - `xtr`: The X-Trace ID to continue this trace with.
-    - `keys`: An optional dictionary of key-value pairs to report.
-    - `store_backtrace`: Whether to report a backtrace. Default: True
-    - `backtrace`: The backtrace to report. Default: this call.
+    :layer: The layer name of the root of the trace.
+    :xtr: The X-Trace ID to continue this trace with.
+    :keys: An optional dictionary of key-value pairs to report.
+    :store_backtrace: Whether to report a backtrace. Default: True
+    :backtrace: The backtrace to report. Default: this call.
     """
     ctx, evt = Context.start_trace(layer, xtr=xtr)
     if not ctx.is_valid():
@@ -242,9 +240,8 @@ def end_trace(layer, keys=None):
     This will end a trace locally. If the X-Trace ID returned here is reported
     externally, other processes can continue this trace.
 
-    Arguments:
-    - `layer`: The layer name of the final layer.
-    - `keys`: An optional dictionary of key-value pairs to report.
+    :layer: The layer name of the final layer.
+    :keys: An optional dictionary of key-value pairs to report.
     """
     ctx = Context.get_default()
     if not ctx.is_valid():
@@ -258,11 +255,10 @@ def end_trace(layer, keys=None):
 def log_entry(layer, keys=None, store_backtrace=True, backtrace=None):
     """Report the first event of a new layer.
 
-    Arguments:
-    - `layer`: The layer name.
-    - `keys`: An optional dictionary of key-value pairs to report.
-    - `store_backtrace`: Whether to report a backtrace. Default: True
-    - `backtrace`: The backtrace to report. Default: this call.
+    :layer: The layer name.
+    :keys: An optional dictionary of key-value pairs to report.
+    :store_backtrace: Whether to report a backtrace. Default: True
+    :backtrace: The backtrace to report. Default: this call.
     """
     ctx = Context.get_default()
     if not ctx.is_valid():
@@ -273,11 +269,10 @@ def log_entry(layer, keys=None, store_backtrace=True, backtrace=None):
 def log_error(err_class, err_msg, store_backtrace=True, backtrace=None):
     """Report an error event.
 
-    Arguments:
-    - `err_class`: The class of error to report, e.g., the name of the Exception.
-    - `err_msg`: The specific error that occurred.
-    - `store_backtrace`: Whether to report a backtrace. Default: True
-    - `backtrace`: The backtrace to report. Default: this call.
+    :err_class: The class of error to report, e.g., the name of the Exception.
+    :err_msg: The specific error that occurred.
+    :store_backtrace: Whether to report a backtrace. Default: True
+    :backtrace: The backtrace to report. Default: this call.
     """
     ctx = Context.get_default()
     if not ctx.is_valid():
@@ -290,9 +285,8 @@ def log_error(err_class, err_msg, store_backtrace=True, backtrace=None):
 def log_exception(msg=None, store_backtrace=True):
     """Report the last thrown exception as an error
 
-    Arguments:
-    - `msg`: An optional message, to override err_msg. Defaults to str(Exception).
-    - `store_backtrace`: Whether to store the Exception backtrace.
+    :msg: An optional message, to override err_msg. Defaults to str(Exception).
+    :store_backtrace: Whether to store the Exception backtrace.
     """
     typ, val, tb = sys.exc_info()
     if typ is None:
@@ -310,11 +304,10 @@ def log_exception(msg=None, store_backtrace=True):
 def log_exit(layer, keys=None, store_backtrace=True, backtrace=None, edge_str=None):
     """Report the last event of the current layer.
 
-    Arguments:
-    - `layer`: The layer name.
-    - `keys`: An optional dictionary of key-value pairs to report.
-    - `store_backtrace`: Whether to report a backtrace. Default: True
-    - `backtrace`: The backtrace to report. Default: this call.
+    :layer: The layer name.
+    :keys: An optional dictionary of key-value pairs to report.
+    :store_backtrace: Whether to report a backtrace. Default: True
+    :backtrace: The backtrace to report. Default: this call.
     """
     ctx = Context.get_default()
     if not ctx.is_valid():
