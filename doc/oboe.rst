@@ -12,26 +12,12 @@ single-threaded code or synchronous code.
 .. module:: oboe
 
 .. autofunction:: log
-
-
 .. autofunction:: start_trace
-
-
 .. autofunction:: end_trace
-
-
 .. autofunction:: log_entry
-
-
 .. autofunction:: log_error
-
-
 .. autofunction:: log_exception
-
-
 .. autofunction:: log_exit
-
-
 .. autofunction:: last_id
 
 
