@@ -99,15 +99,18 @@ class Context(object):
         return cls(md), Event(evt, 'entry', layer) if evt else NullEvent()
 
     def end_trace(self, event): # Reports the last event in a trace
+        """Ends this trace, rendering this Context invalid."""
         self.report(event)
 
     def create_event(self, label, layer):
+        """Returns an Event associated with this Context."""
         if self.is_valid():
             return Event(self._md.createEvent(), label, layer)
         else:
             return NullEvent()
 
     def report(self, event):
+        """Report this Event."""
         if self.is_valid() and event.is_valid():
             if self._md == SwigContext:
                 _reporter().sendReport(event._evt)
@@ -115,15 +118,23 @@ class Context(object):
                 _reporter().sendReport(event._evt, self._md)
 
     def is_valid(self):
+        """Returns whether this Context is valid.
+
+        Call this before doing expensive introspection. If this returns False,
+        then any event created by this Context will not actually return
+        information to Tracelytics.
+        """
         return self._md and self._md.isValid()
 
     def copy(self):
+        """Make a clone of this Context."""
         return self.__class__(self._md)
 
     def __str__(self):
         return self._md.toString()
 
 class Event(object):
+    """An Event is a key/value bag that will be reported to the Tracelyzer."""
 
     def __init__(self, raw_evt, label, layer):
         self._evt = raw_evt
@@ -131,27 +142,54 @@ class Event(object):
         self._evt.addInfo('Layer', layer)
 
     def add_edge(self, ctx):
+        """Connect an additional Context to this Event.
+
+        All Events are created with an edge pointing to the previous Event. This
+        creates an additional edge. This pattern is useful for entry/exit pairs
+        in a layer.
+        """
         if ctx._md == SwigContext:
             self._evt.addEdge(ctx._md.get())
         else:
             self._evt.addEdge(ctx._md)
 
     def add_edge_str(self, xtr):
+        """Adds an edge to this Event, based on a str(Context).
+
+        Useful for continuing a trace, e.g., from an X-Trace header in a service
+        call.
+        """
         self._evt.addEdgeStr(xtr)
 
     def add_info(self, key, value):
+        """Add a key/value pair to this event."""
         self._evt.addInfo(key, value)
 
     def add_backtrace(self, backtrace=None):
+        """Add a backtrace to this event.
+
+        If backtrace is None, grab the backtrace from the current stack trace.
+        """
         self.add_info('Backtrace', _str_backtrace(backtrace))
 
     def is_valid(self):
+        """Returns whether this event will be reported to the Tracelyzer."""
         return True
 
     def id(self):
+        """Returns a string version of this Event.
+
+        Useful for attaching to output service calls (e.g., an X-Trace request
+        header).
+        """
         return self._evt.metadataString()
 
 class NullEvent(object):
+    """Subclass of event that will not be reported to the Tracelyzer.
+
+    All methods here are no-ops. Checking for this class can be done
+    (indirectly) by calling is_valid() on an object.
+    """
 
     def __init__(self):
         pass
@@ -207,12 +245,11 @@ def _log_event(evt, keys=None, store_backtrace=True, backtrace=None, edge_str=No
 def log(label, layer, keys=None, store_backtrace=True, backtrace=None, edge_str=None):
     """Report a single tracing event.
 
-    Arguments:
-    - `label`: 'entry', 'exit', 'info', or 'error'
-    - `layer`: The layer name
-    - `keys`: A optional dictionary of key-value pairs to report.
-    - `store_backtrace`: Whether to report a backtrace. Default: True
-    - `backtrace`: The backtrace to report. Default: this call.
+    :label: 'entry', 'exit', 'info', or 'error'
+    :layer: The layer name
+    :keys: A optional dictionary of key-value pairs to report.
+    :store_backtrace: Whether to report a backtrace. Default: True
+    :backtrace: The backtrace to report. Default: this call.
     """
     ctx = Context.get_default()
     if not ctx.is_valid():
@@ -223,12 +260,11 @@ def log(label, layer, keys=None, store_backtrace=True, backtrace=None, edge_str=
 def start_trace(layer, xtr=None, keys=None, store_backtrace=True, backtrace=None):
     """Start a new trace, or continue one from an external layer.
 
-    Arguments:
-    - `layer`: The layer name of the root of the trace.
-    - `xtr`: The X-Trace ID to continue this trace with.
-    - `keys`: An optional dictionary of key-value pairs to report.
-    - `store_backtrace`: Whether to report a backtrace. Default: True
-    - `backtrace`: The backtrace to report. Default: this call.
+    :layer: The layer name of the root of the trace.
+    :xtr: The X-Trace ID to continue this trace with.
+    :keys: An optional dictionary of key-value pairs to report.
+    :store_backtrace: Whether to report a backtrace. Default: True
+    :backtrace: The backtrace to report. Default: this call.
     """
     ctx, evt = Context.start_trace(layer, xtr=xtr)
     if not ctx.is_valid():
@@ -242,9 +278,8 @@ def end_trace(layer, keys=None):
     This will end a trace locally. If the X-Trace ID returned here is reported
     externally, other processes can continue this trace.
 
-    Arguments:
-    - `layer`: The layer name of the final layer.
-    - `keys`: An optional dictionary of key-value pairs to report.
+    :layer: The layer name of the final layer.
+    :keys: An optional dictionary of key-value pairs to report.
     """
     ctx = Context.get_default()
     if not ctx.is_valid():
@@ -258,11 +293,10 @@ def end_trace(layer, keys=None):
 def log_entry(layer, keys=None, store_backtrace=True, backtrace=None):
     """Report the first event of a new layer.
 
-    Arguments:
-    - `layer`: The layer name.
-    - `keys`: An optional dictionary of key-value pairs to report.
-    - `store_backtrace`: Whether to report a backtrace. Default: True
-    - `backtrace`: The backtrace to report. Default: this call.
+    :layer: The layer name.
+    :keys: An optional dictionary of key-value pairs to report.
+    :store_backtrace: Whether to report a backtrace. Default: True
+    :backtrace: The backtrace to report. Default: this call.
     """
     ctx = Context.get_default()
     if not ctx.is_valid():
@@ -273,11 +307,10 @@ def log_entry(layer, keys=None, store_backtrace=True, backtrace=None):
 def log_error(err_class, err_msg, store_backtrace=True, backtrace=None):
     """Report an error event.
 
-    Arguments:
-    - `err_class`: The class of error to report, e.g., the name of the Exception.
-    - `err_msg`: The specific error that occurred.
-    - `store_backtrace`: Whether to report a backtrace. Default: True
-    - `backtrace`: The backtrace to report. Default: this call.
+    :err_class: The class of error to report, e.g., the name of the Exception.
+    :err_msg: The specific error that occurred.
+    :store_backtrace: Whether to report a backtrace. Default: True
+    :backtrace: The backtrace to report. Default: this call.
     """
     ctx = Context.get_default()
     if not ctx.is_valid():
@@ -290,9 +323,8 @@ def log_error(err_class, err_msg, store_backtrace=True, backtrace=None):
 def log_exception(msg=None, store_backtrace=True):
     """Report the last thrown exception as an error
 
-    Arguments:
-    - `msg`: An optional message, to override err_msg. Defaults to str(Exception).
-    - `store_backtrace`: Whether to store the Exception backtrace.
+    :msg: An optional message, to override err_msg. Defaults to str(Exception).
+    :store_backtrace: Whether to store the Exception backtrace.
     """
     typ, val, tb = sys.exc_info()
     if typ is None:
@@ -310,11 +342,10 @@ def log_exception(msg=None, store_backtrace=True):
 def log_exit(layer, keys=None, store_backtrace=True, backtrace=None, edge_str=None):
     """Report the last event of the current layer.
 
-    Arguments:
-    - `layer`: The layer name.
-    - `keys`: An optional dictionary of key-value pairs to report.
-    - `store_backtrace`: Whether to report a backtrace. Default: True
-    - `backtrace`: The backtrace to report. Default: this call.
+    :layer: The layer name.
+    :keys: An optional dictionary of key-value pairs to report.
+    :store_backtrace: Whether to report a backtrace. Default: True
+    :backtrace: The backtrace to report. Default: this call.
     """
     ctx = Context.get_default()
     if not ctx.is_valid():
@@ -694,8 +725,9 @@ def _old_context_log_method(cls, layer='Python', store_return=False, store_args=
 
 class _old_context_profile_block(profile_block):
     def __init__(self, *args, **kw):
-        _log.warn('oboe.Context.profile_block is deprecated. Please use oboe.profile_block (and note signature change).')
-        return super(_old_context_profile_block, self).__init__(*args, **kw)
+        _log.warn('oboe.Context.profile_block is deprecated. '
+                  'Please use oboe.profile_block (and note signature change).')
+        super(_old_context_profile_block, self).__init__(*args, **kw)
 
 def _old_context_to_string(cls):
     _log.warn('oboe.Context.toString is deprecated. Please use str(oboe.Context.get_default())')
