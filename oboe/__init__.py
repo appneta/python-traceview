@@ -687,8 +687,9 @@ def _old_context_log_method(cls, layer='Python', store_return=False, store_args=
 
 class _old_context_profile_block(profile_block):
     def __init__(self, *args, **kw):
-        _log.warn('oboe.Context.profile_block is deprecated. Please use oboe.profile_block (and note signature change).')
-        return super(_old_context_profile_block, self).__init__(*args, **kw)
+        _log.warn('oboe.Context.profile_block is deprecated. '
+                  'Please use oboe.profile_block (and note signature change).')
+        super(_old_context_profile_block, self).__init__(*args, **kw)
 
 def _old_context_to_string(cls):
     _log.warn('oboe.Context.toString is deprecated. Please use str(oboe.Context.get_default())')
