@@ -3,13 +3,24 @@ Oboe
 
 Oboe is the base library for reporting events to Tracelytics.
 
+.. module:: oboe
+
+Convenience Functions
+------------------------------------
+
+These decorators / functions / classes are Python-specific constructs that can
+help expand the coverage of existing installations or trace new code paths.
+
+.. autofunction:: trace
+.. autoclass:: profile_block
+.. autoclass:: profile_function
+.. autofunction:: log_method
+
 High-Level API
 ------------------------------------
 
 The high-level API mimics a logging library. It is most useful in annotating
 single-threaded code or synchronous code.
-
-.. module:: oboe
 
 .. autofunction:: log
 .. autofunction:: start_trace
