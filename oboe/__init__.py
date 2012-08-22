@@ -385,13 +385,13 @@ def _function_signature(func):
     return name+'('+', '.join(argstrings)+')'
 
 def trace(layer='Python', xtr_hdr=None, kvs=None):
-    """ Decorator to begin a new trace on a block of code.  Takes
-        into account oboe.config['tracing_mode'] as well as
-        oboe.config['sample_rate'], so may not always start a trace.
+    """ Decorator to begin a new trace on a block of code.  Takes into account
+    oboe.config['tracing_mode'] as well as oboe.config['sample_rate'], so may
+    not always start a trace.
 
-        layer: layer name to report as
-        xtr_hdr: optional, incoming x-trace header if available
-        kvs: optional, dictionary of additional key/value pairs to report
+    :layer: layer name to report as
+    :xtr_hdr: optional, incoming x-trace header if available
+    :kvs: optional, dictionary of additional key/value pairs to report
     """
     def _trace_wrapper(func, *f_args, **f_kwargs):
         start_trace(layer, keys=kvs, xtr=xtr_hdr)
@@ -419,15 +419,13 @@ def trace(layer='Python', xtr_hdr=None, kvs=None):
 class profile_block(object):
     """A context manager for oboe profiling a block of code with Tracelytics Oboe.
 
-          profile_name: the profile name to use when reporting.
-          this should be unique to the profiled method.
+    Reports an error event between entry and exit if an exception is thrown,
+    then reraises.
 
-          store_backtrace: whether to capture a backtrace or not (False)
-
-          profile: profile this function with cProfile and report the result
-
-          Reports an error event between entry and exit if an
-          exception is thrown, then reraises.
+    :profile_name: the profile name to use when reporting.  this should be
+        unique to the profiled method.
+    :store_backtrace: whether to capture a backtrace or not (False)
+    :profile: profile this function with cProfile and report the result
     """
     def __init__(self, profile_name, profile=False, store_backtrace=False):
         self.profile_name = profile_name
@@ -482,25 +480,18 @@ def profile_function(profile_name, store_args=False, store_return=False, store_b
                      profile=False, callback=None, entry_kvs=None):
     """Wrap a method for tracing and profiling with the Tracelytics Oboe library.
 
-          profile_name: the profile name to use when reporting.
-          this should be unique to the profiled method.
+    Reports an error event between entry and exit if an exception is thrown,
+    then reraises.
 
-          store_return: report the return value of this function
-
-          store_args: report the arguments to this function
-
-          store_backtrace: whether to capture a backtrace or not (False)
-
-          profile: profile this function with cProfile and report the result
-
-          callback: if set, calls this function after the wrapped
-          function returns, which examines the function, arguments,
-          and return value, and may add more K/V pairs to the
-          dictionary to be reported
-
-          Reports an error event between entry and exit if an
-          exception is thrown, then reraises.
-
+    :profile_name: the profile name to use when reporting.  this should be
+        unique to the profiled method.
+    :store_return: report the return value of this function
+    :store_args: report the arguments to this function
+    :store_backtrace: whether to capture a backtrace or not (False)
+    :profile: profile this function with cProfile and report the result
+    :callback: if set, calls this function after the wrapped function returns,
+        which examines the function, arguments, and return value, and may add
+        more K/V pairs to the dictionary to be reported
     """
 
     def before(func, f_args, f_kwargs):
@@ -547,26 +538,22 @@ def log_method(layer, store_return=False, store_args=False, store_backtrace=Fals
                before_callback=None, callback=None, profile=False, entry_kvs=None,
                send_entry_event=True, send_exit_event=True):
     """Wrap a method for tracing with the Tracelytics Oboe library.
-        as opposed to profile_function, this decorator gives the method its own layer
 
-          layer: the layer to use when reporting. If none, this layer will be a profile.
+    As opposed to profile_function, this decorator gives the method its own layer
 
-          store_return: report the return value
+    Reports an error event between entry and exit if an exception is thrown,
+    then reraises.
 
-          store_args: report the arguments to this function
-
-          before_callback: if set, calls this function before the wrapped
-          function is called. This function can change the args and kwargs, and
-          can return K/V pairs to be reported in the entry event.
-
-          callback: if set, calls this function after the wrapped
-          function returns, which examines the function, arguments,
-          and return value, and may add more K/V pairs to the
-          dictionary to be reported
-
-          Reports an error event between entry and exit if an
-          exception is thrown, then reraises.
-
+    :layer: the layer to use when reporting. If none, this layer will be a
+        profile.
+    :store_return: report the return value
+    :store_args: report the arguments to this function
+    :before_callback: if set, calls this function before the wrapped function is
+        called. This function can change the args and kwargs, and can return K/V
+        pairs to be reported in the entry event.
+    :callback: if set, calls this function after the wrapped function returns,
+        which examines the function, arguments, and return value, and may add
+        more K/V pairs to the dictionary to be reported
     """
     if not entry_kvs:
         entry_kvs = {}
