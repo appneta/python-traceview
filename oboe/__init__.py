@@ -674,7 +674,7 @@ setattr(SwigEvent, 'addInfo', _Event_addInfo_safe(getattr(SwigEvent, 'addInfo'))
 
 def _old_context_log(cls, layer, label, backtrace=False, **kwargs):
     _log.warn('oboe.Context.log is deprecated. Please use oboe.log (and note signature change).')
-    log(layer, label, backtrace=backtrace, keys=kwargs)
+    log(layer, label, store_backtrace=backtrace, keys=kwargs)
 
 def _old_context_log_error(cls, exception=None, err_class=None, err_msg=None, backtrace=True):
     _log.warn('oboe.Context.log_error is deprecated. Please use oboe.log_error (and note signature change).')
