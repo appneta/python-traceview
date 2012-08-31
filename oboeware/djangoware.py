@@ -46,7 +46,7 @@ class OboeDjangoMiddleware(object):
             kvs = {'Controller': view_func.__module__,
                    # XXX Not Python2.4-friendly
                    'Action': view_func.__name__ if hasattr(view_func, '__name__') else None}
-            oboe.log('django', 'process_view', keys=kvs, store_backtrace=False)
+            oboe.log('process_view', 'django', keys=kvs, store_backtrace=False)
         except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
 

@@ -57,7 +57,7 @@ def RequestHandler_finish(self):
 def AsyncHTTPClient_start(request):
     """ takes 'request' param, which is the outgoing HTTPRequest, not the request currently being handled """
     # this is called from AsyncHTTPClient.fetch(), which runs from the RequestHandler's context
-    oboe.log("cURL", "entry", keys={'cURL_URL':request.url, 'Async':True})
+    oboe.log("entry", "cURL", keys={'cURL_URL':request.url, 'Async':True})
     ctx = oboe.Context.get_default()
     if hasattr(request, 'headers'):
         if (hasattr(request.headers, '__setitem__')): # could be dict or tornado.httputil.HTTPHeaders
