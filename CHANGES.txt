@@ -1,3 +1,6 @@
+1.1.4
+ - Layer names were not being properly reported in some cases.
+
 1.1.3
  - Bugfix: proper backtrace reporting for exceptions thrown in logged methods
 
