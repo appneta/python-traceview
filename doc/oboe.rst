@@ -13,7 +13,7 @@ help expand the coverage of existing installations or trace new code paths.
 
 .. autofunction:: trace
 .. autoclass:: profile_block
-.. autoclass:: profile_function
+.. autofunction:: profile_function
 .. autofunction:: log_method
 
 High-Level API
