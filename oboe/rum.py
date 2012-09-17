@@ -64,7 +64,7 @@ p.call(c,a);!d.async||4===c.readyState?i(d):setTimeout(function(){try{4===c.read
 '''
     else:
         return r'''<script type="text/javascript">(function(){var c=this._tly={q:[],mark:function(a,b){c.q.push(["mark",a,b||(new Date).getTime()])},measure:function(a,b,e){c.q.push(["measure",a,b,e||(new Date).getTime()])},done:function(a){c.q.push(["done",a])},cid:"''' + CUSTOMER_RUM_ID + r'''",xt:"''' + SwigContext.toString() + r'''"};c.mark("firstbyte");this.onerror=function(a,b,e){c.measure(["_jserror ",a,"|",b,"|",e].join(""))};var d=document.createElement("script");d.type="text/javascript";d.async=!0;d.src=("http:"===document.location.protocol?"http:":"https:")+"//d2gfdmu30u15x7.cloudfront.net/tly.js";var f=document.getElementsByTagName("script")[0];
-f.parentNode.insertBefore(d,f);}())</script>;
+f.parentNode.insertBefore(d,f);}());</script>
 '''
 
 def rum_footer():
