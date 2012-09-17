@@ -4,6 +4,7 @@ Copyright (C) 2012 by Tracelytics, Inc.
 All rights reserved.
 """
 from oboe_ext import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
+from oboe.rum import rum_header, rum_footer
 
 import logging
 import inspect
