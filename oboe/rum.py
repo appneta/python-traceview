@@ -13,6 +13,11 @@ CUSTOMER_RUM_ID = None
 _RUM_LOADED = None # either False (disabled), True, or None (not loaded)
 _UUID_RE = re.compile('[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\Z')
 
+def _access_key_to_rum_id(uuid):
+    # RFC 4648 base64url encoding
+    return binascii.b2a_base64(hashlib.sha1('RUM'+uuid).digest())\
+        .rstrip().replace('+', '-').replace('/', '_')
+
 def _initialize_rum():
     TLY_CONF_FILE = '/etc/tracelytics.conf'
     global CUSTOMER_RUM_ID, _RUM_LOADED
@@ -27,7 +32,7 @@ def _initialize_rum():
                   TLY_CONF_FILE, e.strerror)
         return
     if access_key and _UUID_RE.match(access_key):
-        CUSTOMER_RUM_ID = binascii.b2a_base64(hashlib.sha1('RUM'+access_key).digest()).rstrip()
+        CUSTOMER_RUM_ID = _access_key_to_rum_id(access_key)
         _RUM_LOADED = True
 _initialize_rum()
 
@@ -38,7 +43,7 @@ def _check_rum_config():
     global CUSTOMER_RUM_ID, _RUM_LOADED
     access_key = oboe.config.get('access_key', None)
     if isinstance(access_key, basestring) and _UUID_RE.match(access_key):
-        CUSTOMER_RUM_ID = binascii.b2a_base64(hashlib.sha1('RUM'+access_key).digest()).rstrip()
+        CUSTOMER_RUM_ID = _access_key_to_rum_id(access_key)
         _RUM_LOADED = True  # success finding access key
     else:
         _RUM_LOADED = False # checked oboe.config, but failed
