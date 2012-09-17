@@ -4,7 +4,6 @@ Copyright (C) 2012 by Tracelytics, Inc.
 All rights reserved.
 """
 from oboe_ext import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
-from oboe.rum import rum_header, rum_footer
 
 import logging
 import inspect
@@ -29,6 +28,8 @@ config['reporter_host'] = '127.0.0.1'   # you probably don't want to change the
 config['reporter_port'] = 7831          # last two options
 
 config['inst_enabled'] = defaultdict(lambda: True)
+
+from oboe.rum import rum_header, rum_footer
 
 SwigContext.init()
 

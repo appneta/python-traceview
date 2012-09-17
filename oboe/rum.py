@@ -10,27 +10,44 @@ _log = logging.getLogger('oboe')
 
 CUSTOMER_RUM_ID = None
 
-def _get_customer_rum_id():
+_RUM_LOADED = None # either False (disabled), True, or None (not loaded)
+_UUID_RE = re.compile('[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\Z')
+
+def _initialize_rum():
     TLY_CONF_FILE = '/etc/tracelytics.conf'
-    UUID_RE = '[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\Z'
-    global CUSTOMER_RUM_ID
-    if CUSTOMER_RUM_ID:
+    global CUSTOMER_RUM_ID, _RUM_LOADED
+    if _RUM_LOADED:
         return
     try:
         access_key = ([l.rstrip().split('=')[1] for l in open(TLY_CONF_FILE, 'r')
                        if l.startswith('tracelyzer.access_key=')] + [None])[0]
     except IOError as e:
-        # couldn't open config file, try settings
-        _log.warn("RUM initialization: couldn't read %s (RUM is disabled): %s.",
+        _log.warn("RUM initialization: couldn't read %s (%s). "
+                  "RUM will be disabled unless oboe.config['access_key'] is set.",
                   TLY_CONF_FILE, e.strerror)
         return
-    if access_key and re.match(UUID_RE, access_key):
+    if access_key and _UUID_RE.match(access_key):
         CUSTOMER_RUM_ID = binascii.b2a_base64(hashlib.sha1('RUM'+access_key).digest()).rstrip()
-_get_customer_rum_id()
+        _RUM_LOADED = True
+_initialize_rum()
+
+def _check_rum_config():
+    # if /etc/tracelytics.conf is not available, check for user-configured value
+    # oboe.config['access_key'] once (after init has finished).
+    import oboe
+    global CUSTOMER_RUM_ID, _RUM_LOADED
+    access_key = oboe.config.get('access_key', None)
+    if isinstance(access_key, basestring) and _UUID_RE.match(access_key):
+        CUSTOMER_RUM_ID = binascii.b2a_base64(hashlib.sha1('RUM'+access_key).digest()).rstrip()
+        _RUM_LOADED = True  # success finding access key
+    else:
+        _RUM_LOADED = False # checked oboe.config, but failed
 
 def rum_header():
     """ Return the RUM header for use in your app's HTML response,
     near the beginning of the <head> element, but after your meta tags."""
+    if _RUM_LOADED == None:
+        _check_rum_config()
     if not CUSTOMER_RUM_ID or not SwigContext.isValid():
         # no valid customer UUID found, or not tracing this request: no RUM injection
         return ''
@@ -43,6 +60,8 @@ p.call(c,a);!d.async||4===c.readyState?i(d):setTimeout(function(){try{4===c.read
 def rum_footer():
     """ Return the RUM footer for use in your app's HTML response,
     just before the </body> tag. """
+    if _RUM_LOADED == None:
+        _check_rum_config()
     if not CUSTOMER_RUM_ID or not SwigContext.isValid():
         return ''
     else:
