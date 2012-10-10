@@ -17,7 +17,7 @@ from backport import defaultdict
 
 from decorator import decorator
 
-__version__ = '1.2.0a5'
+__version__ = '1.2.0a6'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 
 # configuration defaults
@@ -26,6 +26,7 @@ config['tracing_mode'] = 'through'      # always, through, never
 config['sample_rate'] = 0.3             # out of 1.0
 config['reporter_host'] = '127.0.0.1'   # you probably don't want to change the
 config['reporter_port'] = 7831          # last two options
+config['warn_deprecated'] = True
 
 config['inst_enabled'] = defaultdict(lambda: True)
 
@@ -675,11 +676,13 @@ def _Event_addInfo_safe(func):
 setattr(SwigEvent, 'addInfo', _Event_addInfo_safe(getattr(SwigEvent, 'addInfo')))
 
 def _old_context_log(cls, layer, label, backtrace=False, **kwargs):
-    _log.warn('oboe.Context.log is deprecated. Please use oboe.log (and note signature change).')
+    if config['warn_deprecated']:
+        _log.warn('oboe.Context.log is deprecated. Please use oboe.log (and note signature change).')
     log(label, layer, store_backtrace=backtrace, keys=kwargs)
 
 def _old_context_log_error(cls, exception=None, err_class=None, err_msg=None, backtrace=True):
-    _log.warn('oboe.Context.log_error is deprecated. Please use oboe.log_error (and note signature change).')
+    if config['warn_deprecated']:
+        _log.warn('oboe.Context.log_error is deprecated. Please use oboe.log_error (and note signature change).')
     if exception:
         err_class = exception.__class__.__name__
         err_msg = str(exception)
@@ -690,45 +693,53 @@ def _old_context_log_error(cls, exception=None, err_class=None, err_msg=None, ba
     return log_error(err_class, err_msg, store_backtrace=store_backtrace, backtrace=tb)
 
 def _old_context_log_exception(cls, msg=None, exc_info=None, backtrace=True):
-    _log.warn('oboe.Context.log_exception is deprecated. Please use oboe.log_exception (and note signature change).')
+    if config['warn_deprecated']:
+        _log.warn('oboe.Context.log_exception is deprecated. Please use oboe.log_exception (and note signature change).')
     typ, val, tb = exc_info or sys.exc_info()
     if msg is None:
         msg = str(val)
     return log_error(typ.__name__, msg, store_backtrace=backtrace, backtrace=tb)
 
 def _old_context_trace(cls, layer='Python', xtr_hdr=None, kvs=None):
-    _log.warn('oboe.Context.trace is deprecated. Please use oboe.trace (and note signature change).')
+    if config['warn_deprecated']:
+        _log.warn('oboe.Context.trace is deprecated. Please use oboe.trace (and note signature change).')
     return trace(layer, xtr_hdr=kvs, kvs=kvs)
 
 def _old_context_profile_function(cls, profile_name, store_args=False, store_return=False, store_backtrace=False,
                              profile=False, callback=None, **entry_kvs):
-    _log.warn('oboe.Context.trace is deprecated. Please use oboe.trace (and note signature change).')
+    if config['warn_deprecated']:
+        _log.warn('oboe.Context.trace is deprecated. Please use oboe.trace (and note signature change).')
     return profile_function(profile_name, store_args=False, store_return=False, store_backtrace=False,
                             profile=False, callback=None, entry_kvs=entry_kvs)
 
 def _old_context_log_method(cls, layer='Python', store_return=False, store_args=False,
                        callback=None, profile=False, **entry_kvs):
-    _log.warn('oboe.Context.log_method is deprecated. Please use oboe.log_method (and note signature change).')
+    if config['warn_deprecated']:
+        _log.warn('oboe.Context.log_method is deprecated. Please use oboe.log_method (and note signature change).')
     return log_method(layer, store_return=store_return, store_args=store_args,
                       callback=callback, profile=profile, entry_kvs=entry_kvs)
 
 class _old_context_profile_block(profile_block):
     def __init__(self, *args, **kw):
-        _log.warn('oboe.Context.profile_block is deprecated. '
-                  'Please use oboe.profile_block (and note signature change).')
+        if config['warn_deprecated']:
+            _log.warn('oboe.Context.profile_block is deprecated. '
+                      'Please use oboe.profile_block (and note signature change).')
         super(_old_context_profile_block, self).__init__(*args, **kw)
 
 def _old_context_to_string(cls):
-    _log.warn('oboe.Context.toString is deprecated. Please use str(oboe.Context.get_default())')
+    if config['warn_deprecated']:
+        _log.warn('oboe.Context.toString is deprecated. Please use str(oboe.Context.get_default())')
     return str(Context.get_default())
 
 def _old_context_from_string(cls, md_string):
-    _log.warn('oboe.Context.fromString is deprecated.')
+    if config['warn_deprecated']:
+        _log.warn('oboe.Context.fromString is deprecated.')
     c = Context(md_string)
     c.set_as_default()
 
 def _old_context_is_valid(cls):
-    _log.warn('oboe.Context.isValid is deprecated. Please use oboe.Context.get_default().is_valid()')
+    if config['warn_deprecated']:
+        _log.warn('oboe.Context.isValid is deprecated. Please use oboe.Context.get_default().is_valid()')
     return Context.get_default().is_valid()
 
 setattr(Context, 'log',              types.MethodType(_old_context_log, Context))
