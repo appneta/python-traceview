@@ -17,7 +17,7 @@ from backport import defaultdict
 
 from decorator import decorator
 
-__version__ = '1.1.5'
+__version__ = '1.2.0'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 
 # configuration defaults
@@ -29,6 +29,8 @@ config['reporter_port'] = 7831          # last two options
 config['warn_deprecated'] = True
 
 config['inst_enabled'] = defaultdict(lambda: True)
+
+from oboe.rum import rum_header, rum_footer
 
 SwigContext.init()
 
