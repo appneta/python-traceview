@@ -7,7 +7,6 @@ All rights reserved.
 """
 import sys
 import oboe
-import functools
 
 def safeindex(_list, index):
     return _list[index] if len(_list) > index else None
@@ -47,7 +46,7 @@ HTTPLIB_LAYER = 'httplib'
 def wrap(module):
     try:
         # Wrap putrequest.  This marks the beginning of the request, and is also
-        # where 
+        # where
         wrapper_putrequest = oboe.log_method(HTTPLIB_LAYER,
                                              before_callback=wrap_request_putrequest,
                                              send_exit_event=False)
