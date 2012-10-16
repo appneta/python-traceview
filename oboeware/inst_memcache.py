@@ -88,7 +88,8 @@ def wrap(layer_name, module):
             wrapper = oboe.log_method(layer_name,
                                       # XXX Not Python2.4-friendly
                                       callback=partial(wrap_mc_method, funcname=method),
-                                      entry_kvs=kvs)
+                                      entry_kvs=kvs,
+                                      store_backtrace=True)
             setattr(cls, method, wrapper(wrapfn))
 
         # per-key memcache host hook
