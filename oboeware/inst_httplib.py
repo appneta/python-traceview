@@ -49,7 +49,8 @@ def wrap(module):
         # where
         wrapper_putrequest = oboe.log_method(HTTPLIB_LAYER,
                                              before_callback=wrap_request_putrequest,
-                                             send_exit_event=False)
+                                             send_exit_event=False,
+                                             store_backtrace=True)
         setattr(module.HTTPConnection, 'putrequest',
                 wrapper_putrequest(module.HTTPConnection.putrequest))
 
