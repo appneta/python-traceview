@@ -123,10 +123,10 @@ class OboeMiddleware(object):
                 result = self.wrapped_app(environ, wrapped_start_response)
 
         except Exception:
-            self.send_end(ctx, endEvt, environ, threw_error=True)
+            self.send_end(oboe.Context.get_default(), endEvt, environ, threw_error=True)
             raise
 
-        self.send_end(ctx, endEvt, environ, stats=stats)
+        self.send_end(oboe.Context.get_default(), endEvt, environ, stats=stats)
 
         return result
 

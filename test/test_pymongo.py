@@ -123,21 +123,17 @@ class MongoTest:
         return Connection(host, port, *args, **kwargs)
 
 def main():
-    evt = oboe.Context.startTrace()
-    evt.addInfo('Layer', 'MongoTest')
-    evt.addInfo('Label', 'entry')
-    oboe.reporter().sendReport(evt)
+    oboe.config['tracing_mode'] = 'always'
+    oboe.config['sample_rate'] = 1.0
+    oboe.start_trace("MongoTest")
 
     mt = MongoTest()
-    #mt.test1()
-    #mt.test2()
-    #mt.test4()
+    mt.test1()
+    mt.test2()
+    mt.test4()
     mt.dbref_test()
 
-    evt = oboe.Context.createEvent()
-    evt.addInfo('Layer', 'MongoTest')
-    evt.addInfo('Label', 'exit')
-    oboe.reporter().sendReport(evt)
+    oboe.end_trace('MongoTest')
 
 
 if __name__ == '__main__':

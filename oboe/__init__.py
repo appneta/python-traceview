@@ -17,7 +17,7 @@ from backport import defaultdict
 
 from decorator import decorator
 
-__version__ = '1.2.0'
+__version__ = '1.2.1'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 
 # configuration defaults
@@ -90,16 +90,25 @@ class Context(object):
             # Continuing a trace from another, external, layer
             md = Metadata.fromString(xtr)
 
+        sample_rate = None
         if xtr:
             evt = md.createEvent()
         elif tracing_mode == 'always' and random.random() < config['sample_rate']:
+            sample_rate = config['sample_rate']
             if not md:
                 md = Metadata.makeRandom()
             evt = SwigEvent.startTrace(md)
         else:
             evt = None
 
-        return cls(md), Event(evt, 'entry', layer) if evt else NullEvent()
+        if evt:
+            event = Event(evt, 'entry', layer)
+            if sample_rate:
+                event.add_info('SampleRate', sample_rate)
+        else:
+            event = NullEvent()
+
+        return cls(md), event
 
     def end_trace(self, event): # Reports the last event in a trace
         """Ends this trace, rendering this Context invalid."""
