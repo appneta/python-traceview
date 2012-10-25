@@ -13,14 +13,20 @@ import traceback as tb
 MODULE_INIT_REPORTED = False
 
 class OboeMiddleware(object):
-    def __init__(self, app, oboe_config, layer="wsgi", profile=False):
+    def __init__(self, app, oboe_config=None, layer="wsgi", profile=False):
         """
-        Takes the app that we're wrapping, as well as a dictionary with oboe
-        configuration parameters:
+        Install instrumentation for tracing a WSGI app.
 
-          - tracing_mode: 'always', 'through', 'never'
-          - reporter_host: Hostname
+        Arguments:
+            app - the WSGI app that we're wrapping
+            oboe_config - (optional) dictionary with oboe configuration parameters:
+              - oboe.tracing_mode: 'always', 'through', 'never'
+              - oboe.sample_rate: a number from 0 to 1000000 denoting fraction of requests to trace
+            layer - (optional) layer name to use, default is "wsgi"
+            profile - (optional) profile entire calls to app (don't use in production)
         """
+        if oboe_config == None:
+            oboe_config = {}
 
         self.wrapped_app = app
         self.oboe_config = oboe_config
@@ -117,10 +123,10 @@ class OboeMiddleware(object):
                 result = self.wrapped_app(environ, wrapped_start_response)
 
         except Exception:
-            self.send_end(ctx, endEvt, environ, threw_error=True)
+            self.send_end(oboe.Context.get_default(), endEvt, environ, threw_error=True)
             raise
 
-        self.send_end(ctx, endEvt, environ, stats=stats)
+        self.send_end(oboe.Context.get_default(), endEvt, environ, stats=stats)
 
         return result
 

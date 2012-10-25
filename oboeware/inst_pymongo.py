@@ -231,73 +231,73 @@ COLLECTION_METHOD_INST = {
     'save': {},
     'insert': {
         'callback': profile_insert,
-        'backtrace': True,
+        'store_backtrace': True,
     },
     'update': {
         'callback': profile_update,
-        'backtrace': True,
+        'store_backtrace': True,
     },
     'drop': {
         'callback': profile_drop,
-        'backtrace': True,
+        'store_backtrace': True,
     },
     'remove': {
         'callback': profile_remove,
-        'backtrace': True,
+        'store_backtrace': True,
     },
     'find': {
         'callback': profile_find,
-        'backtrace': True,
+        'store_backtrace': True,
     },
     'count': {},
     'create_index': {
         'callback': profile_index,
-        'backtrace': True,
+        'store_backtrace': True,
     },
     'ensure_index': {
         'callback': profile_index,
-        'backtrace': True,
+        'store_backtrace': True,
     },
     'drop_indexes': {
         'callback': profile_index,
     },
     'drop_index': {
         'callback': profile_index,
-        'backtrace': True,
+        'store_backtrace': True,
     },
     'reindex': {
         'callback': profile_index,
-        'backtrace': True,
+        'store_backtrace': True,
     },
     'index_information': {
         'callback': profile_index,
-        'backtrace': True,
+        'store_backtrace': True,
     },
     'options': {
-        'backtrace': True,
+        'store_backtrace': True,
     },
     'group': {
         'callback': profile_group,
-        'backtrace': True,
+        'store_backtrace': True,
     },
     'rename': {
         'callback': profile_rename_collection,
-        'backtrace': True,
+        'store_backtrace': True,
     },
     'distinct': {
         'callback': profile_distinct,
     },
     'map_reduce': {
         'callback': profile_map_reduce,
-        'backtrace': True,
+        'store_backtrace': True,
     },
     'inline_map_reduce': {
         'callback': profile_map_reduce,
-        'backtrace': True,
+        'store_backtrace': True,
     },
     'find_and_modify': {
         'callback': profile_find_and_modify,
-        'backtrace': True,
+        'store_backtrace': True,
     },
 }
 
@@ -333,9 +333,8 @@ def wrap_class(cls, class_name, class_method_inst):
                  'Function': method,
                  'Action': '%s.%s' % (class_name, method),
                }
-        kvs.update(method_log_args)
         # XXX Not Python2.4-friendly
-        setattr(cls, method, oboe.log_method(PYMONGO_LAYER, entry_kvs=kvs, store_backtrace=True)(fn))
+        setattr(cls, method, oboe.log_method(PYMONGO_LAYER, entry_kvs=kvs, **method_log_args)(fn))
 
 def wrap(module):
     """ wrap pymongo module, adding instrumentation to core classes """

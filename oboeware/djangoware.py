@@ -91,6 +91,23 @@ def middleware_hooks(module, objname):
 
 load_middleware_lock = threading.Lock()
 
+def add_rum_template_tags():
+    """ Register Django template tags.
+        1. simple_tag uses method name, so make some proxy methods
+        2. inserting into django.templates.libraries shortcut
+        """
+    def oboe_rum_header():
+        return oboe.rum_header()
+    def oboe_rum_footer():
+        return oboe.rum_footer()
+
+    import django.template as tem_mod
+
+    l = tem_mod.Library()
+    l.simple_tag(oboe_rum_header)
+    l.simple_tag(oboe_rum_footer)
+    tem_mod.libraries['oboe'] = l
+
 def on_load_middleware():
     """ wrap Django middleware from a list """
 
@@ -138,6 +155,12 @@ def on_load_middleware():
 
     finally: # release instrumentation lock
         mwlock.release()
+
+    try:
+        add_rum_template_tags()
+    except Exception, e:
+        print >> sys.stderr, "Oboe error: couldn't add RUM template tags: %s" % (e,)
+
 
 def install_oboe_middleware(module):
     def base_handler_wrapper(func):
