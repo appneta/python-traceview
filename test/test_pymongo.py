@@ -51,7 +51,8 @@ class MongoTest:
             for d in test.distinct('posts'):
                 print "Distinct: %s" % (d,)
 
-            test.reindex()
+            if 'reindex' in dir(test):
+                test.reindex()
             test.drop_indexes()
         finally:
             db.drop_collection("test_2")
