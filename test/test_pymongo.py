@@ -51,7 +51,8 @@ class MongoTest:
             for d in test.distinct('posts'):
                 print "Distinct: %s" % (d,)
 
-            test.reindex()
+            if 'reindex' in dir(test):
+                test.reindex()
             test.drop_indexes()
         finally:
             db.drop_collection("test_2")
@@ -72,11 +73,11 @@ class MongoTest:
                 test.save({ "user_id": i, "name": name, "group_id" : i % 10, "posts": i % 20})
 
             test.create_index("user_id")
-           
+
             for i in xrange(6):
                 for r in test.find( { "group_id": random.randint(0,10) } ):
                     print "Found: %s " % (r)
-         
+
         finally:
             db.drop_collection("test_4")
 
@@ -116,25 +117,36 @@ class MongoTest:
         finally:
             db.drop_collection('owners')
             db.drop_collection('tasks')
-        
+
     def _get_connection(self, *args, **kwargs):
         host = os.environ.get("MONGODB_HOST", "localhost")
         port = int(os.environ.get("MONGODB_PORT", 27017))
         return Connection(host, port, *args, **kwargs)
 
-def main():
-    oboe.config['tracing_mode'] = 'always'
-    oboe.config['sample_rate'] = 1.0
-    oboe.start_trace("MongoTest")
+def main(with_oboe=True):
+    for i in xrange(1):
+        if with_oboe:
+            oboe.config['tracing_mode'] = 'always'
+            oboe.config['sample_rate'] = 1.0
+            oboe.start_trace("MongoTest")
 
-    mt = MongoTest()
-    mt.test1()
-    mt.test2()
-    mt.test4()
-    mt.dbref_test()
+        mt = MongoTest()
+        mt.test1()
+        mt.test2()
+        mt.test4()
+        mt.dbref_test()
 
-    oboe.end_trace('MongoTest')
+        if with_oboe:
+            oboe.end_trace('MongoTest')
 
 
 if __name__ == '__main__':
-    main()
+    import sys
+
+    if len(sys.argv) == 2 and sys.argv[1] == '--no-oboe':
+        print 'not using oboe instrumentation'
+        main(False)
+    elif len(sys.argv) != 1:
+        raise Exception('invalid args')
+    else:
+        main()
