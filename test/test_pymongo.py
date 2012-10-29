@@ -124,7 +124,7 @@ class MongoTest:
         return Connection(host, port, *args, **kwargs)
 
 def main(with_oboe=True):
-    for i in xrange(1):
+    for i in xrange(100):
         if with_oboe:
             oboe.config['tracing_mode'] = 'always'
             oboe.config['sample_rate'] = 1.0
@@ -138,6 +138,8 @@ def main(with_oboe=True):
 
         if with_oboe:
             oboe.end_trace('MongoTest')
+    import pdb
+    pdb.set_trace()
 
 
 if __name__ == '__main__':
