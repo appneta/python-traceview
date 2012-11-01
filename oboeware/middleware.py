@@ -149,4 +149,4 @@ class OboeMiddleware(object):
             if k in set(("controller", "action")):
                 evt.add_info(str(k).capitalize(), str(v))
 
-        ctx.end_trace(evt)
+        oboe.end_trace(evt)
