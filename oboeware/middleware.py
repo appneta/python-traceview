@@ -156,5 +156,6 @@ class OboeMiddleware(object):
             if k in set(("controller", "action")):
                 evt.add_info(str(k).capitalize(), str(v))
 
-        # clear trace context now that trace is over
+        # report, then clear trace context now that trace is over
+        ctx.end_trace(evt)
         oboe.Context.clear_default()
