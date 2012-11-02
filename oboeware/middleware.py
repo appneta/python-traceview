@@ -127,7 +127,6 @@ class OboeMiddleware(object):
             if oboe.Context.get_default().is_valid():
                 endEvt.add_edge(oboe.Context.get_default())
             self.send_end(ctx, endEvt, environ, threw_error=True)
-            oboe.Context.clear_default()
             raise
 
         # check current TLS context and add to end event if valid
@@ -135,8 +134,6 @@ class OboeMiddleware(object):
             endEvt.add_edge(oboe.Context.get_default())
 
         self.send_end(ctx, endEvt, environ, stats=stats)
-        # clear trace context before returning this middleware's output
-        oboe.Context.clear_default()
 
         return result
 
@@ -159,4 +156,5 @@ class OboeMiddleware(object):
             if k in set(("controller", "action")):
                 evt.add_info(str(k).capitalize(), str(v))
 
-        oboe.end_trace(evt)
+        # clear trace context now that trace is over
+        oboe.Context.clear_default()
