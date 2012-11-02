@@ -127,6 +127,7 @@ class OboeMiddleware(object):
             if oboe.Context.get_default().is_valid():
                 endEvt.add_edge(oboe.Context.get_default())
             self.send_end(ctx, endEvt, environ, threw_error=True)
+            oboe.Context.clear_default()
             raise
 
         # check current TLS context and add to end event if valid
