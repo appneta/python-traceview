@@ -58,6 +58,7 @@ class OboeMiddleware(object):
         xtr_hdr = environ.get("HTTP_X-Trace", environ.get("HTTP_X_TRACE"))
         endEvt = None
 
+        # start the trace: ctx.is_valid() will be False if not tracing this request
         ctx, startEvt = oboe.Context.start_trace(self.layer, xtr=xtr_hdr)
 
         if ctx.is_valid():
@@ -95,13 +96,13 @@ class OboeMiddleware(object):
         stats = None
         result = None
         try:
-            if self.profile:
+            if self.profile and ctx.is_valid():
                 try:
                     import cStringIO, cProfile, pstats # XXX test cProfile and pstats exist
                 except ImportError:
                     self.profile = False
 
-            if self.profile:
+            if self.profile and ctx.is_valid():
                 def runapp():
                     appiter = self.wrapped_app(environ, wrapped_start_response)
                     response_body.extend(appiter)
@@ -123,10 +124,16 @@ class OboeMiddleware(object):
                 result = self.wrapped_app(environ, wrapped_start_response)
 
         except Exception:
-            self.send_end(oboe.Context.get_default(), endEvt, environ, threw_error=True)
+            if oboe.Context.get_default().is_valid():
+                endEvt.add_edge(oboe.Context.get_default())
+            self.send_end(ctx, endEvt, environ, threw_error=True)
             raise
 
-        self.send_end(oboe.Context.get_default(), endEvt, environ, stats=stats)
+        # check current TLS context and add to end event if valid
+        if oboe.Context.get_default().is_valid():
+            endEvt.add_edge(oboe.Context.get_default())
+
+        self.send_end(ctx, endEvt, environ, stats=stats)
 
         return result
 
@@ -149,4 +156,6 @@ class OboeMiddleware(object):
             if k in set(("controller", "action")):
                 evt.add_info(str(k).capitalize(), str(v))
 
+        # report, then clear trace context now that trace is over
         ctx.end_trace(evt)
+        oboe.Context.clear_default()

@@ -17,7 +17,7 @@ from backport import defaultdict
 
 from decorator import decorator
 
-__version__ = '1.2.2'
+__version__ = '1.2.3'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 
 # configuration defaults
@@ -113,6 +113,7 @@ class Context(object):
     def end_trace(self, event): # Reports the last event in a trace
         """Ends this trace, rendering this Context invalid."""
         self.report(event)
+        self._md = None
 
     def create_event(self, label, layer):
         """Returns an Event associated with this Context."""
