@@ -3,3 +3,4 @@ dist
 *.pyc
 *.so
 *.egg-info
+.DS_Store
