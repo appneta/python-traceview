@@ -5,7 +5,7 @@
 """
 
 from setuptools import setup, Extension
-version = '1.2.3'
+version = '1.2.4'
 
 oboe_module = Extension('oboe._oboe_ext',
                         sources=['oboe/oboe_wrap.cxx'],
