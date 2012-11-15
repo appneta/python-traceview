@@ -3389,7 +3389,7 @@ SWIGINTERN PyObject *_wrap_Metadata_fromString(PyObject *SWIGUNUSEDPARM(self), P
     if (SWIG_IsNewObj(res)) delete ptr;
   }
   result = (Metadata *)Metadata::fromString(arg1);
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Metadata, 0 |  0 );
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Metadata, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
   return NULL;
