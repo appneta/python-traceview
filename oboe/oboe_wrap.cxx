@@ -4112,7 +4112,7 @@ SWIGINTERN PyObject *_wrap_Event_startTrace(PyObject *SWIGUNUSEDPARM(self), PyOb
   }
   arg1 = reinterpret_cast< oboe_metadata_t * >(argp1);
   result = (Event *)Event::startTrace((oboe_metadata_t const *)arg1);
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Event, 0 |  0 );
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Event, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
   return NULL;
