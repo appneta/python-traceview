@@ -17,7 +17,7 @@ from backport import defaultdict
 
 from decorator import decorator
 
-__version__ = '1.3.0'
+__version__ = '1.3.1'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 
 # configuration defaults
@@ -533,8 +533,15 @@ def profile_function(profile_name, store_args=False, store_return=False, store_b
 
     def after(func, f_args, f_kwargs, res):
 
-        return {'Language': 'python',
-                'ProfileName': profile_name}
+        kvs = {'Language': 'python',
+               'ProfileName': profile_name}
+
+        if callback:
+            user_kvs = callback(func, f_args, f_kwargs, res)
+            if user_kvs:
+                kvs.update(user_kvs)
+
+        return kvs
 
     # Do function passed in here expect to be bound (have im_func/im_class)?
 
