@@ -4,14 +4,14 @@
  All rights reserved.
 """
 
-import os
+import distutils.ccompiler
 from setuptools import setup, Extension
 version = '1.3.0'
 
 # conditionally build extensions if liboboe and liboboe-dev are available on this platform
 # otherwise, will function in no-op mode: no tracing, but all API endpoints available
-can_compile = True
-if can_compile:
+compiler = distutils.ccompiler.new_compiler()
+if compiler.has_function('oboe_metadata_init', libraries=('oboe',)):
     oboe_module = Extension('oboe._oboe_ext',
                             sources=['oboe/oboe_wrap.cxx'],
                             depends=['oboe/oboe.hpp'],
