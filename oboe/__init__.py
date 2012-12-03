@@ -3,8 +3,6 @@
 Copyright (C) 2012 by Tracelytics, Inc.
 All rights reserved.
 """
-from oboe_ext import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
-
 import logging
 import inspect
 import random
@@ -16,6 +14,17 @@ import traceback
 from backport import defaultdict
 
 from decorator import decorator
+
+_log = logging.getLogger(__name__)
+reporter_instance = None
+
+try:
+    from oboe_ext import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
+except ImportError, e:
+    from oboe_noop import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
+    _log.error("Tracelytics Oboe warning: module not built on a platform with liboboe "
+               "and liboboe-dev installed, running in no-op mode.  Tracing disabled. "
+               "Contact support@tracelytics.com if this is unexpected.")
 
 __version__ = '1.3.0'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
@@ -33,9 +42,6 @@ config['inst_enabled'] = defaultdict(lambda: True)
 from oboe.rum import rum_header, rum_footer
 
 SwigContext.init()
-
-_log = logging.getLogger(__name__)
-reporter_instance = None
 
 ###############################################################################
 # Low-level Public API
