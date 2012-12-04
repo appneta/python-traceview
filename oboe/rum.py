@@ -3,8 +3,13 @@
 Copyright (C) 2012 by Tracelytics, Inc.
 All rights reserved.
 """
+import sys
 
-from oboe_ext import Context as SwigContext
+try:
+    from oboe_ext import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
+except ImportError, e:
+    from oboe_noop import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
+
 import hashlib, binascii, re, logging
 _log = logging.getLogger('oboe')
 
