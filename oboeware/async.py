@@ -20,9 +20,9 @@ class OboeContextManager(object):
         self.obj = ctxobj
 
     def __enter__(self):
-        ctx = getattr(self.obj, '_oboe_md', None)
-        if ctx:
-            ctx.set_default()
+        ctx = getattr(self.obj, '_oboe_ctx', None)
+        if ctx and ctx.is_valid():
+            ctx.set_as_default()
         elif oboe.Context.get_default().is_valid():
             oboe.Context.clear_default()
 
@@ -30,5 +30,5 @@ class OboeContextManager(object):
         default_ctx = oboe.Context.get_default()
         if default_ctx.is_valid():
             ctx = default_ctx.copy()
-            setattr(self.obj, '_oboe_md', ctx)
+            setattr(self.obj, '_oboe_ctx', ctx)
             oboe.Context.clear_default()
