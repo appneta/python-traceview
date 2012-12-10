@@ -24,7 +24,7 @@ class Metadata(object):
         return self
 
     def isValid(self):
-        return false
+        return False
 
     def toString(self):
         return ''
