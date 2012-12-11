@@ -147,7 +147,7 @@ class Context(object):
 
     def copy(self):
         """Make a clone of this Context."""
-        return self.__class__(self._md)
+        return self.__class__(self._md.toString())
 
     def __str__(self):
         return self._md.toString()
