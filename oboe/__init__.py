@@ -39,7 +39,9 @@ config['warn_deprecated'] = True
 
 config['inst_enabled'] = defaultdict(lambda: True)
 
-from oboe.rum import rum_header, rum_footer
+import oboe.rum
+rum_header = oboe.rum.rum_header
+rum_footer = oboe.rum.rum_footer
 
 SwigContext.init()
 
@@ -147,7 +149,7 @@ class Context(object):
 
     def copy(self):
         """Make a clone of this Context."""
-        return self.__class__(self._md)
+        return self.__class__(self._md.toString())
 
     def __str__(self):
         return self._md.toString()
@@ -717,7 +719,8 @@ def _old_context_log_error(cls, exception=None, err_class=None, err_msg=None, ba
 
 def _old_context_log_exception(cls, msg=None, exc_info=None, backtrace=True):
     if config['warn_deprecated']:
-        _log.warn('oboe.Context.log_exception is deprecated. Please use oboe.log_exception (and note signature change).')
+        _log.warn('oboe.Context.log_exception is deprecated. '
+                  'Please use oboe.log_exception (and note signature change).')
     typ, val, tb = exc_info or sys.exc_info()
     if msg is None:
         msg = str(val)
