@@ -109,7 +109,7 @@ class OboeContextWrapper(object):
 class _StackContextWrapper(functools.partial):
     def __init__(self, *args, **kwargs):
         if oboe.Context.get_default().is_valid():
-            self._oboe_ctx = oboe.SwigContext.copy()
+            self._oboe_ctx = oboe.Context.copy()
         return super(_StackContextWrapper, self).__init__(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
