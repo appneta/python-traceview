@@ -99,7 +99,7 @@ class OboeContextWrapper(object):
         # get current context at wrap time (e.g. when preparing "done" callback for an async call)
         if oboe.Context.get_default().is_valid():
             # store wrap-time context for use at call time
-            self._oboe_ctx = oboe.SwigContext.copy()
+            self._oboe_ctx = oboe.Context.get_default().copy()
 
     def __call__(self, *args, **kwargs):
         with async.OboeContextManager(self): # uses self._oboe_ctx as context
@@ -109,7 +109,7 @@ class OboeContextWrapper(object):
 class _StackContextWrapper(functools.partial):
     def __init__(self, *args, **kwargs):
         if oboe.Context.get_default().is_valid():
-            self._oboe_ctx = oboe.Context.copy()
+            self._oboe_ctx = oboe.Context.get_default().copy()
         return super(_StackContextWrapper, self).__init__(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
