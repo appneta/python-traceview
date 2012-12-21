@@ -26,7 +26,7 @@ except ImportError, e:
                "and liboboe-dev installed, running in no-op mode.  Tracing disabled. "
                "Contact support@tracelytics.com if this is unexpected.")
 
-__version__ = '1.3.4'
+__version__ = '1.3.5'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 
 # configuration defaults
