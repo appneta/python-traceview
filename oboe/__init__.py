@@ -564,7 +564,7 @@ def profile_function(profile_name, store_args=False, store_return=False, store_b
 
 def log_method(layer, store_return=False, store_args=False, store_backtrace=False,
                before_callback=None, callback=None, profile=False, entry_kvs=None,
-               send_entry_event=True, send_exit_event=True):
+               send_entry_event=True, send_exit_event=True, spawn=False):
     """Wrap a method for tracing with the Tracelytics Oboe library.
 
     As opposed to profile_function, this decorator gives the method its own layer
@@ -605,10 +605,13 @@ def log_method(layer, store_return=False, store_args=False, store_backtrace=Fals
 
         if send_entry_event:
             # log entry event
-            if layer is None:
-                log('profile_entry', layer, keys=entry_kvs, store_backtrace=False)
+            if spawn == False:
+                if layer is None:
+                    log('profile_entry', layer, keys=entry_kvs, store_backtrace=False)
+                else:
+                    log('entry', layer, keys=entry_kvs, store_backtrace=False)
             else:
-                log('entry', layer, keys=entry_kvs, store_backtrace=False)
+                log('entry', f_args[spawn].__name__, keys=entry_kvs.update({'Async': True}), store_backtrace=False)
 
         res = None   # return value of wrapped function
         stats = None # cProfile statistics, if enabled
@@ -650,10 +653,13 @@ def log_method(layer, store_return=False, store_args=False, store_backtrace=Fals
 
             if send_exit_event:
                 # log exit event
-                if layer is None:
-                    log('profile_exit', layer, keys=exit_kvs, store_backtrace=False, edge_str=edge_str)
+                if spawn == False:
+                    if layer is None:
+                        log('profile_exit', layer, keys=exit_kvs, store_backtrace=False, edge_str=edge_str)
+                    else:
+                        log('exit', layer, keys=exit_kvs, store_backtrace=False, edge_str=edge_str)
                 else:
-                    log('exit', layer, keys=exit_kvs, store_backtrace=False, edge_str=edge_str)
+                    log('exit', f_args[spawn].__name__, keys=exit_kvs, store_backtrace=False, edge_str=edge_str)
 
         return res # return output of func(*f_args, **f_kwargs)
 
