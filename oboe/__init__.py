@@ -26,7 +26,7 @@ except ImportError, e:
                "and liboboe-dev installed, running in no-op mode.  Tracing disabled. "
                "Contact support@tracelytics.com if this is unexpected.")
 
-__version__ = '1.3.6'
+__version__ = '1.3.77777777'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 
 # configuration defaults
@@ -350,15 +350,16 @@ def log_exception(msg=None, store_backtrace=True):
     typ, val, tb = sys.exc_info()
     if typ is None:
         raise OboeException('log_exception should only be called from an exception context (e.g., except: block)')
+
     if msg is None:
-        msg = str(val)
+        try:
+            msg = str(val)
+        except:
+            msg = repr(val)
 
-    if store_backtrace:
-        backtrace = tb
-    else:
-        backtrace = None
-
-    log_error(typ.__name__, msg, store_backtrace=store_backtrace, backtrace=backtrace)
+    log_error(typ.__name__, msg,
+              store_backtrace=store_backtrace,
+              backtrace=tb if store_backtrace else None)
 
 def log_exit(layer, keys=None, store_backtrace=True, backtrace=None, edge_str=None):
     """Report the last event of the current layer.
@@ -723,7 +724,10 @@ def _old_context_log_exception(cls, msg=None, exc_info=None, backtrace=True):
                   'Please use oboe.log_exception (and note signature change).')
     typ, val, tb = exc_info or sys.exc_info()
     if msg is None:
-        msg = str(val)
+        try:
+            msg = str(val)
+        except:
+            msg = repr(val)
     return log_error(typ.__name__, msg, store_backtrace=backtrace, backtrace=tb)
 
 def _old_context_trace(cls, layer='Python', xtr_hdr=None, kvs=None):
