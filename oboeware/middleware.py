@@ -153,8 +153,16 @@ class OboeMiddleware(object):
 
         # gets controller, action
         for k, v in environ.get('wsgiorg.routing_args', [{},{}])[1].items():
-            if k in set(("controller", "action")):
-                evt.add_info(str(k).capitalize(), str(v))
+            if k == "action":
+                 evt.add_info(str(k).capitalize(), str(v))
+            elif k == "controller":
+                try:
+                    if v.controller:
+                        evt.add_info(str(k).capitalize(), str(v.controller.__class__.__name__))
+                    else:
+                        evt.add_info(str(k).capitalize(), str(v))
+                except Excpetion, e:
+                    evt.add_info(str(k).capitalize(), str(v))
 
         # report, then clear trace context now that trace is over
         ctx.end_trace(evt)
