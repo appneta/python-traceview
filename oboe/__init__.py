@@ -112,7 +112,7 @@ class Context(object):
         if evt:
             event = Event(evt, 'entry', layer)
             if sample_rate:
-                event.add_info('SampleRate', sample_rate)
+                event.add_info('SampleRate', sample_rate * 1e6)
         else:
             event = NullEvent()
 
