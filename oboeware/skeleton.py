@@ -30,6 +30,7 @@ __all__ = ('skeleton', 'sanitize')
 from bson.objectid import ObjectId
 from bson.code import Code
 from bson.son import SON
+from bson.dbref import DBRef
 from datetime import datetime
 import re
 
@@ -44,6 +45,9 @@ BSON_TYPES = set([
     ObjectId,
     type(re.compile('')),
     Code,
+    type(None),
+    DBRef,
+    SON,
 ])
 
 
