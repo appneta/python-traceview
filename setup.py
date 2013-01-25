@@ -6,6 +6,7 @@
 
 import distutils.ccompiler
 from setuptools import setup, Extension
+
 version = '1.3.8'
 
 # conditionally build extensions if liboboe and liboboe-dev are available on this platform
