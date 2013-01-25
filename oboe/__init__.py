@@ -26,7 +26,7 @@ except ImportError, e:
                "and liboboe-dev installed, running in no-op mode.  Tracing disabled. "
                "Contact support@tracelytics.com if this is unexpected.")
 
-__version__ = '1.3.77777777'
+__version__ = '1.3.8'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 
 # configuration defaults
@@ -112,7 +112,7 @@ class Context(object):
         if evt:
             event = Event(evt, 'entry', layer)
             if sample_rate:
-                event.add_info('SampleRate', sample_rate)
+                event.add_info('SampleRate', sample_rate * 1e6)
         else:
             event = NullEvent()
 

@@ -210,7 +210,11 @@ def _to_json(obj):
     return json.dumps(obj, cls=JSONEncoder)
 
 def _query_fingerprint(query):
-    return skeleton(dict(query))
+    try:
+        return skeleton(dict(query))
+    except:
+        # For safety, in case skeleton encounters something unexpected we won't fail the query:
+        return ""
 
 def _command_fingerprint(query):
     """ Special case for commands: preserve order of arguments, and save
@@ -219,7 +223,11 @@ def _command_fingerprint(query):
     fp = None
     if query and isinstance(query, SON) and len(query) > 0:
         cmd_args = [ {item[0] : item[1]} for item in query.items() ]
-        fp = skeleton(cmd_args, preserve_first=True, no_wrap=True)
+        try:
+            fp = skeleton(cmd_args, preserve_first=True, no_wrap=True)
+        except:
+            # For safety, in case skeleton encounters something unexpected we won't fail the query:
+            pass
 
     return fp
 
@@ -328,7 +336,8 @@ def wrap_class(cls, class_name, class_method_inst):
     for (method, method_log_args) in class_method_inst.iteritems():
         fn = getattr(cls, method, None)
         if not fn:
-            raise Exception('method %s not found in %s' % (method, cls.__name__))
+            # Not all methods may be in all versions of pymongo...
+            continue
         kvs = { 'Class': '%s.%s' % (cls.__module__, cls.__name__),
                  'Function': method,
                  'Action': '%s.%s' % (class_name, method),

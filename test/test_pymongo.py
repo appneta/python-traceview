@@ -89,6 +89,7 @@ class MongoTest:
         try:
             db.create_collection('owners')
             db.create_collection('tasks')
+            db.create_collection('tasks_ref')
 
             # owners and tasks
             db.owners.insert({"name":"Jim"})
@@ -114,9 +115,15 @@ class MongoTest:
             print "tasks are:"
             for task in fresh_jim["tasks"]:
                 print db.dereference(task)["name"]
+
+            db.tasks_ref.insert( { "ref" :  DBRef(collection = "tasks", id = reading_task["_id"]) }) 
+            db.tasks_ref.insert( { "ref" :  DBRef(collection = "tasks", id = sleeping_task["_id"]) }) 
+            r1 = db.tasks_ref.find( { "ref" : DBRef(collection = "tasks", id = reading_task["_id"]) })
+            print r1.count()
         finally:
             db.drop_collection('owners')
             db.drop_collection('tasks')
+            db.drop_collection('tasks_ref')
 
     def _get_connection(self, *args, **kwargs):
         host = os.environ.get("MONGODB_HOST", "localhost")
