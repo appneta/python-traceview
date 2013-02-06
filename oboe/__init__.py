@@ -99,7 +99,7 @@ class Context(object):
             md = Metadata.fromString(xtr)
 
         sample_rate = None
-        if xtr:
+        if xtr and md:
             evt = md.createEvent()
         elif tracing_mode == 'always' and random.random() < config['sample_rate']:
             sample_rate = config['sample_rate']
