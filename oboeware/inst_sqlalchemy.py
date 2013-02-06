@@ -16,12 +16,9 @@ def wrap_execute(func, f_args, _f_kwargs, _return_val):
     if func.__name__ in QUERY_MAP:
         return { 'Query': QUERY_MAP[func.__name__] }
     elif len(f_args) >= 4 and not oboe.config.get('sanitize_sql', False):
-        # XXX This quoting isn't strictly correct for all DB types. It's not
-        # going to the DB, only back to Tracelytics, but technically,
-        # DB-specific quoting would be best.
-        return { 'Query': f_args[2].replace('?', "'%s'") % f_args[3] }
+        return { 'Query': f_args[2], 'QueryArgs': str(f_args[3]) }
     elif len(f_args) >= 3:
-        return { 'Query': f_args[2].replace('?', "''") }
+        return { 'Query': f_args[2] }
     else:
         return {}
 
