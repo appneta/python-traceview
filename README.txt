@@ -1,4 +1,4 @@
-Tracelytics Oboe instrumentation libraries for Python
+AppNeta Traceview instrumentation libraries for Python
 =====================================================
 
 The 'oboe' and 'oboeware' modules provide support for instrumenting
@@ -11,6 +11,6 @@ popular web frameworks such as Django, Tornado, Pylons, and WSGI.
 For more help, please contact support@tracelytics.com or visit:
   http://support.tracelytics.com
 
-Thanks for using Tracelytics!
+Thanks for using TraceView!
 
-- The Tracelytics Team
+- The TraceView Team
