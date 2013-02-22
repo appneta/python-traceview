@@ -1,4 +1,4 @@
-AppNeta Traceview instrumentation libraries for Python
+AppNeta TraceView instrumentation libraries for Python
 =====================================================
 
 The 'oboe' and 'oboeware' modules provide support for instrumenting
