@@ -14,10 +14,15 @@ def safeindex(_list, index):
 def safeget(obj, key):
     return obj.get(key, None) if obj and hasattr(obj, 'get') else None
 
+def wrap_request_request(func, f_args, f_kwargs):
+    self = safeindex(f_args, 0)
+    if self:
+        self.__oboe_path = safeindex(f_args, 2) or safeget(f_kwargs, 'url')
+    return f_args, f_kwargs, {}
+
 def wrap_request_putrequest(func, f_args, f_kwargs):
     self = safeindex(f_args, 0)
     if self:
-        # self.__oboe_method = safeindex(f_args, 1) or safeget(f_kwargs, 'method')
         self.__oboe_path = safeindex(f_args, 2) or safeget(f_kwargs, 'url')
     return f_args, f_kwargs, {}
 
@@ -45,8 +50,13 @@ HTTPLIB_LAYER = 'httplib'
 
 def wrap(module):
     try:
-        # Wrap putrequest.  This marks the beginning of the request, and is also
-        # where
+        wrapper_request = oboe.log_method(HTTPLIB_LAYER,
+                                             before_callback=wrap_request_request,
+                                             send_exit_event=False,
+                                             store_backtrace=True)
+        setattr(module.HTTPConnection, 'request',
+                wrapper_request(module.HTTPConnection.request))
+
         wrapper_putrequest = oboe.log_method(HTTPLIB_LAYER,
                                              before_callback=wrap_request_putrequest,
                                              send_exit_event=False,
