@@ -33,6 +33,7 @@ __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 config = dict()
 config['tracing_mode'] = 'through'      # always, through, never
 config['sample_rate'] = 0.3             # out of 1.0
+config['sanitize_sql'] = False          # Set to true to strip query literals
 config['reporter_host'] = '127.0.0.1'   # you probably don't want to change the
 config['reporter_port'] = 7831          # last two options
 config['warn_deprecated'] = True
