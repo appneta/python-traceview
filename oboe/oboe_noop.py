@@ -11,7 +11,7 @@ class Metadata(object):
 
     @staticmethod
     def fromString(_):
-        pass
+        return Metadata()
 
     def createEvent(self):
         return Event()
@@ -44,7 +44,7 @@ class Context(object):
 
     @staticmethod
     def fromString(_):
-        pass
+        return Context()
 
     @staticmethod
     def copy():
