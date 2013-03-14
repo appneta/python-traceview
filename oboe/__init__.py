@@ -16,6 +16,7 @@ from backport import defaultdict
 from decorator import decorator
 
 _log = logging.getLogger(__name__)
+_log.addHandler(logging.StreamHandler()) # use sys.stderr; see oboeware #63
 reporter_instance = None
 
 try:
@@ -26,13 +27,14 @@ except ImportError, e:
                "and liboboe-dev installed, running in no-op mode.  Tracing disabled. "
                "Contact support@tracelytics.com if this is unexpected.")
 
-__version__ = '1.3.8'
+__version__ = '1.4.0'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 
 # configuration defaults
 config = dict()
 config['tracing_mode'] = 'through'      # always, through, never
 config['sample_rate'] = 0.3             # out of 1.0
+config['sanitize_sql'] = False          # Set to true to strip query literals
 config['reporter_host'] = '127.0.0.1'   # you probably don't want to change the
 config['reporter_port'] = 7831          # last two options
 config['warn_deprecated'] = True
@@ -99,7 +101,7 @@ class Context(object):
             md = Metadata.fromString(xtr)
 
         sample_rate = None
-        if xtr:
+        if xtr and md:
             evt = md.createEvent()
         elif tracing_mode == 'always' and random.random() < config['sample_rate']:
             sample_rate = config['sample_rate']
