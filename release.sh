@@ -23,4 +23,7 @@ git push --tags
 
 # make package
 python setup.py sdist
-echo "Now you can copy dist/oboe-${VERSION}.tar.gz into the packages/pypi repo."
+echo "Now you can copy dist/oboe-${VERSION}.tar.gz into the packages/pypi repo, eg."
+echo "cp dist/oboe-1.* ../packages/"
+echo "cp dist/oboe-1.* ../packages/pypi-internal/"
+echo "and don't forget pypi.python.org !"
