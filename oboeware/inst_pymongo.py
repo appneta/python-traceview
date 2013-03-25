@@ -207,7 +207,7 @@ def _add_connection_info(report_kvs, db):
     report_kvs['RemotePort'] = db.connection.port
 
 def _to_json(obj):
-    return json.dumps(obj, cls=JSONEncoder)
+    return json.dumps(obj, cls=JSONEncoder, ensure_ascii=False)
 
 def _query_fingerprint(query):
     try:
