@@ -18,7 +18,21 @@ class TestLogExceptions(unittest.TestCase):
         except:
             oboe.log_exception()
 
+    def test_log_method_exception(self):
+        def bad_method(*args, **kwargs):
+            raise Exception('boooo')
+
+        @oboe.log_method('raiser', callback=bad_method)
+        def raiser():
+            pass
+
+        raiser()
+
 if __name__ == '__main__':
-#    msg = str(u'\xe4\xf6\xfc')
+    oboe.config['tracing_mode'] = 'always'
+    oboe.config['sample_rate'] = 1.0
+    oboe.start_trace("ExceptionTest")
+
     unittest.main()
-        
+
+    oboe.end_trace("ExceptionTest")
