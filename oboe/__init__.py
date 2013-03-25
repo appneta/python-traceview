@@ -645,7 +645,9 @@ def log_method(layer, store_return=False, store_args=False, store_backtrace=Fals
                         exit_kvs.update(cb_ret)
                 except Exception, e:
                     # should be no user exceptions here; it's a trace-related callback
-                    _log.error("Non-fatal error in log_method callback: %s" % str(e))
+                    type_, msg_, bt_ = sys.exc_info()
+                    _log.error("Non-fatal error in log_method callback: %s, %s, %s"\
+                                   % (str(type_), msg_, _str_backtrace(bt_)))
 
             # (optionally) report return value
             if store_return:
