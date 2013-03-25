@@ -116,8 +116,8 @@ class MongoTest:
             for task in fresh_jim["tasks"]:
                 print db.dereference(task)["name"]
 
-            db.tasks_ref.insert( { "ref" :  DBRef(collection = "tasks", id = reading_task["_id"]) }) 
-            db.tasks_ref.insert( { "ref" :  DBRef(collection = "tasks", id = sleeping_task["_id"]) }) 
+            db.tasks_ref.insert( { "ref" :  DBRef(collection = "tasks", id = reading_task["_id"]) })
+            db.tasks_ref.insert( { "ref" :  DBRef(collection = "tasks", id = sleeping_task["_id"]) })
             r1 = db.tasks_ref.find( { "ref" : DBRef(collection = "tasks", id = reading_task["_id"]) })
             print r1.count()
         finally:
