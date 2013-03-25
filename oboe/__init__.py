@@ -634,14 +634,20 @@ def log_method(layer, store_return=False, store_args=False, store_backtrace=Fals
             # call the callback function, if set, and merge its return
             # values with the exit event's reporting data
             if callback and callable(callback):
-                cb_ret = callback(func, f_args, f_kwargs, res)
-                # callback can optionally return a 2-tuple, where the
-                # second parameter is an additional edge to add to
-                # the exit event
-                if isinstance(cb_ret, tuple) and len(cb_ret) == 2:
-                    cb_ret, edge_str = cb_ret
-                if cb_ret:
-                    exit_kvs.update(cb_ret)
+                try:
+                    cb_ret = callback(func, f_args, f_kwargs, res)
+                    # callback can optionally return a 2-tuple, where the
+                    # second parameter is an additional edge to add to
+                    # the exit event
+                    if isinstance(cb_ret, tuple) and len(cb_ret) == 2:
+                        cb_ret, edge_str = cb_ret
+                    if cb_ret:
+                        exit_kvs.update(cb_ret)
+                except Exception, e:
+                    # should be no user exceptions here; it's a trace-related callback
+                    type_, msg_, bt_ = sys.exc_info()
+                    _log.error("Non-fatal error in log_method callback: %s, %s, %s"\
+                                   % (str(type_), msg_, _str_backtrace(bt_)))
 
             # (optionally) report return value
             if store_return:

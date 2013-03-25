@@ -116,14 +116,23 @@ class MongoTest:
             for task in fresh_jim["tasks"]:
                 print db.dereference(task)["name"]
 
-            db.tasks_ref.insert( { "ref" :  DBRef(collection = "tasks", id = reading_task["_id"]) }) 
-            db.tasks_ref.insert( { "ref" :  DBRef(collection = "tasks", id = sleeping_task["_id"]) }) 
+            db.tasks_ref.insert( { "ref" :  DBRef(collection = "tasks", id = reading_task["_id"]) })
+            db.tasks_ref.insert( { "ref" :  DBRef(collection = "tasks", id = sleeping_task["_id"]) })
             r1 = db.tasks_ref.find( { "ref" : DBRef(collection = "tasks", id = reading_task["_id"]) })
             print r1.count()
         finally:
             db.drop_collection('owners')
             db.drop_collection('tasks')
             db.drop_collection('tasks_ref')
+
+    def binary_contents_test(self):
+        db = Database(self._get_connection(), "pymongo_test")
+        test = db.create_collection("test_binary")
+        import os
+        import bson
+        obj = os.urandom(1024)
+        test.save({"hello": bson.Binary(obj)})
+        db.drop_collection("test_binary")
 
     def _get_connection(self, *args, **kwargs):
         host = os.environ.get("MONGODB_HOST", "localhost")
@@ -142,9 +151,12 @@ def main(with_oboe=True):
         mt.test2()
         mt.test4()
         mt.dbref_test()
+        mt.binary_contents_test()
 
         if with_oboe:
             oboe.end_trace('MongoTest')
+
+        print 'Finished.'
 
 
 if __name__ == '__main__':
