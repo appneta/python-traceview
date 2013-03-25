@@ -26,4 +26,8 @@ python setup.py sdist
 echo "Now you can copy dist/oboe-${VERSION}.tar.gz into the packages/pypi repo, eg."
 echo "cp dist/oboe-1.* ../packages/"
 echo "cp dist/oboe-1.* ../packages/pypi-internal/"
-echo "and don't forget pypi.python.org !"
+echo
+echo "and don't forget pypi.python.org:"
+echo "First time: python setup.py sdist register"
+echo "After that: python setup.py sdist upload"
+echo "(you might need to make sure your ~/.pypirc is in order)"

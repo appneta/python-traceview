@@ -7,7 +7,7 @@
 import distutils.ccompiler
 from setuptools import setup, Extension
 
-version = '1.4.1'
+version = '1.4.2'
 
 # conditionally build extensions if liboboe and liboboe-dev are available on this platform
 # otherwise, will function in no-op mode: no tracing, but all API endpoints available
