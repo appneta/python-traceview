@@ -741,7 +741,7 @@ def _old_context_log_exception(cls, msg=None, exc_info=None, backtrace=True):
 def _old_context_trace(cls, layer='Python', xtr_hdr=None, kvs=None):
     if config['warn_deprecated']:
         _log.warn('oboe.Context.trace is deprecated. Please use oboe.trace (and note signature change).')
-    return trace(layer, xtr_hdr=kvs, kvs=kvs)
+    return trace(layer, xtr_hdr=xtr_hdr, kvs=kvs)
 
 def _old_context_profile_function(cls, profile_name, store_args=False, store_return=False, store_backtrace=False,
                              profile=False, callback=None, **entry_kvs):
