@@ -5,6 +5,7 @@ All rights reserved.
 """
 import logging
 import inspect
+import os
 import random
 import sys
 import types
@@ -19,13 +20,18 @@ _log = logging.getLogger(__name__)
 _log.addHandler(logging.StreamHandler()) # use sys.stderr; see oboeware #63
 reporter_instance = None
 
-try:
-    from oboe_ext import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
-except ImportError, e:
-    from oboe_noop import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
-    _log.error("Tracelytics Oboe warning: module not built on a platform with liboboe "
-               "and liboboe-dev installed, running in no-op mode.  Tracing disabled. "
-               "Contact support@tracelytics.com if this is unexpected.")
+# test harness?  if not, check if we will run in no-op on this platform
+if 'OBOE_TEST' in os.environ:
+    from oboe_test import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
+    _log.error("Tracelytics Oboe running in OBOE_TEST mode; will not emit trace events.")
+else:
+    try:
+        from oboe_ext import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
+    except ImportError, e:
+        from oboe_noop import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
+        _log.error("Tracelytics Oboe warning: module not built on a platform with liboboe "
+                   "and liboboe-dev installed, running in no-op mode.  Tracing disabled. "
+                   "Contact support@tracelytics.com if this is unexpected.")
 
 __version__ = '1.4.2'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']

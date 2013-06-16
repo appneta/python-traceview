@@ -1,42 +1,10 @@
 """Test memcache client"""
 
 import base
-base.force_local_oboeware()
-base.enable_mock_oboe()
-from oboe.oboe_ext import OboeListener
-import oboe
-oboe.config['sample_rate'] = 1.0
-oboe.config['tracing_mode'] = 'always'
-
 from oboeware import inst_memcache # pylint: disable-msg=W0611
-import unittest
 from distutils.version import LooseVersion # pylint: disable-msg=W0611
+import unittest
 
-class Trace(object):
-    """ Mock trace.  Listens directly to events in mock oboe_ext. """
-    def __init__(self):
-        self.oboe = OboeListener()
-        oboe._start_trace('Python')
-        self.ended = False
-    def _end_trace(self):
-        if not self.ended:
-            self.ended = True
-            oboe._end_trace('Python')
-    def __del__(self):
-        self._end_trace()
-    def __enter__(self):
-        return self
-    def __exit__(self, type, value, traceback):
-        self._end_trace()
-    def events(self, *filters):
-        """ Returns all events matching the filters passed """
-        return self.oboe.get_events(*filters)
-    def pop_events(self, *filters):
-        """ Returns all events matching the filters passed,
-        and also removes those events from the Trace so that
-        they will not be returned by future calls to
-        pop_events or events. """
-        return self.oboe.pop_events(*filters)
 
 MODULE_NAMES = set([ 'memcache', 'pylibmc' ])
 
@@ -75,7 +43,7 @@ is_entry_event = label_is('entry')
 is_exit_event = label_is('exit')
 
 
-class TestMemcacheMemcache(unittest.TestCase):
+class TestMemcacheMemcache(base.TraceTestCase):
     """ This class contains tests not just for python-memcached
     but for other python memcache clients as well.  Other clients
     should inherit from this and set moduleName to their own
@@ -90,7 +58,6 @@ class TestMemcacheMemcache(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         self.moduleName = self.__class__.moduleName
         self.lib = __import__(self.__class__.moduleName)
-        self._last_trace = None
         super(TestMemcacheMemcache, self).__init__(*args, **kwargs)
 
     def setUp(self):
@@ -100,32 +67,7 @@ class TestMemcacheMemcache(unittest.TestCase):
     def client(self):
         return self.lib.Client(["127.0.0.1:5679"])
 
-    def new_trace(self):
-        self._last_trace = Trace()
-        return self._last_trace
-
-    def print_events(self, *filters):
-        print ''.join(['%s\n' % (ev.props) for ev in self._last_trace.events(*filters)]),
-
-    # def test_installation(self):
-    #     """ test instrumentation installation """
-    #     lib = __import__(self.moduleName)
-    #     client = lib.Client(["127.0.0.1:5679"])
-    #     #self.print_sigs(client)
-    #     import inst_memcache
-    #     #print
-    #     #self.print_sigs(client)
-    #     eventFilter = lambda x: 'Class' in x.props and x.props['Class'].startswith(self.moduleName)
-    #     events = self.oboe.get_events(eventFilter=eventFilter)
-    #     #print '\n'.join(['%10s: %s' % (ev.name, ev.props) for ev in events])
-    #     self.assertEqual(13, len(events))
-
-    def assertHasMemcacheBacktrace(self, op):
-        backtraces = self._last_trace.events(is_memcache_backtrace, prop_is('Function', op))
-        self.assertEqual(1, len(backtraces))
-
     def assertHasEntryAndExit(self, op):
-        self.assertHasMemcacheBacktrace(op)
         self.assertEqual(1, len(self._last_trace.pop_events(is_entry_event, layer_is('Python'))))
         self.assertEqual(1, len(self._last_trace.pop_events(is_entry_event, is_memcache_layer)))
         exits = self._last_trace.pop_events(is_exit_event, is_memcache_layer, prop_is('KVOp', op))
@@ -301,7 +243,6 @@ class TestMemcachePylibmc(TestMemcacheMemcache):
 #   https://docs.djangoproject.com/en/dev/topics/cache/
 # twisted memcache support:
 #   http://twistedmatrix.com/documents/current/api/twisted.protocols.memcache.html
-
 
 
 if __name__ == '__main__':
