@@ -8,56 +8,133 @@ import oboe
 import socket
 from functools import partial, wraps
 
-# these methods also have the same names as Memcached commands/ops
-REDIS_COMMANDS = set(('get', 'get_multi',
-                   'set', 'add', 'replace', 'set_multi',
-                   'incr', 'decr',
-                   'delete', 'delete_multi',
-                   'append', 'cas', 'prepend', 'gets'))
-
-def wrap_mc_method(func, f_args, f_kwargs, return_val, funcname=None):
-    """Pulls the operation and (for get) whether a key was found, on each public method."""
-    kvs = {}
-    if funcname in MC_COMMANDS:
-        kvs['KVOp'] = funcname
-    # could examine f_args for key(s) here
-    if funcname == 'get':
-        kvs['KVHit'] = int(return_val != None)
-    return kvs
-
-def wrap_get_server(layer_name, func):
-    """ Wrapper for memcache._get_server, to read remote host on all ops.
-
-    This relies on the module internals, and just sends an info event when this
-    function is called.
-    """
-    @wraps(func) # XXX Not Python2.4-friendly
-    def wrapper(*f_args, **f_kwargs):
-        ret = func(*f_args, **f_kwargs)
-        try:
-            args = {'KVKey' : f_args[1]}
-            (host, _) = ret
-            if host:
-                if host.family == socket.AF_INET:
-                    args['RemoteHost'] = host.ip
-                elif host.family == socket.AF_UNIX:
-                    args['RemoteHost'] = 'localhost'
-
-            oboe.log('info', layer_name, keys=args)
-        except Exception, e:
-            print >> sys.stderr, "Oboe error: %s" % e
-        return ret
-    return wrapper
-
 HITTABLE_COMMANDS = set(('GET','GETSET','HGET','LINDEX','LGET',
                         'RPOPLPUSH','LPOP','RPOP','BRPOPLPUSH',
                         'SPOP','SRANDMEMBER'))
 
+# TODO: add kvhit for mget
+# PubSub has own execute_command
+
+KEYABLE_COMMANDS = {'APPEND': 1,
+                    'BITCOUNT': 1,
+                    'BITOP': 2, #XXX DEST
+                    'DECR': 1,
+                    'EXISTS': 1,
+                    'EXPIRE': 1,
+                    'EXPIREAT': 1,
+                    'GET': 1,
+                    'GETBIT': 1,
+                    'GETRANGE': 1,
+                    'GETSET': 1,
+                    'INCR': 1,
+                    'INCRBY': 1,
+                    'INCRBYFLOAT': 1,
+                    'MOVE': 1,
+                    'PEXPIRE': 1,
+                    'PEXPIREAT': 1,
+                    'PSETEX': 1,
+                    'PTTL': 1,
+                    'RENAME': 1,
+                    'RENAMEX': 1,
+                    'SET': 1,
+                    'SETBIT': 1,
+                    'SETEX': 1,
+                    'SETNX': 1,
+                    'SETRANGE': 1,
+                    'STRLEN': 1,
+                    'SUBSTR': 1,
+                    'TTL': 1,
+                    'TYPE': 1,
+
+                    'LINDEX': 1,
+                    'LINSERT': 1,
+                    'LLEN': 1,
+                    'LPOP': 1,
+                    'LPUSH': 1,
+                    'LPUSHX': 1,
+                    'LRANGE': 1,
+                    'LREM': 1,
+                    'LSET': 1,
+                    'LTRIM': 1,
+                    'RPOP': 1,
+                    'RPUSH': 1,
+                    'RPOPLPUSH': 1,
+                    'RPUSH': 1,
+                    'RPUSHX': 1,
+                    'SORT': 1,
+
+                    'SADD': 1,
+                    'SCARD': 1,
+                    'SDIFF': 1,
+                    'SDIFFSTORE': 1, #XXX DEST
+                    'SINTERSTORE': 1, #XXX DEST
+                    'SISMEMBER': 1,
+                    'SMEMBERS': 1,
+                    'SMOVE': 1,
+                    'SPOP': 1,
+                    'SRANDMEMBER': 1,
+                    'SREM': 1,
+                    'SUNIONSTORE': 1, #XXX DEST
+
+                    'ZADD': 1,
+                    'ZCARD': 1,
+                    'ZCOUNT': 1,
+                    'ZINCRBY': 1,
+                    'ZINTERSTORE': 1, #XXX DEST
+                    'ZRANGE': 1,
+                    'ZRANGEBYSCORE': 1,
+                    'ZRANK': 1,
+                    'ZREM': 1,
+                    'ZREMRANGEBYRANK': 1,
+                    'ZREMRANGEBYSCORE': 1,
+                    'ZREVRANGE': 1,
+                    'ZREVRANGEBYSCORE': 1,
+                    'ZREVRANK': 1,
+                    'ZSCORE': 1,
+                    'ZUNIONSCORE': 1, #XXX DEST
+
+                    'HDEL': 1,
+                    'HEXISTS': 1,
+                    'HGET': 1,
+                    'HGETALL': 1,
+                    'HINCRBY': 1,
+                    'HINCRBYFLOAT': 1,
+                    'HKEYS': 1,
+                    'HLEN': 1,
+                    'HSET': 1,
+                    'HSETNX': 1,
+                    'HMSET': 1,
+                    'HMGET': 1,
+                    'HVALS': 1,
+
+                    'PUBLISH': 1 # CHANNEL
+                    }
+
+SCRIPT_COMMANDS = { 'EVAL': 1, #SCRIPT
+                    'EVALSHA': 1 #SHA
+                  }
+
+# these commands have two parts, as separate args in python redis client
+# eg. SCRIPT LOAD
+TWO_PARTERS = set(('SCRIPT','CLIENT','CONFIG','DEBUG'))
+
+
 def wrap_execute_command(func, f_args, f_kwargs, return_val):
     """ This is where most "normal" redis commands are instrumented. """
     kvs = {}
-    kvs['KVOp'] = f_args[1]
-    if f_args[1] in HITTABLE_COMMANDS:
+
+    # command
+    op = f_args[1]
+    if op in TWO_PARTERS:
+        op = op + ' ' + f_args[2]
+    kvs['KVOp'] = op
+
+    # key
+    if op in KEYABLE_COMMANDS:
+        kvs['KVKey'] = f_args[1+KEYABLE_COMMANDS[op]]
+
+    # hit/miss
+    if op in HITTABLE_COMMANDS:
         kvs['KVHit'] = return_val != None
     return kvs
 

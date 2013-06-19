@@ -46,11 +46,13 @@ class TestRedis(base.TraceTestCase):
         self.assertEqual(1, len(self._last_trace.pop_events(is_entry_event, layer_is('Python'))))
         self.assertEqual(1, len(self._last_trace.pop_events(is_exit_event, layer_is('Python'))))
 
-    def assertHasRedisCall(self, op, hit=None):
+    def assertHasRedisCall(self, op, hit=None, key=None):
         self.assertEqual(1, len(self._last_trace.pop_events(is_entry_event, is_redis_layer)))
         preds = [is_exit_event, is_redis_layer, prop_is('KVOp', op)]
         if hit != None:
             preds.append(prop_is('KVHit', hit))
+        if key != None:
+            preds.append(prop_is('KVKey', key))
         exit_with_kvs = self._last_trace.pop_events(*preds)
         self.assertEqual(1, len(exit_with_kvs))
 
@@ -61,29 +63,29 @@ class TestRedis(base.TraceTestCase):
     def assertNoExtraEvents(self):
         self.assertEqual(0, len(self._last_trace.events()))
 
-    def assertRedisTrace(self, op, num_remote_hosts=1, hit=None):
+    def assertRedisTrace(self, op, num_remote_hosts=1, hit=None, key=False):
         self.assertHasBaseEntryAndExit()
-        self.assertHasRedisCall(op, hit=hit)
+        self.assertHasRedisCall(op, hit=hit, key=key)
         self.assertHasRemoteHost(num=num_remote_hosts)
         self.assertNoExtraEvents()
 
     def test_set(self):
         with self.new_trace():
-            self.client.set('test1', 'set')
-        self.assertRedisTrace(op='SET')
-        self.assertEqual('set', self.client.get('test1'))
+            self.client.set('test1', 'set_val')
+        self.assertRedisTrace(op='SET', key='test1')
+        self.assertEqual('set_val', self.client.get('test1'))
 
     def test_get_hit(self):
-        self.client.set('test1', 'get')
+        self.client.set('test1', 'get_val')
         with self.new_trace():
             ret = self.client.get('test1')
-        self.assertRedisTrace(op='GET', hit=True)
-        self.assertEqual('get', ret)
+        self.assertRedisTrace(op='GET', hit=True, key='test1')
+        self.assertEqual('get_val', ret)
 
     def test_get_miss(self):
         with self.new_trace():
             ret = self.client.get('test2')
-        self.assertRedisTrace(op='GET', hit=False)
+        self.assertRedisTrace(op='GET', hit=False, key='test2')
         self.assertEqual(None, ret)
 
 if __name__ == '__main__':
