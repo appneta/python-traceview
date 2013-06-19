@@ -49,14 +49,15 @@ def wrap_get_server(layer_name, func):
         return ret
     return wrapper
 
-# TODO
-HITTABLE_COMMANDS = set(('get',))
+HITTABLE_COMMANDS = set(('GET','GETSET','HGET','LINDEX','LGET',
+                        'RPOPLPUSH','LPOP','RPOP','BRPOPLPUSH',
+                        'SPOP','SRANDMEMBER'))
 
 def wrap_execute_command(func, f_args, f_kwargs, return_val):
     """ This is where most "normal" redis commands are instrumented. """
     kvs = {}
     kvs['KVOp'] = f_args[1]
-    if f_args[0] in HITTABLE_COMMANDS:
+    if f_args[1] in HITTABLE_COMMANDS:
         kvs['KVHit'] = return_val != None
     return kvs
 
