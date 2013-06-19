@@ -6,11 +6,16 @@ import oboe
 import unittest
 import logging
 
-oboe.config['sample_rate'] = 0 # make sure we send init regardless of sampling
-
 class TestOnInit(base.TraceTestCase):
     def __init(self, *args, **kwargs):
         super(TestOnInit, self).__init__(*args, **kwargs)
+
+    def setUp(self):
+        self.old_sample_rate = oboe.config['sample_rate']
+        oboe.config['sample_rate'] = 0 # make sure we send init regardless of sampling
+
+    def tearDown(self):
+        oboe.config['sample_rate'] = self.old_sample_rate
 
     def assertInitTrace(self, layer='wsgi'):
         self.assertEqual(2, len(self._last_trace.events()))
