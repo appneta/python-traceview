@@ -133,6 +133,10 @@ def wrap_execute_command(func, f_args, f_kwargs, return_val):
     if op in KEYABLE_COMMANDS:
         kvs['KVKey'] = f_args[1+KEYABLE_COMMANDS[op]]
 
+    # script eval
+    if op in SCRIPT_COMMANDS:
+        kvs['Script'] = f_args[1+SCRIPT_COMMANDS[op]][0:100] # max out at 100 chars if script
+
     # hit/miss
     if op in HITTABLE_COMMANDS:
         kvs['KVHit'] = return_val != None
