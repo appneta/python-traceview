@@ -35,34 +35,56 @@ class TestRedis(base.TraceTestCase):
         self.lib = __import__('redis')
         super(TestRedis, self).__init__(*args, **kwargs)
 
-    def client(self):
-        return self.lib.StrictRedis(host='127.0.0.1', port=6379, db=0)
+    def setUp(self):
+        self.client = self.lib.StrictRedis(host='127.0.0.1', port=6379, db=0)
 
-    def assertHasEntryAndExit(self, op):
+    def tearDown(self):
+        self.client = None
+
+    def assertHasBaseEntryAndExit(self):
+        self.print_events() # only prints anything if the following asserts will fail
         self.assertEqual(1, len(self._last_trace.pop_events(is_entry_event, layer_is('Python'))))
-        self.assertEqual(1, len(self._last_trace.pop_events(is_entry_event, is_redis_layer)))
-        exit_with_kvop = self._last_trace.pop_events(is_exit_event, is_redis_layer, prop_is('KVOp', op))
-        self.assertEqual(1, len(exit_with_kvop))
         self.assertEqual(1, len(self._last_trace.pop_events(is_exit_event, layer_is('Python'))))
+
+    def assertHasRedisCall(self, op, hit=None):
+        self.assertEqual(1, len(self._last_trace.pop_events(is_entry_event, is_redis_layer)))
+        preds = [is_exit_event, is_redis_layer, prop_is('KVOp', op)]
+        if hit != None:
+            preds.append(prop_is('KVHit', hit))
+        exit_with_kvs = self._last_trace.pop_events(*preds)
+        self.assertEqual(1, len(exit_with_kvs))
 
     def assertHasRemoteHost(self, num=1):
         self.assertEqual(num, len(self._last_trace.pop_events(is_remote_host_event)))
         return True
 
     def assertNoExtraEvents(self):
-        self.print_events() # only prints anything if the following assert will fail
         self.assertEqual(0, len(self._last_trace.events()))
 
-    def assertSimpleTrace(self, op, num_remote_hosts=1):
-        self.assertHasEntryAndExit(op)
+    def assertRedisTrace(self, op, num_remote_hosts=1, hit=None):
+        self.assertHasBaseEntryAndExit()
+        self.assertHasRedisCall(op, hit=hit)
         self.assertHasRemoteHost(num=num_remote_hosts)
         self.assertNoExtraEvents()
 
     def test_set(self):
-        """ test set: client.set('key', 'value') """
         with self.new_trace():
-            self.client().set('test1', '5')
-        self.assertSimpleTrace(op='SET')
+            self.client.set('test1', 'set')
+        self.assertRedisTrace(op='SET')
+        self.assertEqual('set', self.client.get('test1'))
+
+    def test_get_hit(self):
+        self.client.set('test1', 'get')
+        with self.new_trace():
+            ret = self.client.get('test1')
+        self.assertRedisTrace(op='GET', hit=True)
+        self.assertEqual('get', ret)
+
+    def test_get_miss(self):
+        with self.new_trace():
+            ret = self.client.get('test2')
+        self.assertRedisTrace(op='GET', hit=False)
+        self.assertEqual(None, ret)
 
 if __name__ == '__main__':
     unittest.main()
