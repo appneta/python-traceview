@@ -184,5 +184,16 @@ class TestRedis(base.TraceTestCase):
         self.assertRedisTrace(op='ZREM', key='setkey')
         self.assertEqual(ret, 1)
 
+    ##### PIPELINE COMMANDS ###################################################
+
+    def test_transaction(self):
+        self.client.delete('key1', 'hashkey1')
+        p = self.client.pipeline()
+        with self.new_trace():
+            p.set('key1', 'val1').hset('hashkey1', 'key1', 'val1')
+            ret = p.execute()
+        self.assertRedisTrace(op='PIPE:SET,HSET')
+        self.assertEqual(ret, [True, 1])
+
 if __name__ == '__main__':
     unittest.main()

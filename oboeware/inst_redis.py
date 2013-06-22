@@ -3,10 +3,11 @@
 Copyright (C) 2011 by Tracelytics, Inc.
 All rights reserved.
 """
-import sys
-import oboe
-import socket
 from functools import partial, wraps
+import oboe
+import operator
+import socket
+import sys
 
 HITTABLE_COMMANDS = set(('GET','GETSET','HGET','LINDEX','LGET',
                         'RPOPLPUSH','LPOP','RPOP','BRPOPLPUSH',
@@ -142,6 +143,18 @@ def wrap_execute_command(func, f_args, f_kwargs, return_val):
         kvs['KVHit'] = return_val != None
     return kvs
 
+def wrap_execute_pipeline(func, f_args, f_kwargs, return_val):
+    # args: self, connection, commands, raise_on_error
+    kvs = {}
+    fp_cmds = {}
+    for (args, options) in f_args[2]:
+        fp_cmds[args[0]] = fp_cmds.get(args[0], 0) + 1
+
+    kvs['KVOp'] = 'PIPE:' + ','.join([cmd for (cmd,_) in\
+                    sorted(fp_cmds.iteritems(), key=operator.itemgetter(1))])
+    return kvs
+
+
 def wrap_send_packed_command(layer_name, func):
     """ This is where we get the RemoteHost.
 
@@ -167,19 +180,37 @@ def wrap(layer_name, module):
     try:
         # first get the basic client methods; common point of processing is Client.execute_command
         cls = getattr(module, 'StrictRedis', None)
-        if not cls:
-            return
-        execute_command = cls.execute_command
-        wrapper = oboe.log_method(layer_name,
-                                    callback=wrap_execute_command)
-        setattr(cls, 'execute_command', wrapper(execute_command))
+        if cls:
+            execute_command = cls.execute_command
+            wrapper = oboe.log_method(layer_name,
+                                        callback=wrap_execute_command)
+            setattr(cls, 'execute_command', wrapper(execute_command))
+        else:
+            oboe._log.error("Oboe error: couldn't find redis.StrictRedis class to instrument, "\
+                            "redis coverage may be partial.")
 
         # RemoteHost
         cls = getattr(module, 'Connection', None)
-        if not cls:
-            return
-        wrapper = wrap_send_packed_command(layer_name, cls.send_packed_command)
-        setattr(cls, 'send_packed_command', wrapper)
+        if cls:
+            wrapper = wrap_send_packed_command(layer_name, cls.send_packed_command)
+            setattr(cls, 'send_packed_command', wrapper)
+        else:
+            oboe._log.error("Oboe error: couldn't find redis.Connection class to instrument, "\
+                            "redis coverage may be partial.")
+
+        # pipeline/multi
+        cls = getattr(module.client, 'BasePipeline', None)
+        if cls:
+            wrapper = oboe.log_method(layer_name,
+                                        callback=wrap_execute_pipeline)
+            execute_pipeline = cls._execute_pipeline
+            setattr(cls, '_execute_pipeline', wrapper(execute_pipeline))
+            execute_transaction = cls._execute_transaction
+            setattr(cls, '_execute_transaction', wrapper(execute_transaction))
+        else:
+            oboe._log.error("Oboe error: couldn't find redis.client.BasePipeline class to instrument, "\
+                            "redis coverage may be partial.")
+
 
     except Exception, e:
         print >> sys.stderr, "Oboe error:", str(e)
