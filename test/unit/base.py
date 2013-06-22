@@ -5,6 +5,7 @@ N.B. has on-import behavior to use repo-local oboe and set OBOE_TEST environment
 
 import os
 import sys
+import trace_filters as f
 import unittest
 
 def force_local_oboe():
@@ -72,3 +73,8 @@ class TraceTestCase(unittest.TestCase):
 
     def print_events(self, *filters):
         print ''.join(['%s\n' % (ev.props) for ev in self._last_trace.events(*filters)]),
+
+    def assertHasBaseEntryAndExit(self):
+        self.print_events() # only prints anything if the following asserts will fail
+        self.assertEqual(1, len(self._last_trace.pop_events(f.is_entry_event, f.layer_is('Python'))))
+        self.assertEqual(1, len(self._last_trace.pop_events(f.is_exit_event, f.layer_is('Python'))))

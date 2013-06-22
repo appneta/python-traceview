@@ -1,33 +1,13 @@
 """ Test redis client instrumentation. """
 
 import base
+import trace_filters as f
 from oboeware import inst_redis # pylint: disable-msg=W0611
 import unittest
 
 # Filters for assertions re: inspecting Events in Traces
-
-def _and(*filters):
-    def wrapped(*args, **kwargs):
-        result = True
-        for _filter in filters:
-            result = result and _filter(*args, **kwargs)
-        return result
-    return wrapped
-def has_prop(prop):
-    return lambda ev: prop in ev.props
-def prop_is_in(prop, values_set):
-    return lambda ev: (prop in ev.props) and (ev.props[prop] in values_set)
-def prop_is(prop, value):
-    return lambda ev: (prop in ev.props) and (ev.props[prop] == value)
-def label_is(label):
-    return prop_is('Label', label)
-def layer_is(layer):
-    return prop_is('Layer', layer)
-is_redis_layer = prop_is('Layer', 'redis')
-is_redis_backtrace = _and(has_prop('Backtrace'), is_redis_layer)
-is_remote_host_event = _and(has_prop('RemoteHost'), label_is('info'))
-is_entry_event = label_is('entry')
-is_exit_event = label_is('exit')
+is_redis_layer = f.prop_is('Layer', 'redis')
+is_redis_backtrace = f._and(f.has_prop('Backtrace'), is_redis_layer)
 
 
 class TestRedis(base.TraceTestCase):
@@ -41,23 +21,18 @@ class TestRedis(base.TraceTestCase):
     def tearDown(self):
         self.client = None
 
-    def assertHasBaseEntryAndExit(self):
-        self.print_events() # only prints anything if the following asserts will fail
-        self.assertEqual(1, len(self._last_trace.pop_events(is_entry_event, layer_is('Python'))))
-        self.assertEqual(1, len(self._last_trace.pop_events(is_exit_event, layer_is('Python'))))
-
     def assertHasRedisCall(self, op, hit=None, key=None):
-        self.assertEqual(1, len(self._last_trace.pop_events(is_entry_event, is_redis_layer)))
-        preds = [is_exit_event, is_redis_layer, prop_is('KVOp', op)]
+        self.assertEqual(1, len(self._last_trace.pop_events(f.is_entry_event, is_redis_layer)))
+        preds = [f.is_exit_event, is_redis_layer, f.prop_is('KVOp', op)]
         if hit != None:
-            preds.append(prop_is('KVHit', hit))
+            preds.append(f.prop_is('KVHit', hit))
         if key != None:
-            preds.append(prop_is('KVKey', key))
+            preds.append(f.prop_is('KVKey', key))
         exit_with_kvs = self._last_trace.pop_events(*preds)
         self.assertEqual(1, len(exit_with_kvs))
 
     def assertHasRemoteHost(self, num=1):
-        self.assertEqual(num, len(self._last_trace.pop_events(is_remote_host_event)))
+        self.assertEqual(num, len(self._last_trace.pop_events(f.is_remote_host_event)))
         return True
 
     def assertNoExtraEvents(self):
