@@ -75,6 +75,9 @@ class TraceTestCase(unittest.TestCase):
         print ''.join(['%s\n' % (ev.props) for ev in self._last_trace.events(*filters)]),
 
     def assertHasBaseEntryAndExit(self):
-        self.print_events() # only prints anything if the following asserts will fail
+        self.print_events() # only really prints anything if test case fails
         self.assertEqual(1, len(self._last_trace.pop_events(f.is_entry_event, f.layer_is('Python'))))
         self.assertEqual(1, len(self._last_trace.pop_events(f.is_exit_event, f.layer_is('Python'))))
+
+    def assertNoExtraEvents(self):
+        self.print_events() # only prints anything if the following assert will fail

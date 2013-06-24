@@ -31,10 +31,6 @@ class TestRedis(base.TraceTestCase):
 
     def assertHasRemoteHost(self, num=1):
         self.assertEqual(num, len(self._last_trace.pop_events(f.is_remote_host_event)))
-        return True
-
-    def assertNoExtraEvents(self):
-        self.assertEqual(0, len(self._last_trace.events()))
 
     def assertRedisTrace(self, num_remote_hosts=1, **kvs):
         self.assertHasBaseEntryAndExit()

@@ -62,10 +62,6 @@ class TestMemcacheMemcache(base.TraceTestCase):
             # connect, this test will fail.
             self.assertEqual(num, len(self._last_trace.pop_events(f.is_remote_host_event)))
 
-    def assertNoExtraEvents(self):
-        self.print_events() # only prints anything if the following assert will fail
-        self.assertEqual(0, len(self._last_trace.events()))
-
     def assertSimpleTrace(self, op, num_remote_hosts=1):
         self.assertHasMemcacheEntryAndExit(op)
         self.assertHasRemoteHost(num=num_remote_hosts)
