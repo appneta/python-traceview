@@ -187,6 +187,7 @@ class TestRedis(base.TraceTestCase):
     ##### PIPELINE COMMANDS ###################################################
 
     def test_transaction(self):
+        """ Tests atomic transaction execution of pipeline. """
         self.client.delete('key1', 'hashkey1')
         p = self.client.pipeline()
         with self.new_trace():
@@ -194,6 +195,17 @@ class TestRedis(base.TraceTestCase):
             ret = p.execute()
         self.assertRedisTrace(op='PIPE:SET,HSET')
         self.assertEqual(ret, [True, 1])
+
+    def test_pipeline_and_fp(self):
+        """ Tests non-atomic pipeline execution; also tests that fingerprint ops are ranked
+            by frequency of occurrence in pipeline. """
+        self.client.delete('key1', 'hashkey1')
+        p = self.client.pipeline(transaction=False)
+        with self.new_trace():
+            p.set('key1', 'val1').hset('hashkey1', 'key1', 'val1').hset('hashkey1', 'key2', 'val2')
+            ret = p.execute()
+        self.assertRedisTrace(op='PIPE:HSET,SET')
+        self.assertEqual(ret, [True, 1, 1])
 
 if __name__ == '__main__':
     unittest.main()
