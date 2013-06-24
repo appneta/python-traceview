@@ -207,5 +207,19 @@ class TestRedis(base.TraceTestCase):
         self.assertRedisTrace(op='PIPE:HSET,SET')
         self.assertEqual(ret, [True, 1, 1])
 
+    ##### PUBSUB COMMANDS #####################################################
+
+    def test_subscribe(self):
+        with self.new_trace():
+            p = self.client.pubsub()
+            p.subscribe('messages')
+        self.assertRedisTrace(op='SUBSCRIBE')
+
+    def test_psubscribe(self):
+        with self.new_trace():
+            p = self.client.pubsub()
+            p.psubscribe('pattern')
+        self.assertRedisTrace(op='PSUBSCRIBE')
+
 if __name__ == '__main__':
     unittest.main()

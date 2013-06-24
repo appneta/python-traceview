@@ -211,6 +211,16 @@ def wrap(layer_name, module):
             oboe._log.error("Oboe error: couldn't find redis.client.BasePipeline class to instrument, "\
                             "redis coverage may be partial.")
 
+        # pubsub
+        cls = getattr(module.client, 'PubSub', None)
+        if cls:
+            execute_command = cls.execute_command
+            wrapper = oboe.log_method(layer_name,
+                                        callback=wrap_execute_command)
+            setattr(cls, 'execute_command', wrapper(execute_command))
+        else:
+            oboe._log.error("Oboe error: couldn't find redis.client.PubSub class to instrument, "\
+                            "redis coverage may be partial.")
 
     except Exception, e:
         print >> sys.stderr, "Oboe error:", str(e)
