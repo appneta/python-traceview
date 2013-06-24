@@ -7,7 +7,7 @@ import unittest
 import logging
 
 class TestOnInit(base.TraceTestCase):
-    def __init(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(TestOnInit, self).__init__(*args, **kwargs)
 
     def setUp(self):
