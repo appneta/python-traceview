@@ -1,8 +1,9 @@
 """ Tests for basic oboe event construction type safety. """
 import oboe
-import unit.base as base
+import unittest
 
-class TestOboeAddInfo(base.TraceTestCase):
+# XXX do not use base.TraceTestCase here--we really do want it to fall through to c extension
+class TestOboeAddInfo(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
         super(TestOboeAddInfo, self).__init__(*args, **kwargs)
