@@ -151,7 +151,7 @@ def wrap_execute_pipeline(func, f_args, f_kwargs, return_val):
         fp_cmds[args[0]] = fp_cmds.get(args[0], 0) + 1
 
     kvs['KVOp'] = 'PIPE:' + ','.join([cmd for (cmd,_) in\
-                    sorted(fp_cmds.iteritems(), key=operator.itemgetter(1))])
+                    sorted(fp_cmds.iteritems(), key=operator.itemgetter(1), reverse=True)])
     return kvs
 
 
