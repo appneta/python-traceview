@@ -215,5 +215,22 @@ class TestRedis(base.TraceTestCase):
             p.psubscribe('pattern')
         self.assertRedisTrace(KVOp='PSUBSCRIBE')
 
+    ##### SCRIPT COMMANDS #####################################################
+
+    LUA_SCRIPT = """-- this is just meant to be longer than 100 chars
+if redis.call("EXISTS",KEYS[1]) == 1 then
+  return redis.call("INCR",KEYS[1])
+else
+  return nil
+end
+"""
+
+    def test_eval(self):
+        script = self.LUA_SCRIPT
+        with self.new_trace():
+            res = self.client.eval(script, 0, [])
+        self.assertRedisTrace(KVOp='EVAL', Script=script[0:100])
+        self.assertEquals(res, None)
+
 if __name__ == '__main__':
     unittest.main()
