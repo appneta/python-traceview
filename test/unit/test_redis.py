@@ -38,6 +38,14 @@ class TestRedis(base.TraceTestCase):
         self.assertHasRemoteHost(num=num_remote_hosts)
         self.assertNoExtraEvents()
 
+    def guardFeature(self, command):
+        import redis
+        try:
+            self.client.execute_command(command)
+        except redis.client.ResponseError, e:
+            if 'unknown command' in str(e):
+                return self.skipTest("Installed version of Redis server doesn't support %s, skipping." % command)
+
     ##### GET/SET/DELETE ######################################################
 
     def test_set(self):
@@ -87,6 +95,7 @@ class TestRedis(base.TraceTestCase):
     # test a few of the two-word commands
 
     def test_client_list(self):
+        self.guardFeature('CLIENT LIST')
         with self.new_trace():
             ret = self.client.client_list()
         self.assertRedisTrace(KVOp='CLIENT LIST')
@@ -94,6 +103,7 @@ class TestRedis(base.TraceTestCase):
         self.assertEqual(type(ret[0]), dict)
 
     def test_script_exists(self):
+        self.guardFeature('SCRIPT EXISTS xxx')
         with self.new_trace():
             ret = self.client.script_exists('xxx')
         self.assertRedisTrace(KVOp='SCRIPT EXISTS')
@@ -226,6 +236,7 @@ end
 """
 
     def test_eval(self):
+        self.guardFeature('EVAL')
         script = self.LUA_SCRIPT
         with self.new_trace():
             res = self.client.eval(script, 0, [])
