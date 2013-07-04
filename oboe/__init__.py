@@ -88,7 +88,7 @@ class Context(object):
     # For starting/stopping traces
 
     @classmethod
-    def start_trace(cls, layer, xtr=None):
+    def start_trace(cls, layer, xtr=None, avw=None):
         """Returns a Context and a start event.
 
         Takes sampling into account -- may return an (invalid Context, event) pair.
@@ -103,7 +103,7 @@ class Context(object):
         sample_rate = None
         if xtr and md:
             evt = md.createEvent()
-        elif tracing_mode == 'always' and random.random() < config['sample_rate']:
+        elif avw or tracing_mode == 'always' and random.random() < config['sample_rate']:
             sample_rate = config['sample_rate']
             if not md:
                 md = Metadata.makeRandom()
@@ -115,6 +115,9 @@ class Context(object):
             event = Event(evt, 'entry', layer)
             if sample_rate:
                 event.add_info('SampleRate', sample_rate * 1e6)
+            if avw:
+                event.add_info('X-TV-Meta', avw)
+
         else:
             event = NullEvent()
 
