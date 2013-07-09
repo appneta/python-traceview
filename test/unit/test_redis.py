@@ -171,18 +171,18 @@ class TestRedis(base.TraceTestCase):
     ##### SORTED SET COMMANDS #################################################
     # test a few of the z-set commands
 
-    def test_set_zadd(self):
+    def test_zset_zadd(self):
         self.client.delete('setkey')
         with self.new_trace():
-            ret = self.client.zadd('setkey', 5, 'item')
+            ret = self.client.zadd('setkey', 5, 7.1)
         self.assertRedisTrace(KVOp='ZADD', KVKey='setkey')
         self.assertEqual(ret, 1)
 
-    def test_set_srem(self):
+    def test_zset_srem(self):
         self.client.delete('setkey')
-        self.client.zadd('setkey', 5, 'item')
+        self.client.zadd('setkey', 5, 7.1)
         with self.new_trace():
-            ret = self.client.zrem('setkey', 'item')
+            ret = self.client.zrem('setkey', 7.1)
         self.assertRedisTrace(KVOp='ZREM', KVKey='setkey')
         self.assertEqual(ret, 1)
 
