@@ -200,7 +200,7 @@ def wrap(layer_name, module):
                             "redis coverage may be partial.")
 
         # pipeline/multi
-        cls = getattr(module.client, 'BasePipeline', None)
+        cls = getattr(module.client, 'BasePipeline', getattr(module.client, 'Pipeline', None))
         if cls:
             wrapper = oboe.log_method(layer_name,
                                         callback=wrap_execute_pipeline)
@@ -209,7 +209,8 @@ def wrap(layer_name, module):
             execute_transaction = cls._execute_transaction
             setattr(cls, '_execute_transaction', wrapper(execute_transaction))
         else:
-            oboe._log.error("Oboe error: couldn't find redis.client.BasePipeline class to instrument, "\
+            oboe._log.error("Oboe error: couldn't find redis.client.BasePipeline nor "\
+                            "redis.client.Pipeline class to instrument, "\
                             "redis coverage may be partial.")
 
         # pubsub
