@@ -85,7 +85,10 @@ class TestRedis(base.TraceTestCase):
         with self.new_trace():
             ret = self.client.delete('test1','test2')
         self.assertRedisTrace(KVOp='DEL')
-        self.assertEqual(ret, 2)
+        if self.lib.__version__ <= '2.7.4':
+            self.assertEqual(ret, True)
+        else:
+            self.assertEqual(ret, 2)
 
     ##### TWO-WORD COMMANDS ###################################################
     # test a few of the two-word commands
