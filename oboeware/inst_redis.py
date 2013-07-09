@@ -178,16 +178,17 @@ def wrap_send_packed_command(layer_name, func):
 
 def wrap(layer_name, module):
     try:
-        # first get the basic client methods; common point of processing is Client.execute_command
-        cls = getattr(module, 'StrictRedis', None)
+        # first get the basic client methods; common point of processing is execute_command
+        # client is StrictRedis for >= 2.4.10, or Redis for < 2.4.10
+        cls = getattr(module, 'StrictRedis', getattr(module, 'Redis', None))
         if cls:
             execute_command = cls.execute_command
             wrapper = oboe.log_method(layer_name,
                                         callback=wrap_execute_command)
             setattr(cls, 'execute_command', wrapper(execute_command))
         else:
-            oboe._log.error("Oboe error: couldn't find redis.StrictRedis class to instrument, "\
-                            "redis coverage may be partial.")
+            oboe._log.error("Oboe error: couldn't find redis.StrictRedis nor redis.Redis class to"\
+                            " instrument, redis coverage may be partial.")
 
         # RemoteHost
         cls = getattr(module, 'Connection', None)
