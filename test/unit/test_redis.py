@@ -42,6 +42,14 @@ class TestRedis(base.TraceTestCase):
         self.assertHasRemoteHost(num=num_remote_hosts)
         self.assertNoExtraEvents()
 
+    def guardServerFeature(self, command):
+        import redis
+        try:
+            self.client.execute_command(command)
+        except redis.client.ResponseError, e:
+            if 'unknown command' in str(e):
+                return self.skipTest("Installed version of Redis server doesn't support %s, skipping." % command)
+
     ##### GET/SET/DELETE ######################################################
 
     def test_set(self):
@@ -96,6 +104,7 @@ class TestRedis(base.TraceTestCase):
     def test_client_list(self):
         if not 'client_list' in dir(self.lib.Redis):
             self.skipTest('Version of library does not support client_list method.')
+        self.guardServerFeature('CLIENT LIST')
         with self.new_trace():
             ret = self.client.client_list()
         self.assertRedisTrace(KVOp='CLIENT LIST')
@@ -105,6 +114,7 @@ class TestRedis(base.TraceTestCase):
     def test_script_exists(self):
         if not 'script_exists' in dir(self.lib.Redis):
             self.skipTest('Version of library does not support script_exists method.')
+        self.guardServerFeature('SCRIPT EXISTS xxx')
         with self.new_trace():
             ret = self.client.script_exists('xxx')
         self.assertRedisTrace(KVOp='SCRIPT EXISTS')
@@ -242,6 +252,7 @@ end
     def test_eval(self):
         if not 'eval' in dir(self.lib.Redis):
             self.skipTest('Version of library does not support eval method.')
+        self.guardServerFeature('EVAL')
         script = self.LUA_SCRIPT
         with self.new_trace():
             res = self.client.eval(script, 0, [])
