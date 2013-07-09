@@ -177,17 +177,20 @@ class TestRedis(base.TraceTestCase):
     def test_zset_zadd(self):
         self.client.delete('setkey')
         with self.new_trace():
-            ret = self.client.zadd('setkey', 5, 7.1)
+            ret = self.client.zadd('setkey', 'item', 7.1)
         self.assertRedisTrace(KVOp='ZADD', KVKey='setkey')
         self.assertEqual(ret, 1)
 
     def test_zset_srem(self):
         self.client.delete('setkey')
-        self.client.zadd('setkey', 5, 7.1)
+        self.client.zadd('setkey', 'item', 7.1)
         with self.new_trace():
-            ret = self.client.zrem('setkey', 7.1)
+            ret = self.client.zrem('setkey', 'item')
         self.assertRedisTrace(KVOp='ZREM', KVKey='setkey')
-        self.assertEqual(ret, 1)
+        if self.lib.__version__ <= '2.7.4':
+            self.assertEqual(ret, True)
+        else:
+            self.assertEqual(ret, 1)
 
     ##### PIPELINE COMMANDS ###################################################
 
