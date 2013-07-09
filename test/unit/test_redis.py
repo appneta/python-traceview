@@ -16,7 +16,11 @@ class TestRedis(base.TraceTestCase):
         super(TestRedis, self).__init__(*args, **kwargs)
 
     def setUp(self):
-        self.client = self.lib.StrictRedis(host='127.0.0.1', port=6379, db=0)
+        # use Redis class for versions < 2.4.10
+        if not 'StrictRedis' in dir(self.lib):
+            self.client = self.lib.Redis(host='127.0.0.1', port=6379, db=0)
+        else:
+            self.client = self.lib.StrictRedis(host='127.0.0.1', port=6379, db=0)
 
     def tearDown(self):
         self.client = None
@@ -87,6 +91,8 @@ class TestRedis(base.TraceTestCase):
     # test a few of the two-word commands
 
     def test_client_list(self):
+        if not 'client_list' in dir(self.lib.Redis):
+            self.skipTest('Version of library does not support client_list method.')
         with self.new_trace():
             ret = self.client.client_list()
         self.assertRedisTrace(KVOp='CLIENT LIST')
@@ -94,6 +100,8 @@ class TestRedis(base.TraceTestCase):
         self.assertEqual(type(ret[0]), dict)
 
     def test_script_exists(self):
+        if not 'script_exists' in dir(self.lib.Redis):
+            self.skipTest('Version of library does not support script_exists method.')
         with self.new_trace():
             ret = self.client.script_exists('xxx')
         self.assertRedisTrace(KVOp='SCRIPT EXISTS')
@@ -226,6 +234,8 @@ end
 """
 
     def test_eval(self):
+        if not 'eval' in dir(self.lib.Redis):
+            self.skipTest('Version of library does not support eval method.')
         script = self.LUA_SCRIPT
         with self.new_trace():
             res = self.client.eval(script, 0, [])
