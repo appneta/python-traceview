@@ -24,10 +24,10 @@ else:
 setup(name = 'oboe',
       version = version,
       author = 'AppNeta',
-      author_email = 'contact@tracelytics.com',
+      author_email = 'traceview@appneta.com',
       url = 'http://dev.appneta.com',
       download_url = 'http://pypi.python.org/oboeware',
-      description  = 'AppNeta Traceview Oboe libraries, instrumentation and web middleware components '
+      description  = 'AppNeta TraceView Oboe libraries, instrumentation, and web middleware components '
       'for WSGI, Django, and Tornado.',
       long_description = open('README.txt').read(),
       keywords='appneta traceview tracelytics oboe liboboe instrumentation performance wsgi middleware django',

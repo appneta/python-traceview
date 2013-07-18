@@ -8,8 +8,8 @@ The oboe module provides a Pythonic interface to liboboe for C, and
 the oboeware module provides middleware and other components for
 popular web frameworks such as Django, Tornado, Pylons, and WSGI.
 
-For more help, please contact support@tracelytics.com or visit:
-  http://support.tracelytics.com
+For more help, please contact traceviewsupport@appneta.com or visit:
+  http://support.tv.appneta.com
 
 Thanks for using TraceView!
 
