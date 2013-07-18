@@ -140,6 +140,10 @@ def wrap_execute_command(func, f_args, f_kwargs, return_val):
     # hit/miss
     if op in HITTABLE_COMMANDS:
         kvs['KVHit'] = return_val != None
+    elif op == 'MGET' or op == 'HMGET':
+        kvs['KVKeyCount'] = len(return_val)
+        kvs['KVHitCount'] = sum(r != None for r in return_val)
+
     return kvs
 
 def wrap_execute_pipeline(func, f_args, f_kwargs, return_val):
