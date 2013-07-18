@@ -14,7 +14,6 @@ HITTABLE_COMMANDS = set(('GET','GETSET','HGET','LINDEX','LGET',
                         'SPOP','SRANDMEMBER'))
 
 # TODO: add kvhit for mget
-# PubSub has own execute_command
 
 KEYABLE_COMMANDS = {'APPEND': 1,
                     'BITCOUNT': 1,
@@ -128,7 +127,7 @@ def wrap_execute_command(func, f_args, f_kwargs, return_val):
     op = f_args[1]
     if op in TWO_PARTERS:
         op = op + ' ' + f_args[2]
-    kvs['KVOp'] = op
+    kvs['KVOp'] = op.lower()
 
     # key
     if op in KEYABLE_COMMANDS:
@@ -150,8 +149,10 @@ def wrap_execute_pipeline(func, f_args, f_kwargs, return_val):
     for (args, options) in f_args[2]:
         fp_cmds[args[0]] = fp_cmds.get(args[0], 0) + 1
 
-    kvs['KVOp'] = 'PIPE:' + ','.join([cmd for (cmd,_) in\
+    op = 'PIPE:' + ','.join([cmd for (cmd,_) in\
                     sorted(fp_cmds.iteritems(), key=operator.itemgetter(1), reverse=True)])
+    kvs['KVOp'] = op.lower()
+
     return kvs
 
 

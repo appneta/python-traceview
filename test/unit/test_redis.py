@@ -55,20 +55,20 @@ class TestRedis(base.TraceTestCase):
     def test_set(self):
         with self.new_trace():
             self.client.set('test1', 'set_val')
-        self.assertRedisTrace(KVOp='SET', KVKey='test1')
+        self.assertRedisTrace(KVOp='set', KVKey='test1')
         self.assertEqual('set_val', self.client.get('test1'))
 
     def test_get_hit(self):
         self.client.set('test1', 'get_val')
         with self.new_trace():
             ret = self.client.get('test1')
-        self.assertRedisTrace(KVOp='GET', KVHit=True, KVKey='test1')
+        self.assertRedisTrace(KVOp='get', KVHit=True, KVKey='test1')
         self.assertEqual('get_val', ret)
 
     def test_get_miss(self):
         with self.new_trace():
             ret = self.client.get('test2')
-        self.assertRedisTrace(KVOp='GET', KVHit=False, KVKey='test2')
+        self.assertRedisTrace(KVOp='get', KVHit=False, KVKey='test2')
         self.assertEqual(None, ret)
 
     def test_mget(self):
@@ -77,14 +77,14 @@ class TestRedis(base.TraceTestCase):
         self.client.delete('missing')
         with self.new_trace():
             ret = self.client.mget(kvs.keys(), 'missing')
-        self.assertRedisTrace(KVOp='MGET')
+        self.assertRedisTrace(KVOp='mget')
         self.assertEqual(ret, kvs.values() + [None])
 
     def test_mset(self):
         kvs = {'key1': 'val1', 'key2': 'val2'}
         with self.new_trace():
             self.client.mset(kvs)
-        self.assertRedisTrace(KVOp='MSET')
+        self.assertRedisTrace(KVOp='mset')
         self.assertEqual(kvs.values(), self.client.mget(kvs.keys()))
 
     def test_delete(self):
@@ -92,7 +92,7 @@ class TestRedis(base.TraceTestCase):
         self.client.set('test2', 'get_val')
         with self.new_trace():
             ret = self.client.delete('test1','test2')
-        self.assertRedisTrace(KVOp='DEL')
+        self.assertRedisTrace(KVOp='del')
         if self.lib.__version__ <= '2.7.4':
             self.assertEqual(ret, True)
         else:
@@ -104,20 +104,20 @@ class TestRedis(base.TraceTestCase):
     def test_client_list(self):
         if not 'client_list' in dir(self.lib.Redis):
             self.skipTest('Version of library does not support client_list method.')
-        self.guardServerFeature('CLIENT LIST')
+        self.guardServerFeature('client list')
         with self.new_trace():
             ret = self.client.client_list()
-        self.assertRedisTrace(KVOp='CLIENT LIST')
+        self.assertRedisTrace(KVOp='client list')
         self.assertEqual(type(ret), list)
         self.assertEqual(type(ret[0]), dict)
 
     def test_script_exists(self):
         if not 'script_exists' in dir(self.lib.Redis):
             self.skipTest('Version of library does not support script_exists method.')
-        self.guardServerFeature('SCRIPT EXISTS xxx')
+        self.guardServerFeature('script exists xxx')
         with self.new_trace():
             ret = self.client.script_exists('xxx')
-        self.assertRedisTrace(KVOp='SCRIPT EXISTS')
+        self.assertRedisTrace(KVOp='script exists')
         self.assertEqual(ret, [False])
 
     ##### LIST COMMANDS #######################################################
@@ -127,7 +127,7 @@ class TestRedis(base.TraceTestCase):
         self.client.delete('listkey')
         with self.new_trace():
             ret = self.client.lpush('listkey','val')
-        self.assertRedisTrace(KVOp='LPUSH', KVKey='listkey')
+        self.assertRedisTrace(KVOp='lpush', KVKey='listkey')
         self.assertEqual(ret, 1)
 
     def test_list_rpop(self):
@@ -135,7 +135,7 @@ class TestRedis(base.TraceTestCase):
         ret = self.client.lpush('listkey','val')
         with self.new_trace():
             ret = self.client.rpop('listkey')
-        self.assertRedisTrace(KVOp='RPOP', KVKey='listkey')
+        self.assertRedisTrace(KVOp='rpop', KVKey='listkey')
         self.assertEqual(ret, 'val')
 
     ##### HASH COMMANDS #######################################################
@@ -145,7 +145,7 @@ class TestRedis(base.TraceTestCase):
         self.client.delete('hashkey')
         with self.new_trace():
             ret = self.client.hset('hashkey', 'key', 'val')
-        self.assertRedisTrace(KVOp='HSET', KVKey='hashkey')
+        self.assertRedisTrace(KVOp='hset', KVKey='hashkey')
         self.assertEqual(ret, 1)
 
     def test_hget_hit(self):
@@ -153,14 +153,14 @@ class TestRedis(base.TraceTestCase):
         ret = self.client.hset('hashkey', 'key', 'val')
         with self.new_trace():
             ret = self.client.hget('hashkey', 'key')
-        self.assertRedisTrace(KVOp='HGET', KVHit=True, KVKey='hashkey')
+        self.assertRedisTrace(KVOp='hget', KVHit=True, KVKey='hashkey')
         self.assertEqual(ret, 'val')
 
     def test_hget_miss(self):
         self.client.delete('hashkey')
         with self.new_trace():
             ret = self.client.hget('hashkey', 'key')
-        self.assertRedisTrace(KVOp='HGET', KVHit=False, KVKey='hashkey')
+        self.assertRedisTrace(KVOp='hget', KVHit=False, KVKey='hashkey')
         self.assertEqual(ret, None)
 
     ##### SET COMMANDS ########################################################
@@ -170,7 +170,7 @@ class TestRedis(base.TraceTestCase):
         self.client.delete('setkey')
         with self.new_trace():
             ret = self.client.sadd('setkey', 'item')
-        self.assertRedisTrace(KVOp='SADD', KVKey='setkey')
+        self.assertRedisTrace(KVOp='sadd', KVKey='setkey')
         self.assertEqual(ret, 1)
 
     def test_set_srem(self):
@@ -178,7 +178,7 @@ class TestRedis(base.TraceTestCase):
         self.client.sadd('setkey', 'item')
         with self.new_trace():
             ret = self.client.srem('setkey', 'item')
-        self.assertRedisTrace(KVOp='SREM', KVKey='setkey')
+        self.assertRedisTrace(KVOp='srem', KVKey='setkey')
         self.assertEqual(ret, 1)
 
     ##### SORTED SET COMMANDS #################################################
@@ -188,7 +188,7 @@ class TestRedis(base.TraceTestCase):
         self.client.delete('setkey')
         with self.new_trace():
             ret = self.client.zadd('setkey', 'item', 7.1)
-        self.assertRedisTrace(KVOp='ZADD', KVKey='setkey')
+        self.assertRedisTrace(KVOp='zadd', KVKey='setkey')
         self.assertEqual(ret, 1)
 
     def test_zset_srem(self):
@@ -196,7 +196,7 @@ class TestRedis(base.TraceTestCase):
         self.client.zadd('setkey', 'item', 7.1)
         with self.new_trace():
             ret = self.client.zrem('setkey', 'item')
-        self.assertRedisTrace(KVOp='ZREM', KVKey='setkey')
+        self.assertRedisTrace(KVOp='zrem', KVKey='setkey')
         if self.lib.__version__ <= '2.7.4':
             self.assertEqual(ret, True)
         else:
@@ -222,7 +222,7 @@ class TestRedis(base.TraceTestCase):
         with self.new_trace():
             p.set('key1', 'val1').hset('hashkey1', 'key1', 'val1').hset('hashkey1', 'key2', 'val2')
             ret = p.execute()
-        self.assertRedisTrace(KVOp='PIPE:HSET,SET')
+        self.assertRedisTrace(KVOp='pipe:hset,set')
         self.assertEqual(ret, [True, 1, 1])
 
     ##### PUBSUB COMMANDS #####################################################
@@ -231,13 +231,13 @@ class TestRedis(base.TraceTestCase):
         with self.new_trace():
             p = self.client.pubsub()
             p.subscribe('messages')
-        self.assertRedisTrace(KVOp='SUBSCRIBE')
+        self.assertRedisTrace(KVOp='subscribe')
 
     def test_psubscribe(self):
         with self.new_trace():
             p = self.client.pubsub()
             p.psubscribe('pattern')
-        self.assertRedisTrace(KVOp='PSUBSCRIBE')
+        self.assertRedisTrace(KVOp='psubscribe')
 
     ##### SCRIPT COMMANDS #####################################################
 
@@ -256,7 +256,7 @@ end
         script = self.LUA_SCRIPT
         with self.new_trace():
             res = self.client.eval(script, 0, [])
-        self.assertRedisTrace(KVOp='EVAL', Script=script[0:100])
+        self.assertRedisTrace(KVOp='eval', Script=script[0:100])
         self.assertEquals(res, None)
 
 if __name__ == '__main__':
