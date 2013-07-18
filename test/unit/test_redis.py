@@ -211,7 +211,11 @@ class TestRedis(base.TraceTestCase):
         with self.new_trace():
             p.set('key1', 'val1').hset('hashkey1', 'key1', 'val1')
             ret = p.execute()
-        self.assertRedisTrace(KVOp='PIPE:SET,HSET')
+        # not sure what the exact cutoff should be here, but older versions have extra arguments
+        if self.lib.__version__ <= '2.7':
+            self.assertRedisTrace(KVOp='pipe:multi,set,hset,exec')
+        else:
+            self.assertRedisTrace(KVOp='pipe:set,hset')
         self.assertEqual(ret, [True, 1])
 
     def test_pipeline_and_fp(self):
