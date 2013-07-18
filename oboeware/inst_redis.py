@@ -9,12 +9,14 @@ import operator
 import socket
 import sys
 
+# which commands can we get hit/miss info from?
+# also supports mget and hmget separately, see below
 HITTABLE_COMMANDS = set(('GET','GETSET','HGET','LINDEX','LGET',
                         'RPOPLPUSH','LPOP','RPOP','BRPOPLPUSH',
                         'SPOP','SRANDMEMBER'))
 
-# TODO: add kvhit for mget
-
+# which commands can we get KVKey from?
+# for S*/H*/Z* commans, the key is currently the set/hash name
 KEYABLE_COMMANDS = {'APPEND': 1,
                     'BITCOUNT': 1,
                     'BITOP': 2, #XXX DEST
