@@ -103,7 +103,7 @@ class Context(object):
         sample_rate = None
         if xtr and md:
             evt = md.createEvent()
-        elif SwigContext.sampleRequest(layer, xtr, avw)
+        elif SwigContext.sampleRequest(layer, xtr, avw):
             sample_rate = config['sample_rate']
             if not md:
                 md = Metadata.makeRandom()
