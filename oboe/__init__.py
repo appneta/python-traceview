@@ -5,6 +5,7 @@ All rights reserved.
 """
 import logging
 import inspect
+import os
 import random
 import sys
 import types
@@ -16,7 +17,10 @@ from backport import defaultdict
 from decorator import decorator
 
 _log = logging.getLogger(__name__)
-_log.addHandler(logging.StreamHandler()) # use sys.stderr; see oboeware #63
+if 'OBOE_DISABLE_DEFAULT_LOGGER' in os.environ:
+    _log.addHandler(logging.NullHandler())
+else:
+    _log.addHandler(logging.StreamHandler()) # use sys.stderr; see oboeware #63
 reporter_instance = None
 
 try:
