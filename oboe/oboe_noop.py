@@ -33,6 +33,18 @@ class Context(object):
     @staticmethod
     def init():
         pass
+    
+    @staticmethod
+    def setTracingMode(_):
+        return False
+    
+    @staticmethod
+    def setDefaultSampleRate(_):
+        return False
+
+    @staticmethod
+    def sampleRequest(_, __, ___):
+        return False
 
     @staticmethod
     def get():
