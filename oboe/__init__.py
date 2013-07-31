@@ -84,7 +84,7 @@ class Context(object):
     def clear_default(cls):
         """Removes the current thread-local Context."""
         SwigContext.clear()
-
+    
     # For starting/stopping traces
 
     @classmethod
@@ -93,31 +93,32 @@ class Context(object):
 
         Takes sampling into account -- may return an (invalid Context, event) pair.
         """
-
+        
         tracing_mode = config['tracing_mode']
         md = None
+
         if xtr and tracing_mode in ['always', 'through']:
             # Continuing a trace from another, external, layer
             md = Metadata.fromString(xtr)
-
+        
         sample_rate = None
+
         if xtr and md:
             evt = md.createEvent()
-        elif SwigContext.sampleRequest(layer, xtr, avw):
+        elif SwigContext.sampleRequest(layer, xtr or '', avw or ''):
             sample_rate = config['sample_rate']
             if not md:
                 md = Metadata.makeRandom()
             evt = SwigEvent.startTrace(md)
         else:
             evt = None
-
+            
         if evt:
             event = Event(evt, 'entry', layer)
             if sample_rate:
                 event.add_info('SampleRate', sample_rate * 1e6)
             if avw:
                 event.add_info('X-TV-Meta', avw)
-
         else:
             event = NullEvent()
 
@@ -793,3 +794,4 @@ setattr(Context, 'profile_block',    _old_context_profile_block)
 setattr(Context, 'toString',         types.MethodType(_old_context_to_string, Context))
 setattr(Context, 'fromString',       types.MethodType(_old_context_from_string, Context))
 setattr(Context, 'isValid',          types.MethodType(_old_context_is_valid, Context))
+
