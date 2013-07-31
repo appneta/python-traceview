@@ -69,6 +69,16 @@ class Context(object):
         else:
             self._md = md
 
+    # For interacting with SRv1
+
+    @classmethod
+    def setTracingMode(cls, mode):
+        SwigContext.setTracingMode(mode)
+
+    @classmethod
+    def setDefaultSampleRate(cls, rate):
+        SwigContext.setDefaultSampleRate(rate)
+
     # For interacting with the thread-local Context
 
     @classmethod
