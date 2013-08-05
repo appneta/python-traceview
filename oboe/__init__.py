@@ -107,7 +107,7 @@ class Context(object):
         tracing_mode = config['tracing_mode']
         md = None
 
-        if xtr and tracing_mode in ['always', 'through']:
+        if xtr and (tracing_mode in ['always', 'through'] or avw):
             # Continuing a trace from another, external, layer
             md = Metadata.fromString(xtr)
         
