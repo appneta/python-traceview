@@ -45,6 +45,8 @@ class OboeMiddleware(object):
         if self.oboe_config.get('oboe.sample_rate'):
             oboe.config['sample_rate'] = float(self.oboe_config['oboe.sample_rate'])
 
+        oboe.Context.updateConfig()
+
         # load pluggaable instrumentation
         load_inst_modules()
 

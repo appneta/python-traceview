@@ -78,6 +78,24 @@ class Context(object):
     @classmethod
     def setDefaultSampleRate(cls, rate):
         SwigContext.setDefaultSampleRate(rate)
+    
+    @classmethod
+    def updateConfig(cls):
+        """Updates liboboe via SWIG with the configured tracing_mode and sample_rate"""
+        ##
+        # liboboe TracingMode defines not exported through SWIG
+        # OBOE_TRACE_NEVER   0
+        # OBOE_TRACE_ALWAYS  1
+        # OBOE_TRACE_THROUGH 2
+        #
+        if config['tracing_mode'] == 'never':
+            oboe.Context.setTracingMode(0)
+        elif config['tracing_mode'] == 'always': 
+            oboe.Context.setTracingMode(1)
+        else:
+            oboe.Context.setTracingMode(2)
+
+        oboe.Context.setDefaultSampleRate(int(config['sample_rate'] * 1e6))
 
     # For interacting with the thread-local Context
 
