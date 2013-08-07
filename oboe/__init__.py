@@ -76,7 +76,7 @@ class OboeConfig(object):
             self.__config[k] = v
 
         else:
-            raise Exception('Bad key: ' + str(k))
+            raise Exception('Unsupported oboe config key: ' + str(k))
             
     def __getitem__(self, k):
         return self.__config[k]
