@@ -30,22 +30,58 @@ except ImportError, e:
 __version__ = '1.4.2'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 
-# configuration defaults
-config = dict()
-config['tracing_mode'] = 'through'      # always, through, never
-config['sample_rate'] = 0.3             # out of 1.0
-config['sanitize_sql'] = False          # Set to true to strip query literals
-config['reporter_host'] = '127.0.0.1'   # you probably don't want to change the
-config['reporter_port'] = 7831          # last two options
-config['warn_deprecated'] = True
-
-config['inst_enabled'] = defaultdict(lambda: True)
-
 import oboe.rum
 rum_header = oboe.rum.rum_header
 rum_footer = oboe.rum.rum_footer
 
 SwigContext.init()
+
+class OboeConfig(object):
+    """ Oboe Configuration Class """
+
+    __config = dict()
+
+    def __init__(self):
+        self.__config = dict()
+        self.__config['tracing_mode'] = 'through'      # always, through, never
+        self.__config['sample_rate'] = 0.3             # out of 1.0
+        self.__config['sanitize_sql'] = False          # Set to true to strip query literals
+        self.__config['reporter_host'] = '127.0.0.1'   # you probably don't want to change the
+        self.__config['reporter_port'] = 7831          # last two options
+        self.__config['warn_deprecated'] = True
+        self.__config['inst_enabled'] = defaultdict(lambda: True)
+
+    def __setitem__(self, k, v):
+        if k == 'tracing_mode':
+            ##
+            # liboboe TracingMode defines not exported through SWIG
+            # OBOE_TRACE_NEVER   0
+            # OBOE_TRACE_ALWAYS  1
+            # OBOE_TRACE_THROUGH 2
+            #
+            if v == 'never':
+                oboe.Context.setTracingMode(0)
+            elif v == 'always': 
+                oboe.Context.setTracingMode(1)
+            else:
+                oboe.Context.setTracingMode(2)
+
+            self.__config[k] = v
+
+        elif k == 'sample_rate':
+            self.__config[k] = v
+            oboe.Context.setDefaultSampleRate(int(v * 1e6))
+
+        elif k in ['sanitize_sql', 'reporter_host', 'reporter_port', 'warn_deprecated']:
+            self.__config[k] = v
+
+        else:
+            raise Exception('Bad key: ' + str(k))
+            
+    def __getitem__(self, k):
+        return self.__config[k]
+
+config = OboeConfig()
 
 ###############################################################################
 # Low-level Public API
@@ -272,7 +308,7 @@ except ImportError:
     found_cprofile = False
 
 def _get_profile_info(p):
-    """Retursn a sorted set of stats from a cProfile instance."""
+    """Returns a sorted set of stats from a cProfile instance."""
     sio = cStringIO.StringIO()
     s = pstats.Stats(p, stream=sio)
     s.sort_stats('time')
