@@ -2,7 +2,7 @@
 #define OBOE_HPP
 
 #include <string>
-#include <oboe.h>
+#include "oboe.h"
 
 
 class Event;
