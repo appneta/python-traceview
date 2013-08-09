@@ -6,12 +6,13 @@ All rights reserved.
 import oboe
 import oboeware
 import sys
+import copy
 
 def report_layer_init(layer="wsgi"):
     """ Send a fake trace showing the initialization and version of this layer's
         instrumentation. """
     # force trace, save old config
-    tmp_config = oboe.config.copy()
+    tmp_config = copy.deepcopy(oboe.config)
     oboe.config['tracing_mode'] = 'always'
     oboe.config['sample_rate'] = 1.0
 
