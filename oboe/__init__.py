@@ -81,6 +81,12 @@ class OboeConfig(object):
     def __getitem__(self, k):
         return self.__config[k]
 
+    def get(self, k, default):
+        if self.__config.has_key(k):
+            return self.__config[k]
+        else:
+            return default
+
 config = OboeConfig()
 
 ###############################################################################
