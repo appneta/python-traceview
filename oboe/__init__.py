@@ -39,17 +39,17 @@ SwigContext.init()
 class OboeConfig(object):
     """ Oboe Configuration Class """
 
-    __config = {}
+    _config = {}
 
     def __init__(self, *args, **kwargs):
-        self.__config = kwargs
-        self.__config['tracing_mode'] = 'through'      # always, through, never
-        self.__config['sample_rate'] = 0.3             # out of 1.0
-        self.__config['sanitize_sql'] = False          # Set to true to strip query literals
-        self.__config['reporter_host'] = '127.0.0.1'   # you probably don't want to change the
-        self.__config['reporter_port'] = 7831          # last two options
-        self.__config['warn_deprecated'] = True
-        self.__config['inst_enabled'] = defaultdict(lambda: True)
+        self._config = kwargs
+        self._config['tracing_mode'] = 'through'      # always, through, never
+        self._config['sample_rate'] = 0.3             # out of 1.0
+        self._config['sanitize_sql'] = False          # Set to true to strip query literals
+        self._config['reporter_host'] = '127.0.0.1'   # you probably don't want to change the
+        self._config['reporter_port'] = 7831          # last two options
+        self._config['warn_deprecated'] = True
+        self._config['inst_enabled'] = defaultdict(lambda: True)
 
     def __setitem__(self, k, v):
         if k == 'tracing_mode':
@@ -66,27 +66,27 @@ class OboeConfig(object):
             else:
                 oboe.Context.setTracingMode(2)
 
-            self.__config[k] = v
+            self._config[k] = v
 
         elif k == 'sample_rate':
-            self.__config[k] = v
+            self._config[k] = v
             oboe.Context.setDefaultSampleRate(int(v * 1e6))
 
         elif k in ['sanitize_sql', 'reporter_host', 'reporter_port', 'warn_deprecated']:
-            self.__config[k] = v
+            self._config[k] = v
 
         else:
             raise OboeException('Unsupported oboe config key: ' + str(k))
 
     def __getitem__(self, k):
-        return self.__config[k]
+        return self._config[k]
 
     def __delitem__(self, ii):
-        del self.__config[ii]
+        del self._config[ii]
 
     def get(self, k, default=None):
-        if self.__config.has_key(k):
-            return self.__config[k]
+        if self._config.has_key(k):
+            return self._config[k]
         else:
             return default
 
