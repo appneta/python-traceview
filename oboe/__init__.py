@@ -77,7 +77,7 @@ class OboeConfig(object):
 
         else:
             raise OboeException('Unsupported oboe config key: ' + str(k))
-            
+
     def __getitem__(self, k):
         return self.__config[k]
 
@@ -123,7 +123,7 @@ class Context(object):
     @classmethod
     def setDefaultSampleRate(cls, rate):
         SwigContext.setDefaultSampleRate(rate)
-    
+
     # For interacting with the thread-local Context
 
     @classmethod
@@ -139,7 +139,7 @@ class Context(object):
     def clear_default(cls):
         """Removes the current thread-local Context."""
         SwigContext.clear()
-    
+
     # For starting/stopping traces
 
     @classmethod
@@ -148,14 +148,14 @@ class Context(object):
 
         Takes sampling into account -- may return an (invalid Context, event) pair.
         """
-        
+
         tracing_mode = config['tracing_mode']
         md = None
 
         if xtr and (tracing_mode in ['always', 'through'] or avw):
             # Continuing a trace from another, external, layer
             md = Metadata.fromString(xtr)
-        
+
         sample_rate = None
 
         if xtr and md:
@@ -167,7 +167,7 @@ class Context(object):
             evt = SwigEvent.startTrace(md)
         else:
             evt = None
-            
+
         if evt:
             event = Event(evt, 'entry', layer)
             if sample_rate:
