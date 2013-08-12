@@ -83,7 +83,6 @@ class OboeConfig(object):
 
     def __delitem__(self, ii):
         del self.__config[ii]
-        return
 
     def get(self, k, default):
         if self.__config.has_key(k):
