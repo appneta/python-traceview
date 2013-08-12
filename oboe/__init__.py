@@ -39,10 +39,10 @@ SwigContext.init()
 class OboeConfig(object):
     """ Oboe Configuration Class """
 
-    __config = dict()
+    __config = {}
 
     def __init__(self):
-        self.__config = dict()
+        self.__config = {}
         self.__config['tracing_mode'] = 'through'      # always, through, never
         self.__config['sample_rate'] = 0.3             # out of 1.0
         self.__config['sanitize_sql'] = False          # Set to true to strip query literals
