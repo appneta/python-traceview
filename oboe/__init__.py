@@ -41,8 +41,8 @@ class OboeConfig(object):
 
     __config = {}
 
-    def __init__(self):
-        self.__config = {}
+    def __init__(self, *args, **kwargs):
+        self.__config = kwargs
         self.__config['tracing_mode'] = 'through'      # always, through, never
         self.__config['sample_rate'] = 0.3             # out of 1.0
         self.__config['sanitize_sql'] = False          # Set to true to strip query literals
