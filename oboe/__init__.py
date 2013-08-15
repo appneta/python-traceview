@@ -10,8 +10,12 @@ import sys
 import types
 import traceback
 
+# "invalid name ... for type constant"
+# pylint interprets all module-level variables as being 'constants'.
+# pylint: disable-msg=C0103
+
 # defaultdict not implemented before 2.5
-from backport import defaultdict
+from oboe.backport import defaultdict
 
 from decorator import decorator
 
@@ -20,9 +24,9 @@ _log.addHandler(logging.StreamHandler()) # use sys.stderr; see oboeware #63
 reporter_instance = None
 
 try:
-    from oboe_ext import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
+    from oboe.oboe_ext import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
 except ImportError, e:
-    from oboe_noop import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
+    from oboe.oboe_noop import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
     _log.error("Tracelytics Oboe warning: module not built on a platform with liboboe "
                "and liboboe-dev installed, running in no-op mode.  Tracing disabled. "
                "Contact support@tracelytics.com if this is unexpected.")
@@ -85,6 +89,7 @@ class OboeConfig(object):
         del self._config[ii]
 
     def get(self, k, default=None):
+        """ Get the value of key k """
         if self._config.has_key(k):
             return self._config[k]
         else:
@@ -97,16 +102,18 @@ config = OboeConfig()
 ###############################################################################
 
 class OboeException(Exception):
+    """ Oboe Exception Class """
     pass
 
 def _str_backtrace(backtrace=None):
+    """ Return a string representation of an existing or new backtrace """
     if backtrace:
         return "".join(traceback.format_tb(backtrace))
     else:
         return "".join(traceback.format_stack()[:-1])
 
 class Context(object):
-    # Basically a wrapper around the swig Metadata
+    """ A wrapper around the swig Metadata """
 
     def __init__(self, md):
         if isinstance(md, basestring):
@@ -118,10 +125,12 @@ class Context(object):
 
     @classmethod
     def setTracingMode(cls, mode):
+        """ Updates liboboe with the configured tracing_mode """
         SwigContext.setTracingMode(mode)
 
     @classmethod
     def setDefaultSampleRate(cls, rate):
+        """ Updates liboboe with the configured sample_rate """
         SwigContext.setDefaultSampleRate(rate)
 
     # For interacting with the thread-local Context
@@ -415,7 +424,7 @@ def log_exception(msg=None, store_backtrace=True):
     if msg is None:
         try:
             msg = str(val)
-        except:
+        except Exception:
             msg = repr(val)
 
     log_error(typ.__name__, msg,
@@ -702,7 +711,7 @@ def log_method(layer, store_return=False, store_args=False, store_backtrace=Fals
                         cb_ret, edge_str = cb_ret
                     if cb_ret:
                         exit_kvs.update(cb_ret)
-                except Exception, e:
+                except Exception:
                     # should be no user exceptions here; it's a trace-related callback
                     type_, msg_, bt_ = sys.exc_info()
                     _log.error("Non-fatal error in log_method callback: %s, %s, %s"\
@@ -793,7 +802,7 @@ def _old_context_log_exception(cls, msg=None, exc_info=None, backtrace=True):
     if msg is None:
         try:
             msg = str(val)
-        except:
+        except Exception:
             msg = repr(val)
     return log_error(typ.__name__, msg, store_backtrace=backtrace, backtrace=tb)
 

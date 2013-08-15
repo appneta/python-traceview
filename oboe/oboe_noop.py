@@ -4,8 +4,12 @@ Copyright (C) 2012 by Tracelytics, Inc.
 All rights reserved.
 """
 
+# No-op classes intentionally left undocumented
+# "Missing docstring"
+# pylint: disable-msg=C0103
+
 # defines no-op classes for platforms we don't support building the c extension on
-class Metadata(object):
+class Metadata(object): 
     def __init__(self, _=None):
         pass
 
@@ -112,3 +116,4 @@ class UdpReporter(object):
 
     def sendReport(self, _, __=None):
         pass
+
