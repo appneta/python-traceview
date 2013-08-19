@@ -76,8 +76,8 @@ following license:
 This product contains defaultdict from http://code.activestate.com/recipes/523034/
 which is distributed under the PSF license.
 
-All modifications and other components are Copyright (c) 2012
-Tracelytics, Inc.  All Rights Reserved.  The software made available
-to you by Tracelytics, Inc. and/or through your use of tracelytics.com
+All modifications and other components are Copyright (c) 2013
+AppNeta, Inc.  All Rights Reserved.  The software made available
+to you by AppNeta, Inc. and/or through your use of appneta.com
 is licensed pursuant to the Terms of Service:
-http://www.tracelytics.com/terms-of-service/
+http://www.appneta.com/traceview-terms-of-service

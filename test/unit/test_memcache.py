@@ -1,12 +1,14 @@
 """Test memcache client"""
 
 import base
-from oboeware import inst_memcache # pylint: disable-msg=W0611
 from distutils.version import LooseVersion # pylint: disable-msg=W0611
+from oboeware import inst_memcache # pylint: disable-msg=W0611
+import trace_filters as f
 import unittest
 
 
 MODULE_NAMES = set([ 'memcache', 'pylibmc' ])
+MC_HOSTS = ["127.0.0.1:11211"]
 
 TEST_KEY = 'wqelihvwer'
 TEST_VALUE = 'wclifun'
@@ -18,29 +20,8 @@ TEMP_TEST_KEY_2 = 'ilufhweeewr'
 TEMP_TEST_VALUE_2 = 'sdgsergerg'
 
 # Filters for assertions re: inspecting Events in Traces
-
-def _and(*filters):
-    def wrapped(*args, **kwargs):
-        result = True
-        for _filter in filters:
-            result = result and _filter(*args, **kwargs)
-        return result
-    return wrapped
-def has_prop(prop):
-    return lambda ev: prop in ev.props
-def prop_is_in(prop, values_set):
-    return lambda ev: (prop in ev.props) and (ev.props[prop] in values_set)
-def prop_is(prop, value):
-    return lambda ev: (prop in ev.props) and (ev.props[prop] == value)
-def label_is(label):
-    return prop_is('Label', label)
-def layer_is(layer):
-    return prop_is('Layer', layer)
-is_memcache_layer = prop_is_in('Layer', MODULE_NAMES)
-is_memcache_backtrace = _and(has_prop('Backtrace'), is_memcache_layer)
-is_remote_host_event = _and(has_prop('RemoteHost'), label_is('info'))
-is_entry_event = label_is('entry')
-is_exit_event = label_is('exit')
+is_memcache_layer = f.prop_is_in('Layer', MODULE_NAMES)
+is_memcache_backtrace = f._and(f.has_prop('Backtrace'), is_memcache_layer)
 
 
 class TestMemcacheMemcache(base.TraceTestCase):
@@ -65,27 +46,24 @@ class TestMemcacheMemcache(base.TraceTestCase):
         self.client().set(TEST_KEY_2, TEST_VALUE_2)
 
     def client(self):
-        return self.lib.Client(["127.0.0.1:5679"])
+        return self.lib.Client(MC_HOSTS)
 
-    def assertHasEntryAndExit(self, op):
-        self.assertEqual(1, len(self._last_trace.pop_events(is_entry_event, layer_is('Python'))))
-        self.assertEqual(1, len(self._last_trace.pop_events(is_entry_event, is_memcache_layer)))
-        exits = self._last_trace.pop_events(is_exit_event, is_memcache_layer, prop_is('KVOp', op))
+    def assertHasMemcacheEntryAndExit(self, op):
+        self.assertHasBaseEntryAndExit()
+        self.assertEqual(1, len(self._last_trace.pop_events(f.is_entry_event, is_memcache_layer)))
+        exits = self._last_trace.pop_events(f.is_exit_event, is_memcache_layer, f.prop_is('KVOp', op))
         self.assertEqual(1, len(exits))
-        self.assertEqual(1, len(self._last_trace.pop_events(is_exit_event, layer_is('Python'))))
 
     def assertHasRemoteHost(self, num=1):
         # this is not supported in pylibmc
         supported_libs = set([ 'memcache' ])
         if self.moduleName in supported_libs:
-            self.assertEqual(num, len(self._last_trace.pop_events(is_remote_host_event)))
-
-    def assertNoExtraEvents(self):
-        self.print_events() # only prints anything if the following assert will fail
-        self.assertEqual(0, len(self._last_trace.events()))
+            # if this fails: are you running a memached instance at MC_HOSTS?  if it can't
+            # connect, this test will fail.
+            self.assertEqual(num, len(self._last_trace.pop_events(f.is_remote_host_event)))
 
     def assertSimpleTrace(self, op, num_remote_hosts=1):
-        self.assertHasEntryAndExit(op)
+        self.assertHasMemcacheEntryAndExit(op)
         self.assertHasRemoteHost(num=num_remote_hosts)
         self.assertNoExtraEvents()
 
@@ -231,8 +209,8 @@ class TestMemcacheMemcache(base.TraceTestCase):
 # pylibmc: http://pypi.python.org/pypi/pylibmc
 # - authored by Ludvig Ericson
 
-class TestMemcachePylibmc(TestMemcacheMemcache):
-    moduleName = 'pylibmc'
+#class TestMemcachePylibmc(TestMemcacheMemcache):
+#    moduleName = 'pylibmc'
 
 # ## other libraries listed at http://code.google.com/p/memcached/wiki/Clients#Python
 # python-libmemcached:
