@@ -2,9 +2,10 @@
 
 Copyright (C) 2012 by Tracelytics, Inc.
 All rights reserved.
+
+oboe_noop defines no-op classes for platforms we don't support building the c extension on
 """
 
-# defines no-op classes for platforms we don't support building the c extension on
 class Metadata(object):
     def __init__(self, _=None):
         pass
