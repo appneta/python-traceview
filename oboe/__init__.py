@@ -17,7 +17,10 @@ from backport import defaultdict
 from decorator import decorator
 
 _log = logging.getLogger(__name__)
-_log.addHandler(logging.StreamHandler()) # use sys.stderr; see oboeware #63
+if 'OBOE_DISABLE_DEFAULT_LOGGER' in os.environ:
+    _log.addHandler(logging.NullHandler())
+else:
+    _log.addHandler(logging.StreamHandler()) # use sys.stderr; see oboeware #63
 reporter_instance = None
 
 # test harness?  if not, check if we will run in no-op on this platform
