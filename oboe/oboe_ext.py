@@ -104,6 +104,12 @@ class Context(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, Context, name)
     __repr__ = _swig_repr
+    __swig_getmethods__["setTracingMode"] = lambda x: _oboe_ext.Context_setTracingMode
+    if _newclass:setTracingMode = staticmethod(_oboe_ext.Context_setTracingMode)
+    __swig_getmethods__["setDefaultSampleRate"] = lambda x: _oboe_ext.Context_setDefaultSampleRate
+    if _newclass:setDefaultSampleRate = staticmethod(_oboe_ext.Context_setDefaultSampleRate)
+    __swig_getmethods__["sampleRequest"] = lambda x: _oboe_ext.Context_sampleRequest
+    if _newclass:sampleRequest = staticmethod(_oboe_ext.Context_sampleRequest)
     __swig_getmethods__["get"] = lambda x: _oboe_ext.Context_get
     if _newclass:get = staticmethod(_oboe_ext.Context_get)
     __swig_getmethods__["toString"] = lambda x: _oboe_ext.Context_toString
@@ -132,6 +138,18 @@ class Context(_object):
     __del__ = lambda self : None;
 Context_swigregister = _oboe_ext.Context_swigregister
 Context_swigregister(Context)
+
+def Context_setTracingMode(*args):
+  return _oboe_ext.Context_setTracingMode(*args)
+Context_setTracingMode = _oboe_ext.Context_setTracingMode
+
+def Context_setDefaultSampleRate(*args):
+  return _oboe_ext.Context_setDefaultSampleRate(*args)
+Context_setDefaultSampleRate = _oboe_ext.Context_setDefaultSampleRate
+
+def Context_sampleRequest(*args):
+  return _oboe_ext.Context_sampleRequest(*args)
+Context_sampleRequest = _oboe_ext.Context_sampleRequest
 
 def Context_get():
   return _oboe_ext.Context_get()
@@ -227,6 +245,39 @@ class FileReporter(_object):
     def sendReport(self, *args): return _oboe_ext.FileReporter_sendReport(self, *args)
 FileReporter_swigregister = _oboe_ext.FileReporter_swigregister
 FileReporter_swigregister(FileReporter)
+
+class Config(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, Config, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, Config, name)
+    __repr__ = _swig_repr
+    __swig_getmethods__["checkVersion"] = lambda x: _oboe_ext.Config_checkVersion
+    if _newclass:checkVersion = staticmethod(_oboe_ext.Config_checkVersion)
+    __swig_getmethods__["getVersion"] = lambda x: _oboe_ext.Config_getVersion
+    if _newclass:getVersion = staticmethod(_oboe_ext.Config_getVersion)
+    __swig_getmethods__["getRevision"] = lambda x: _oboe_ext.Config_getRevision
+    if _newclass:getRevision = staticmethod(_oboe_ext.Config_getRevision)
+    def __init__(self): 
+        this = _oboe_ext.new_Config()
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _oboe_ext.delete_Config
+    __del__ = lambda self : None;
+Config_swigregister = _oboe_ext.Config_swigregister
+Config_swigregister(Config)
+
+def Config_checkVersion(*args):
+  return _oboe_ext.Config_checkVersion(*args)
+Config_checkVersion = _oboe_ext.Config_checkVersion
+
+def Config_getVersion():
+  return _oboe_ext.Config_getVersion()
+Config_getVersion = _oboe_ext.Config_getVersion
+
+def Config_getRevision():
+  return _oboe_ext.Config_getRevision()
+Config_getRevision = _oboe_ext.Config_getRevision
 
 # This file is compatible with both classic and new-style classes.
 

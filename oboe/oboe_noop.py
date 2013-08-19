@@ -2,10 +2,15 @@
 
 Copyright (C) 2012 by Tracelytics, Inc.
 All rights reserved.
+
+oboe_noop defines no-op classes for platforms we don't support building the c extension on
 """
 
-# defines no-op classes for platforms we don't support building the c extension on
-class Metadata(object):
+# No-op classes intentionally left undocumented
+# "Missing docstring"
+# pylint: disable-msg=C0103
+
+class Metadata(object): 
     def __init__(self, _=None):
         pass
 
@@ -33,6 +38,18 @@ class Context(object):
     @staticmethod
     def init():
         pass
+
+    @staticmethod
+    def setTracingMode(_):
+        return False
+
+    @staticmethod
+    def setDefaultSampleRate(_):
+        return False
+
+    @staticmethod
+    def sampleRequest(_, __, ___):
+        return False
 
     @staticmethod
     def get():
@@ -100,3 +117,4 @@ class UdpReporter(object):
 
     def sendReport(self, _, __=None):
         pass
+

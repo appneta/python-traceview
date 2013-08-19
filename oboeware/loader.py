@@ -20,4 +20,6 @@ def load_inst_modules():
         from oboeware import inst_sqlalchemy
     if _enabled('httplib'):
         from oboeware import inst_httplib
+    if _enabled('redis'):
+        from oboeware import inst_redis
     # additionally, in djangoware.py: 'django_orm'
