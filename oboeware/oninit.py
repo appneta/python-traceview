@@ -24,9 +24,9 @@ def report_layer_init(layer="wsgi"):
         pass
 
     ver_keys = {"__Init": 1,
-                "PyVersion": sys.version,
-                "OboePythonVersion": oboe.__version__,
-                "DjangoVersion": django_version}
+                "Python.Version": sys.version,
+                "Python.Oboe.Version": oboe.__version__,
+                "Python.Django.Version": django_version}
 
     oboe.start_trace(layer, store_backtrace=False, keys=ver_keys)
     oboe.end_trace(layer)
