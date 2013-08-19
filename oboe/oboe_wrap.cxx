@@ -2939,15 +2939,16 @@ SWIG_Python_NonDynamicSetAttr(PyObject *obj, PyObject *name, PyObject *value) {
 
 /* -------- TYPES TABLE (BEGIN) -------- */
 
-#define SWIGTYPE_p_Context swig_types[0]
-#define SWIGTYPE_p_Event swig_types[1]
-#define SWIGTYPE_p_FileReporter swig_types[2]
-#define SWIGTYPE_p_Metadata swig_types[3]
-#define SWIGTYPE_p_UdpReporter swig_types[4]
-#define SWIGTYPE_p_char swig_types[5]
-#define SWIGTYPE_p_oboe_metadata_t swig_types[6]
-static swig_type_info *swig_types[8];
-static swig_module_info swig_module = {swig_types, 7, 0, 0, 0, 0};
+#define SWIGTYPE_p_Config swig_types[0]
+#define SWIGTYPE_p_Context swig_types[1]
+#define SWIGTYPE_p_Event swig_types[2]
+#define SWIGTYPE_p_FileReporter swig_types[3]
+#define SWIGTYPE_p_Metadata swig_types[4]
+#define SWIGTYPE_p_UdpReporter swig_types[5]
+#define SWIGTYPE_p_char swig_types[6]
+#define SWIGTYPE_p_oboe_metadata_t swig_types[7]
+static swig_type_info *swig_types[9];
+static swig_module_info swig_module = {swig_types, 8, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -3205,7 +3206,14 @@ SWIG_From_std_string  (const std::string& s)
 }
 
 
-
+#include <limits.h>
+#if !defined(SWIG_NO_LLONG_MAX)
+# if !defined(LLONG_MAX) && defined(__GNUC__) && defined (__LONG_LONG_MAX__)
+#   define LLONG_MAX __LONG_LONG_MAX__
+#   define LLONG_MIN (-LLONG_MAX - 1LL)
+#   define ULLONG_MAX (LLONG_MAX * 2ULL + 1ULL)
+# endif
+#endif
 
 
 SWIGINTERN int
@@ -3324,6 +3332,35 @@ SWIG_AsVal_long (PyObject *obj, long* val)
   }
 #endif
   return SWIG_TypeError;
+}
+
+
+SWIGINTERN int
+SWIG_AsVal_int (PyObject * obj, int *val)
+{
+  long v;
+  int res = SWIG_AsVal_long (obj, &v);
+  if (SWIG_IsOK(res)) {
+    if ((v < INT_MIN || v > INT_MAX)) {
+      return SWIG_OverflowError;
+    } else {
+      if (val) *val = static_cast< int >(v);
+    }
+  }  
+  return res;
+}
+
+
+
+
+
+  #define SWIG_From_long   PyInt_FromLong 
+
+
+SWIGINTERNINLINE PyObject *
+SWIG_From_int  (int value)
+{    
+  return SWIG_From_long  (value);
 }
 
 #ifdef __cplusplus
@@ -3503,6 +3540,94 @@ SWIGINTERN PyObject *Metadata_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObj
   SWIG_TypeNewClientData(SWIGTYPE_p_Metadata, SWIG_NewClientData(obj));
   return SWIG_Py_Void();
 }
+
+SWIGINTERN PyObject *_wrap_Context_setTracingMode(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  int arg1 ;
+  int val1 ;
+  int ecode1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Context_setTracingMode",&obj0)) SWIG_fail;
+  ecode1 = SWIG_AsVal_int(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "Context_setTracingMode" "', argument " "1"" of type '" "int""'");
+  } 
+  arg1 = static_cast< int >(val1);
+  Context::setTracingMode(arg1);
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Context_setDefaultSampleRate(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  int arg1 ;
+  int val1 ;
+  int ecode1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Context_setDefaultSampleRate",&obj0)) SWIG_fail;
+  ecode1 = SWIG_AsVal_int(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "Context_setDefaultSampleRate" "', argument " "1"" of type '" "int""'");
+  } 
+  arg1 = static_cast< int >(val1);
+  Context::setDefaultSampleRate(arg1);
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Context_sampleRequest(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  std::string arg1 ;
+  std::string arg2 ;
+  std::string arg3 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  bool result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOO:Context_sampleRequest",&obj0,&obj1,&obj2)) SWIG_fail;
+  {
+    std::string *ptr = (std::string *)0;
+    int res = SWIG_AsPtr_std_string(obj0, &ptr);
+    if (!SWIG_IsOK(res) || !ptr) {
+      SWIG_exception_fail(SWIG_ArgError((ptr ? res : SWIG_TypeError)), "in method '" "Context_sampleRequest" "', argument " "1"" of type '" "std::string""'"); 
+    }
+    arg1 = *ptr;
+    if (SWIG_IsNewObj(res)) delete ptr;
+  }
+  {
+    std::string *ptr = (std::string *)0;
+    int res = SWIG_AsPtr_std_string(obj1, &ptr);
+    if (!SWIG_IsOK(res) || !ptr) {
+      SWIG_exception_fail(SWIG_ArgError((ptr ? res : SWIG_TypeError)), "in method '" "Context_sampleRequest" "', argument " "2"" of type '" "std::string""'"); 
+    }
+    arg2 = *ptr;
+    if (SWIG_IsNewObj(res)) delete ptr;
+  }
+  {
+    std::string *ptr = (std::string *)0;
+    int res = SWIG_AsPtr_std_string(obj2, &ptr);
+    if (!SWIG_IsOK(res) || !ptr) {
+      SWIG_exception_fail(SWIG_ArgError((ptr ? res : SWIG_TypeError)), "in method '" "Context_sampleRequest" "', argument " "3"" of type '" "std::string""'"); 
+    }
+    arg3 = *ptr;
+    if (SWIG_IsNewObj(res)) delete ptr;
+  }
+  result = (bool)Context::sampleRequest(arg1,arg2,arg3);
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
 
 SWIGINTERN PyObject *_wrap_Context_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
@@ -4557,6 +4682,104 @@ SWIGINTERN PyObject *FileReporter_swigregister(PyObject *SWIGUNUSEDPARM(self), P
   return SWIG_Py_Void();
 }
 
+SWIGINTERN PyObject *_wrap_Config_checkVersion(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  int arg1 ;
+  int arg2 ;
+  int val1 ;
+  int ecode1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  bool result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:Config_checkVersion",&obj0,&obj1)) SWIG_fail;
+  ecode1 = SWIG_AsVal_int(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "Config_checkVersion" "', argument " "1"" of type '" "int""'");
+  } 
+  arg1 = static_cast< int >(val1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Config_checkVersion" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  result = (bool)Config::checkVersion(arg1,arg2);
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Config_getVersion(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)":Config_getVersion")) SWIG_fail;
+  result = (int)Config::getVersion();
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Config_getRevision(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)":Config_getRevision")) SWIG_fail;
+  result = (int)Config::getRevision();
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_new_Config(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  Config *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)":new_Config")) SWIG_fail;
+  result = (Config *)new Config();
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Config, SWIG_POINTER_NEW |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_delete_Config(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  Config *arg1 = (Config *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:delete_Config",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_Config, SWIG_POINTER_DISOWN |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_Config" "', argument " "1"" of type '" "Config *""'"); 
+  }
+  arg1 = reinterpret_cast< Config * >(argp1);
+  delete arg1;
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *Config_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *obj;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigregister", &obj)) return NULL;
+  SWIG_TypeNewClientData(SWIGTYPE_p_Config, SWIG_NewClientData(obj));
+  return SWIG_Py_Void();
+}
+
 static PyMethodDef SwigMethods[] = {
 	 { (char *)"SWIG_PyInstanceMethod_New", (PyCFunction)SWIG_PyInstanceMethod_New, METH_O, NULL},
 	 { (char *)"new_Metadata", _wrap_new_Metadata, METH_VARARGS, NULL},
@@ -4568,6 +4791,9 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Metadata_isValid", _wrap_Metadata_isValid, METH_VARARGS, NULL},
 	 { (char *)"Metadata_toString", _wrap_Metadata_toString, METH_VARARGS, NULL},
 	 { (char *)"Metadata_swigregister", Metadata_swigregister, METH_VARARGS, NULL},
+	 { (char *)"Context_setTracingMode", _wrap_Context_setTracingMode, METH_VARARGS, NULL},
+	 { (char *)"Context_setDefaultSampleRate", _wrap_Context_setDefaultSampleRate, METH_VARARGS, NULL},
+	 { (char *)"Context_sampleRequest", _wrap_Context_sampleRequest, METH_VARARGS, NULL},
 	 { (char *)"Context_get", _wrap_Context_get, METH_VARARGS, NULL},
 	 { (char *)"Context_toString", _wrap_Context_toString, METH_VARARGS, NULL},
 	 { (char *)"Context_set", _wrap_Context_set, METH_VARARGS, NULL},
@@ -4597,6 +4823,12 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"delete_FileReporter", _wrap_delete_FileReporter, METH_VARARGS, NULL},
 	 { (char *)"FileReporter_sendReport", _wrap_FileReporter_sendReport, METH_VARARGS, NULL},
 	 { (char *)"FileReporter_swigregister", FileReporter_swigregister, METH_VARARGS, NULL},
+	 { (char *)"Config_checkVersion", _wrap_Config_checkVersion, METH_VARARGS, NULL},
+	 { (char *)"Config_getVersion", _wrap_Config_getVersion, METH_VARARGS, NULL},
+	 { (char *)"Config_getRevision", _wrap_Config_getRevision, METH_VARARGS, NULL},
+	 { (char *)"new_Config", _wrap_new_Config, METH_VARARGS, NULL},
+	 { (char *)"delete_Config", _wrap_delete_Config, METH_VARARGS, NULL},
+	 { (char *)"Config_swigregister", Config_swigregister, METH_VARARGS, NULL},
 	 { NULL, NULL, 0, NULL }
 };
 
@@ -4606,6 +4838,7 @@ static PyMethodDef SwigMethods[] = {
 static void *_p_MetadataTo_p_oboe_metadata_t(void *x, int *SWIGUNUSEDPARM(newmemory)) {
     return (void *)((oboe_metadata_t *)  ((Metadata *) x));
 }
+static swig_type_info _swigt__p_Config = {"_p_Config", "Config *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_Context = {"_p_Context", "Context *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_Event = {"_p_Event", "Event *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_FileReporter = {"_p_FileReporter", "FileReporter *", 0, 0, (void*)0, 0};
@@ -4615,6 +4848,7 @@ static swig_type_info _swigt__p_char = {"_p_char", "char *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_oboe_metadata_t = {"_p_oboe_metadata_t", "oboe_metadata_t *", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
+  &_swigt__p_Config,
   &_swigt__p_Context,
   &_swigt__p_Event,
   &_swigt__p_FileReporter,
@@ -4624,6 +4858,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_oboe_metadata_t,
 };
 
+static swig_cast_info _swigc__p_Config[] = {  {&_swigt__p_Config, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_Context[] = {  {&_swigt__p_Context, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_Event[] = {  {&_swigt__p_Event, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_FileReporter[] = {  {&_swigt__p_FileReporter, 0, 0, 0},{0, 0, 0, 0}};
@@ -4633,6 +4868,7 @@ static swig_cast_info _swigc__p_char[] = {  {&_swigt__p_char, 0, 0, 0},{0, 0, 0,
 static swig_cast_info _swigc__p_oboe_metadata_t[] = {  {&_swigt__p_Metadata, _p_MetadataTo_p_oboe_metadata_t, 0, 0},  {&_swigt__p_oboe_metadata_t, 0, 0, 0},{0, 0, 0, 0}};
 
 static swig_cast_info *swig_cast_initial[] = {
+  _swigc__p_Config,
   _swigc__p_Context,
   _swigc__p_Event,
   _swigc__p_FileReporter,

@@ -11,8 +11,12 @@ import sys
 import types
 import traceback
 
+# "invalid name ... for type constant"
+# pylint interprets all module-level variables as being 'constants'.
+# pylint: disable-msg=C0103
+
 # defaultdict not implemented before 2.5
-from backport import defaultdict
+from oboe.backport import defaultdict
 
 from decorator import decorator
 
@@ -25,13 +29,13 @@ reporter_instance = None
 
 # test harness?  if not, check if we will run in no-op on this platform
 if 'OBOE_TEST' in os.environ:
-    from oboe_test import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
+    from oboe.oboe_test import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
     _log.error("Tracelytics Oboe running in OBOE_TEST mode; will not emit trace events.")
 else:
     try:
-        from oboe_ext import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
+        from oboe.oboe_ext import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
     except ImportError, e:
-        from oboe_noop import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
+        from oboe.oboe_noop import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
         _log.error("Tracelytics Oboe warning: module not built on a platform with liboboe "
                    "and liboboe-dev installed, running in no-op mode.  Tracing disabled. "
                    "Contact support@tracelytics.com if this is unexpected.")
@@ -39,44 +43,104 @@ else:
 __version__ = '1.4.3'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 
-# configuration defaults
-config = dict()
-config['tracing_mode'] = 'through'      # always, through, never
-config['sample_rate'] = 0.3             # out of 1.0
-config['sanitize_sql'] = False          # Set to true to strip query literals
-config['reporter_host'] = '127.0.0.1'   # you probably don't want to change the
-config['reporter_port'] = 7831          # last two options
-config['warn_deprecated'] = True
-
-config['inst_enabled'] = defaultdict(lambda: True)
-
 import oboe.rum
 rum_header = oboe.rum.rum_header
 rum_footer = oboe.rum.rum_footer
 
 SwigContext.init()
 
+class OboeConfig(object):
+    """ Oboe Configuration Class """
+
+    _config = {}
+
+    def __init__(self, *args, **kwargs):
+        self._config = kwargs
+        self._config['tracing_mode'] = 'through'      # always, through, never
+        self._config['sample_rate'] = 0.3             # out of 1.0
+        self._config['sanitize_sql'] = False          # Set to true to strip query literals
+        self._config['reporter_host'] = '127.0.0.1'   # you probably don't want to change the
+        self._config['reporter_port'] = 7831          # last two options
+        self._config['warn_deprecated'] = True
+        self._config['inst_enabled'] = defaultdict(lambda: True)
+
+    def __setitem__(self, k, v):
+        if k == 'tracing_mode':
+            ##
+            # liboboe TracingMode defines not exported through SWIG
+            # OBOE_TRACE_NEVER   0
+            # OBOE_TRACE_ALWAYS  1
+            # OBOE_TRACE_THROUGH 2
+            #
+            if v == 'never':
+                oboe.Context.setTracingMode(0)
+            elif v == 'always': 
+                oboe.Context.setTracingMode(1)
+            else:
+                oboe.Context.setTracingMode(2)
+
+            self._config[k] = v
+
+        elif k == 'sample_rate':
+            self._config[k] = v
+            oboe.Context.setDefaultSampleRate(int(v * 1e6))
+
+        elif k in ['sanitize_sql', 'reporter_host', 'reporter_port', 'warn_deprecated']:
+            self._config[k] = v
+
+        else:
+            raise OboeException('Unsupported oboe config key: ' + str(k))
+
+    def __getitem__(self, k):
+        return self._config[k]
+
+    def __delitem__(self, ii):
+        del self._config[ii]
+
+    def get(self, k, default=None):
+        """ Get the value of key k """
+        if self._config.has_key(k):
+            return self._config[k]
+        else:
+            return default
+
+config = OboeConfig()
+
 ###############################################################################
 # Low-level Public API
 ###############################################################################
 
 class OboeException(Exception):
+    """ Oboe Exception Class """
     pass
 
 def _str_backtrace(backtrace=None):
+    """ Return a string representation of an existing or new backtrace """
     if backtrace:
         return "".join(traceback.format_tb(backtrace))
     else:
         return "".join(traceback.format_stack()[:-1])
 
 class Context(object):
-    # Basically a wrapper around the swig Metadata
+    """ A wrapper around the swig Metadata """
 
     def __init__(self, md):
         if isinstance(md, basestring):
             self._md = Metadata.fromString(md)
         else:
             self._md = md
+
+    # For interacting with SRv1
+
+    @classmethod
+    def setTracingMode(cls, mode):
+        """ Updates liboboe with the configured tracing_mode """
+        SwigContext.setTracingMode(mode)
+
+    @classmethod
+    def setDefaultSampleRate(cls, rate):
+        """ Updates liboboe with the configured sample_rate """
+        SwigContext.setDefaultSampleRate(rate)
 
     # For interacting with the thread-local Context
 
@@ -97,7 +161,7 @@ class Context(object):
     # For starting/stopping traces
 
     @classmethod
-    def start_trace(cls, layer, xtr=None):
+    def start_trace(cls, layer, xtr=None, avw=None):
         """Returns a Context and a start event.
 
         Takes sampling into account -- may return an (invalid Context, event) pair.
@@ -105,14 +169,16 @@ class Context(object):
 
         tracing_mode = config['tracing_mode']
         md = None
-        if xtr and tracing_mode in ['always', 'through']:
+
+        if xtr and (tracing_mode in ['always', 'through'] or avw):
             # Continuing a trace from another, external, layer
             md = Metadata.fromString(xtr)
 
         sample_rate = None
+
         if xtr and md:
             evt = md.createEvent()
-        elif tracing_mode == 'always' and random.random() < config['sample_rate']:
+        elif SwigContext.sampleRequest(layer, xtr or '', avw or ''):
             sample_rate = config['sample_rate']
             if not md:
                 md = Metadata.makeRandom()
@@ -124,6 +190,8 @@ class Context(object):
             event = Event(evt, 'entry', layer)
             if sample_rate:
                 event.add_info('SampleRate', sample_rate * 1e6)
+            if avw:
+                event.add_info('X-TV-Meta', avw)
         else:
             event = NullEvent()
 
@@ -249,7 +317,7 @@ except ImportError:
     found_cprofile = False
 
 def _get_profile_info(p):
-    """Retursn a sorted set of stats from a cProfile instance."""
+    """Returns a sorted set of stats from a cProfile instance."""
     sio = cStringIO.StringIO()
     s = pstats.Stats(p, stream=sio)
     s.sort_stats('time')
@@ -365,7 +433,7 @@ def log_exception(msg=None, store_backtrace=True):
     if msg is None:
         try:
             msg = str(val)
-        except:
+        except Exception:
             msg = repr(val)
 
     log_error(typ.__name__, msg,
@@ -652,7 +720,7 @@ def log_method(layer, store_return=False, store_args=False, store_backtrace=Fals
                         cb_ret, edge_str = cb_ret
                     if cb_ret:
                         exit_kvs.update(cb_ret)
-                except Exception, e:
+                except Exception:
                     # should be no user exceptions here; it's a trace-related callback
                     type_, msg_, bt_ = sys.exc_info()
                     _log.error("Non-fatal error in log_method callback: %s, %s, %s"\
@@ -743,7 +811,7 @@ def _old_context_log_exception(cls, msg=None, exc_info=None, backtrace=True):
     if msg is None:
         try:
             msg = str(val)
-        except:
+        except Exception:
             msg = repr(val)
     return log_error(typ.__name__, msg, store_backtrace=backtrace, backtrace=tb)
 
@@ -799,3 +867,4 @@ setattr(Context, 'profile_block',    _old_context_profile_block)
 setattr(Context, 'toString',         types.MethodType(_old_context_to_string, Context))
 setattr(Context, 'fromString',       types.MethodType(_old_context_from_string, Context))
 setattr(Context, 'isValid',          types.MethodType(_old_context_is_valid, Context))
+

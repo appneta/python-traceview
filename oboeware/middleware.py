@@ -56,10 +56,11 @@ class OboeMiddleware(object):
 
     def __call__(self, environ, start_response):
         xtr_hdr = environ.get("HTTP_X-Trace", environ.get("HTTP_X_TRACE"))
+        avw_hdr = environ.get("X-TV-Meta", environ.get('X-TV-Meta'))
         endEvt = None
 
         # start the trace: ctx.is_valid() will be False if not tracing this request
-        ctx, startEvt = oboe.Context.start_trace(self.layer, xtr=xtr_hdr)
+        ctx, startEvt = oboe.Context.start_trace(self.layer, xtr=xtr_hdr, avw=avw_hdr)
 
         if ctx.is_valid():
             # get some HTTP details from WSGI vars

@@ -17,7 +17,7 @@ def RequestHandler_start(self):
         instance (which holds the current HTTPRequest in self.request)
     """
     # check for X-Trace header in HTTP request
-    ctx, ev = oboe.Context.start_trace('tornado', xtr=self.request.headers.get("X-Trace"))
+    ctx, ev = oboe.Context.start_trace('tornado', xtr=self.request.headers.get("X-Trace"), avw=self.request.headers.get("X-TV-Meta"))
 
     if hasattr(self, '__class__') and hasattr(self.__class__, '__name__'):
         ev.add_info("Controller", self.__class__.__name__)
