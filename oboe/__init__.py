@@ -58,11 +58,14 @@ class OboeConfig(object):
         self._config = kwargs
         self._config['tracing_mode'] = 'through'      # always, through, never
         self._config['sample_rate'] = 0.3             # out of 1.0
+        self._config['sample_source'] = 2             # OBOE_SAMPLE_RATE_SOURCE_DEFAULT
         self._config['sanitize_sql'] = False          # Set to true to strip query literals
         self._config['reporter_host'] = '127.0.0.1'   # you probably don't want to change the
         self._config['reporter_port'] = 7831          # last two options
         self._config['warn_deprecated'] = True
         self._config['inst_enabled'] = defaultdict(lambda: True)
+        SwigContext.setTracingMode(2)
+        SwigContext.setDefaultSampleRate(300000)
 
     def __setitem__(self, k, v):
         if k == 'tracing_mode':
@@ -73,17 +76,18 @@ class OboeConfig(object):
             # OBOE_TRACE_THROUGH 2
             #
             if v == 'never':
-                oboe.Context.setTracingMode(0)
+                SwigContext.setTracingMode(0)
             elif v == 'always': 
-                oboe.Context.setTracingMode(1)
+                SwigContext.setTracingMode(1)
             else:
-                oboe.Context.setTracingMode(2)
+                SwigContext.setTracingMode(2)
 
             self._config[k] = v
 
         elif k == 'sample_rate':
             self._config[k] = v
-            oboe.Context.setDefaultSampleRate(int(v * 1e6))
+            SwigContext.setDefaultSampleRate(int(v * 1e6))
+            self._config['sample_source'] = 1 # OBOE_SAMPLE_RATE_SOURCE_FILE
 
         elif k in ['sanitize_sql', 'reporter_host', 'reporter_port', 'warn_deprecated']:
             self._config[k] = v
@@ -189,7 +193,8 @@ class Context(object):
         if evt:
             event = Event(evt, 'entry', layer)
             if sample_rate:
-                event.add_info('SampleRate', sample_rate * 1e6)
+                event.add_info('SampleSource', config["sample_source"])
+                event.add_info('SampleRate', int(sample_rate * 1e6))
             if avw:
                 event.add_info('X-TV-Meta', avw)
         else:
