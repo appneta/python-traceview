@@ -196,7 +196,7 @@ class Context(object):
                 event.add_info('SampleSource', config["sample_source"])
                 event.add_info('SampleRate', int(sample_rate * 1e6))
             if avw:
-                event.add_info('X-TV-Meta', avw)
+                event.add_info('TV-Meta', avw)
         else:
             event = NullEvent()
 
@@ -362,16 +362,17 @@ def log(label, layer, keys=None, store_backtrace=True, backtrace=None, edge_str=
     evt = ctx.create_event(label, layer)
     _log_event(evt, keys=keys, store_backtrace=store_backtrace, backtrace=backtrace, edge_str=edge_str)
 
-def start_trace(layer, xtr=None, keys=None, store_backtrace=True, backtrace=None):
+def start_trace(layer, xtr=None, avw=None, keys=None, store_backtrace=True, backtrace=None):
     """Start a new trace, or continue one from an external layer.
 
     :layer: The layer name of the root of the trace.
     :xtr: The X-Trace ID to continue this trace with.
+    :avw: The X-TV-Meta HTTP header value (if present).
     :keys: An optional dictionary of key-value pairs to report.
     :store_backtrace: Whether to report a backtrace. Default: True
     :backtrace: The backtrace to report. Default: this call.
     """
-    ctx, evt = Context.start_trace(layer, xtr=xtr)
+    ctx, evt = Context.start_trace(layer, xtr=xtr, avw=avw)
     if not ctx.is_valid():
         return
     ctx.set_as_default()
