@@ -34,8 +34,9 @@ class OboeDjangoMiddleware(object):
 
     def process_request(self, request):
         try:
-            xtr_hdr = request.META.get("HTTP_X-Trace", request.META.get("HTTP_X_TRACE"))
-            oboe.start_trace('django', xtr=xtr_hdr, store_backtrace=False)
+            xtr_hdr = request.META.get("HTTP_X-Trace",   request.META.get("HTTP_X_TRACE"))
+            avw_hdr = request.META.get("HTTP_X-TV-Meta", request.META.get("HTTP_X_TV_META"))
+            oboe.start_trace('django', xtr=xtr_hdr, avw=avw_hdr, store_backtrace=False)
         except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
 
