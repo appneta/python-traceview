@@ -38,7 +38,7 @@ else:
         from oboe.oboe_noop import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
         _log.error("Tracelytics Oboe warning: module not built on a platform with liboboe "
                    "and liboboe-dev installed, running in no-op mode.  Tracing disabled. "
-                   "Contact support@tracelytics.com if this is unexpected.")
+                   "Contact traceviewsupport@appneta.com if this is unexpected.")
 
 __version__ = '1.5.0'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
