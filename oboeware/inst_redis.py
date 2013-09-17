@@ -179,7 +179,7 @@ def wrap_send_packed_command(layer_name, func):
                 host = conn_obj.host + ':' + str(conn_obj.port)
 
             oboe.log('info', layer_name, keys={'RemoteHost': host}, 
-                store_backtrace=oboe.config['inst']['redis']['collect_backtraces'])
+                store_backtrace=oboe._collect_backtraces('redis'))
         except Exception, e:
             print >> sys.stderr, "Oboe error: %s" % e
         return ret
