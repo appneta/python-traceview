@@ -63,7 +63,30 @@ class OboeConfig(object):
         self._config['reporter_host'] = '127.0.0.1'   # you probably don't want to change the
         self._config['reporter_port'] = 7831          # last two options
         self._config['warn_deprecated'] = True
-        self._config['inst_enabled'] = defaultdict(lambda: True)
+        self._config['inst_enabled']       = defaultdict(lambda: True)
+   
+        # Initialize dictionaries for per instrumentation configuration
+        self._config['inst'] = defaultdict(lambda: True)
+
+        self._config['inst']['django_orm'] = defaultdict(lambda: True)
+        self._config['inst']['django_orm']['collect_backtraces'] = False
+
+        self._config['inst']['httplib'] = defaultdict(lambda: True)
+        self._config['inst']['httplib']['collect_backtraces'] = False
+
+        self._config['inst']['memcache'] = defaultdict(lambda: True)
+        self._config['inst']['memcache']['collect_backtraces'] = False
+
+        self._config['inst']['pymongo'] = defaultdict(lambda: True)
+        self._config['inst']['pymongo']['collect_backtraces'] = False
+
+        self._config['inst']['redis'] = defaultdict(lambda: True)
+        self._config['inst']['redis']['collect_backtraces'] = False
+        
+        self._config['inst']['sqlalchemy'] = defaultdict(lambda: True)
+        self._config['inst']['sqlalchemy']['collect_backtraces'] = False
+
+        # Set liboboe defaults
         SwigContext.setTracingMode(2)
         SwigContext.setDefaultSampleRate(300000)
 
