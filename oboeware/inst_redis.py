@@ -11,9 +11,9 @@ import sys
 
 # which commands can we get hit/miss info from?
 # also supports mget and hmget separately, see below
-HITTABLE_COMMANDS = set(('GET','GETSET','HGET','LINDEX','LGET',
-                        'RPOPLPUSH','LPOP','RPOP','BRPOPLPUSH',
-                        'SPOP','SRANDMEMBER'))
+HITTABLE_COMMANDS = set(('GET', 'GETSET', 'HGET', 'LINDEX', 'LGET',
+                        'RPOPLPUSH', 'LPOP', 'RPOP', 'BRPOPLPUSH',
+                        'SPOP', 'SRANDMEMBER'))
 
 # which commands can we get KVKey from?
 # for S*/H*/Z* commans, the key is currently the set/hash name
@@ -118,7 +118,7 @@ SCRIPT_COMMANDS = { 'EVAL': 1, #SCRIPT
 
 # these commands have two parts, as separate args in python redis client
 # eg. SCRIPT LOAD
-TWO_PARTERS = set(('SCRIPT','CLIENT','CONFIG','DEBUG'))
+TWO_PARTERS = set(('SCRIPT', 'CLIENT', 'CONFIG', 'DEBUG'))
 
 
 def wrap_execute_command(func, f_args, f_kwargs, return_val):
@@ -155,7 +155,7 @@ def wrap_execute_pipeline(func, f_args, f_kwargs, return_val):
     for (args, options) in f_args[2]:
         fp_cmds[args[0]] = fp_cmds.get(args[0], 0) + 1
 
-    op = 'PIPE:' + ','.join([cmd for (cmd,_) in\
+    op = 'PIPE:' + ','.join([cmd for (cmd, _) in\
                     sorted(fp_cmds.iteritems(), key=operator.itemgetter(1), reverse=True)])
     kvs['KVOp'] = op.lower()
 
