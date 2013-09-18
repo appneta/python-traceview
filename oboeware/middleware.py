@@ -56,7 +56,7 @@ class OboeMiddleware(object):
 
     def __call__(self, environ, start_response):
         xtr_hdr = environ.get("HTTP_X-Trace", environ.get("HTTP_X_TRACE"))
-        avw_hdr = environ.get("X-TV-Meta", environ.get('X-TV-Meta'))
+        avw_hdr = environ.get("HTTP_X-TV-Meta", environ.get('HTTP_X_TV_META'))
         endEvt = None
 
         # start the trace: ctx.is_valid() will be False if not tracing this request
