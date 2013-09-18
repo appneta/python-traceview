@@ -69,22 +69,22 @@ class OboeConfig(object):
         self._config['inst'] = defaultdict(lambda: True)
 
         self._config['inst']['django_orm'] = defaultdict(lambda: True)
-        self._config['inst']['django_orm']['collect_backtraces'] = False
+        self._config['inst']['django_orm']['collect_backtraces'] = True
 
         self._config['inst']['httplib'] = defaultdict(lambda: True)
-        self._config['inst']['httplib']['collect_backtraces'] = False
+        self._config['inst']['httplib']['collect_backtraces'] = True
 
         self._config['inst']['memcache'] = defaultdict(lambda: True)
         self._config['inst']['memcache']['collect_backtraces'] = False
 
         self._config['inst']['pymongo'] = defaultdict(lambda: True)
-        self._config['inst']['pymongo']['collect_backtraces'] = False
+        self._config['inst']['pymongo']['collect_backtraces'] = True
 
         self._config['inst']['redis'] = defaultdict(lambda: True)
         self._config['inst']['redis']['collect_backtraces'] = False
         
         self._config['inst']['sqlalchemy'] = defaultdict(lambda: True)
-        self._config['inst']['sqlalchemy']['collect_backtraces'] = False
+        self._config['inst']['sqlalchemy']['collect_backtraces'] = True
 
         # Set liboboe defaults
         SwigContext.setTracingMode(2)
