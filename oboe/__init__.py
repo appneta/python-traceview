@@ -223,7 +223,7 @@ class Context(object):
                 event.add_info('SampleSource', config["sample_source"])
                 event.add_info('SampleRate', int(sample_rate * 1e6))
             if avw:
-                event.add_info('X-TV-Meta', avw)
+                event.add_info('TV-Meta', avw)
         else:
             event = NullEvent()
 
