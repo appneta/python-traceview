@@ -150,7 +150,7 @@ def _str_backtrace(backtrace=None):
 
 def _collect_backtraces(module):
     """ Return the collect backtraces config value for module """
-    return oboe.config['inst'][module]['collect_backtrace']
+    return oboe.config['inst'][module]['collect_backtraces']
 
 class Context(object):
     """ A wrapper around the swig Metadata """
