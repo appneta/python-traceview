@@ -48,9 +48,9 @@ def wrap(module):
         # Wrap putrequest.  This marks the beginning of the request, and is also
         # where
         wrapper_putrequest = oboe.log_method(HTTPLIB_LAYER,
-                                             before_callback=wrap_request_putrequest,
-                                             send_exit_event=False,
-                                             store_backtrace=True)
+                                before_callback=wrap_request_putrequest,
+                                send_exit_event=False,
+                                store_backtrace=oboe._collect_backtraces('httplib'))
         setattr(module.HTTPConnection, 'putrequest',
                 wrapper_putrequest(module.HTTPConnection.putrequest))
 

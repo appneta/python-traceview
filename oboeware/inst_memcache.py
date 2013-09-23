@@ -54,7 +54,8 @@ def wrap_get_server(layer_name, func):
                 elif host.family == socket.AF_UNIX:
                     args['RemoteHost'] = 'localhost'
 
-            oboe.log('info', layer_name, keys=args)
+            oboe.log('info', layer_name, keys=args,
+                store_backtrace=oboe._collect_backtraces('memcache'))
         except Exception, e:
             print >> sys.stderr, "Oboe error: %s" % e
         return ret
