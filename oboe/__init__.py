@@ -38,7 +38,7 @@ else:
         from oboe.oboe_noop import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
         _log.error("Tracelytics Oboe warning: module not built on a platform with liboboe "
                    "and liboboe-dev installed, running in no-op mode.  Tracing disabled. "
-                   "Contact support@tracelytics.com if this is unexpected.")
+                   "Contact traceviewsupport@appneta.com if this is unexpected.")
 
 __version__ = '1.5.0'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
@@ -63,7 +63,30 @@ class OboeConfig(object):
         self._config['reporter_host'] = '127.0.0.1'   # you probably don't want to change the
         self._config['reporter_port'] = 7831          # last two options
         self._config['warn_deprecated'] = True
-        self._config['inst_enabled'] = defaultdict(lambda: True)
+        self._config['inst_enabled']       = defaultdict(lambda: True)
+   
+        # Initialize dictionaries for per instrumentation configuration
+        self._config['inst'] = defaultdict(lambda: True)
+
+        self._config['inst']['django_orm'] = defaultdict(lambda: True)
+        self._config['inst']['django_orm']['collect_backtraces'] = True
+
+        self._config['inst']['httplib'] = defaultdict(lambda: True)
+        self._config['inst']['httplib']['collect_backtraces'] = True
+
+        self._config['inst']['memcache'] = defaultdict(lambda: True)
+        self._config['inst']['memcache']['collect_backtraces'] = False
+
+        self._config['inst']['pymongo'] = defaultdict(lambda: True)
+        self._config['inst']['pymongo']['collect_backtraces'] = True
+
+        self._config['inst']['redis'] = defaultdict(lambda: True)
+        self._config['inst']['redis']['collect_backtraces'] = False
+        
+        self._config['inst']['sqlalchemy'] = defaultdict(lambda: True)
+        self._config['inst']['sqlalchemy']['collect_backtraces'] = True
+
+        # Set liboboe defaults
         SwigContext.setTracingMode(2)
         SwigContext.setDefaultSampleRate(300000)
 
@@ -124,6 +147,10 @@ def _str_backtrace(backtrace=None):
         return "".join(traceback.format_tb(backtrace))
     else:
         return "".join(traceback.format_stack()[:-1])
+
+def _collect_backtraces(module):
+    """ Return the collect backtraces config value for module """
+    return oboe.config['inst'][module]['collect_backtrace']
 
 class Context(object):
     """ A wrapper around the swig Metadata """
@@ -196,7 +223,7 @@ class Context(object):
                 event.add_info('SampleSource', config["sample_source"])
                 event.add_info('SampleRate', int(sample_rate * 1e6))
             if avw:
-                event.add_info('X-TV-Meta', avw)
+                event.add_info('TV-Meta', avw)
         else:
             event = NullEvent()
 
@@ -362,16 +389,17 @@ def log(label, layer, keys=None, store_backtrace=True, backtrace=None, edge_str=
     evt = ctx.create_event(label, layer)
     _log_event(evt, keys=keys, store_backtrace=store_backtrace, backtrace=backtrace, edge_str=edge_str)
 
-def start_trace(layer, xtr=None, keys=None, store_backtrace=True, backtrace=None):
+def start_trace(layer, xtr=None, avw=None, keys=None, store_backtrace=True, backtrace=None):
     """Start a new trace, or continue one from an external layer.
 
     :layer: The layer name of the root of the trace.
     :xtr: The X-Trace ID to continue this trace with.
+    :avw: The X-TV-Meta HTTP header value (if present).
     :keys: An optional dictionary of key-value pairs to report.
     :store_backtrace: Whether to report a backtrace. Default: True
     :backtrace: The backtrace to report. Default: this call.
     """
-    ctx, evt = Context.start_trace(layer, xtr=xtr)
+    ctx, evt = Context.start_trace(layer, xtr=xtr, avw=avw)
     if not ctx.is_valid():
         return
     ctx.set_as_default()

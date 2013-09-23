@@ -31,7 +31,7 @@ def _initialize_rum():
     try:
         access_key = ([l.rstrip().split('=')[1] for l in open(TLY_CONF_FILE, 'r')
                        if l.startswith('tracelyzer.access_key=')] + [None])[0]
-    except IOError as e:
+    except IOError, e:
         _log.warn("RUM initialization: couldn't read %s (%s). "
                   "RUM will be disabled unless oboe.config['access_key'] is set.",
                   TLY_CONF_FILE, e.strerror)
