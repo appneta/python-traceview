@@ -64,7 +64,7 @@ class OboeConfig(object):
         self._config['reporter_port'] = 7831          # last two options
         self._config['warn_deprecated'] = True
         self._config['inst_enabled']       = defaultdict(lambda: True)
-   
+
         # Initialize dictionaries for per instrumentation configuration
         self._config['inst'] = defaultdict(lambda: True)
 
@@ -82,13 +82,9 @@ class OboeConfig(object):
 
         self._config['inst']['redis'] = defaultdict(lambda: True)
         self._config['inst']['redis']['collect_backtraces'] = False
-        
+
         self._config['inst']['sqlalchemy'] = defaultdict(lambda: True)
         self._config['inst']['sqlalchemy']['collect_backtraces'] = True
-
-        # Set liboboe defaults
-        SwigContext.setTracingMode(2)
-        SwigContext.setDefaultSampleRate(300000)
 
     def __setitem__(self, k, v):
         if k == 'tracing_mode':
