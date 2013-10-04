@@ -11,10 +11,6 @@ import copy
 def report_layer_init(layer="wsgi"):
     """ Send a fake trace showing the initialization and version of this layer's
         instrumentation. """
-    # force trace, save old config
-    tmp_config = copy.deepcopy(oboe.config)
-    oboe.config['tracing_mode'] = 'always'
-    oboe.config['sample_rate'] = 1.0
 
     django_version = 'none'
     try:
@@ -24,6 +20,7 @@ def report_layer_init(layer="wsgi"):
         pass
 
     ver_keys = {"__Init": 1,
+                "Force": True,
                 "Python.Version": sys.version,
                 "Python.Oboe.Version": oboe.__version__,
                 "Python.Django.Version": django_version}
@@ -31,5 +28,3 @@ def report_layer_init(layer="wsgi"):
     oboe.start_trace(layer, store_backtrace=False, keys=ver_keys)
     oboe.end_trace(layer)
 
-    # restore old config
-    oboe.config = tmp_config
