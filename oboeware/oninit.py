@@ -23,10 +23,15 @@ def report_layer_init(layer="wsgi"):
     except ImportError:
         pass
 
+    tornado_version = 'none'
+    if 'tornado' in sys.modules:
+        tornado_version = sys.modules['tornado'].version
+
     ver_keys = {"__Init": 1,
                 "Python.Version": sys.version,
                 "Python.Oboe.Version": oboe.__version__,
-                "Python.Django.Version": django_version}
+                "Python.Django.Version": django_version,
+                "Python.Tornado.Version": tornado_version}
 
     oboe.start_trace(layer, store_backtrace=False, keys=ver_keys)
     oboe.end_trace(layer)
