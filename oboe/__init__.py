@@ -188,7 +188,7 @@ class Context(object):
     # For starting/stopping traces
 
     @classmethod
-    def start_trace(cls, layer, xtr=None, avw=None):
+    def start_trace(cls, layer, xtr=None, avw=None, force=False):
         """Returns a Context and a start event.
 
         Takes sampling into account -- may return an (invalid Context, event) pair.
@@ -205,7 +205,7 @@ class Context(object):
 
         if xtr and md:
             evt = md.createEvent()
-        elif SwigContext.sampleRequest(layer, xtr or '', avw or ''):
+        elif SwigContext.sampleRequest(layer, xtr or '', avw or '') or force:
             sample_rate = config['sample_rate']
             if not md:
                 md = Metadata.makeRandom()
@@ -395,7 +395,10 @@ def start_trace(layer, xtr=None, avw=None, keys=None, store_backtrace=True, back
     :store_backtrace: Whether to report a backtrace. Default: True
     :backtrace: The backtrace to report. Default: this call.
     """
-    ctx, evt = Context.start_trace(layer, xtr=xtr, avw=avw)
+    is_forced_trace = False
+    if keys:
+        is_forced_trace = "Force" in keys
+    ctx, evt = Context.start_trace(layer, xtr=xtr, avw=avw, force=is_forced_trace)
     if not ctx.is_valid():
         return
     ctx.set_as_default()
