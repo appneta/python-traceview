@@ -96,7 +96,7 @@ class OboeConfig(object):
             #
             if v == 'never':
                 SwigContext.setTracingMode(0)
-            elif v == 'always': 
+            elif v == 'always':
                 SwigContext.setTracingMode(1)
             else:
                 SwigContext.setTracingMode(2)
@@ -113,6 +113,14 @@ class OboeConfig(object):
 
         else:
             raise OboeException('Unsupported oboe config key: ' + str(k))
+
+    def sync(self):
+        """ Called before each oboe settings operation; ensures that settings are in sync between
+            this singleton instance and settings pthread local storage copy. """
+        sync_keys = ['tracing_mode', 'sample_rate']
+        for k in sync_keys:
+            if k in self._config:
+                self.__setitem__(k, self._config[k])
 
     def __getitem__(self, k):
         return self._config[k]
@@ -195,6 +203,7 @@ class Context(object):
         """
 
         tracing_mode = config['tracing_mode']
+        config.sync()
         md = None
 
         if xtr and (tracing_mode in ['always', 'through'] or avw):
