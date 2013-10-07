@@ -96,7 +96,7 @@ class OboeConfig(object):
             #
             if v == 'never':
                 SwigContext.setTracingMode(0)
-            elif v == 'always': 
+            elif v == 'always':
                 SwigContext.setTracingMode(1)
             else:
                 SwigContext.setTracingMode(2)
@@ -113,6 +113,14 @@ class OboeConfig(object):
 
         else:
             raise OboeException('Unsupported oboe config key: ' + str(k))
+
+    def sync(self):
+        """ Called before each oboe settings operation; ensures that settings are in sync between
+            this singleton instance and settings pthread local storage copy. """
+        sync_keys = ['tracing_mode', 'sample_rate']
+        for k in sync_keys:
+            if k in self._config:
+                self.__setitem__(k, self._config[k])
 
     def __getitem__(self, k):
         return self._config[k]
@@ -188,13 +196,14 @@ class Context(object):
     # For starting/stopping traces
 
     @classmethod
-    def start_trace(cls, layer, xtr=None, avw=None):
+    def start_trace(cls, layer, xtr=None, avw=None, force=False):
         """Returns a Context and a start event.
 
         Takes sampling into account -- may return an (invalid Context, event) pair.
         """
 
         tracing_mode = config['tracing_mode']
+        config.sync()
         md = None
 
         if xtr and (tracing_mode in ['always', 'through'] or avw):
@@ -205,7 +214,7 @@ class Context(object):
 
         if xtr and md:
             evt = md.createEvent()
-        elif SwigContext.sampleRequest(layer, xtr or '', avw or ''):
+        elif SwigContext.sampleRequest(layer, xtr or '', avw or '') or force:
             sample_rate = config['sample_rate']
             if not md:
                 md = Metadata.makeRandom()
@@ -395,7 +404,10 @@ def start_trace(layer, xtr=None, avw=None, keys=None, store_backtrace=True, back
     :store_backtrace: Whether to report a backtrace. Default: True
     :backtrace: The backtrace to report. Default: this call.
     """
-    ctx, evt = Context.start_trace(layer, xtr=xtr, avw=avw)
+    is_forced_trace = False
+    if keys:
+        is_forced_trace = "Force" in keys
+    ctx, evt = Context.start_trace(layer, xtr=xtr, avw=avw, force=is_forced_trace)
     if not ctx.is_valid():
         return
     ctx.set_as_default()
