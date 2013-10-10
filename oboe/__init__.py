@@ -120,7 +120,12 @@ class OboeConfig(object):
         sync_keys = ['tracing_mode', 'sample_rate']
         for k in sync_keys:
             if k in self._config:
-                self.__setitem__(k, self._config[k])
+                if k == 'sample_rate':
+                  # Only sync sample_rate if it was previously set by user (not default)
+                  if self._config['sample_source'] == 1:
+                    self.__setitem__(k, self._config[k])
+                else:
+                    self.__setitem__(k, self._config[k])
 
     def __getitem__(self, k):
         return self._config[k]
