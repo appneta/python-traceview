@@ -3351,9 +3351,6 @@ SWIG_AsVal_int (PyObject * obj, int *val)
 }
 
 
-
-
-
   #define SWIG_From_long   PyInt_FromLong 
 
 
@@ -3362,6 +3359,9 @@ SWIG_From_int  (int value)
 {    
   return SWIG_From_long  (value);
 }
+
+
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -3591,7 +3591,7 @@ SWIGINTERN PyObject *_wrap_Context_sampleRequest(PyObject *SWIGUNUSEDPARM(self),
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
-  bool result;
+  int result;
   
   if (!PyArg_ParseTuple(args,(char *)"OOO:Context_sampleRequest",&obj0,&obj1,&obj2)) SWIG_fail;
   {
@@ -3621,8 +3621,8 @@ SWIGINTERN PyObject *_wrap_Context_sampleRequest(PyObject *SWIGUNUSEDPARM(self),
     arg3 = *ptr;
     if (SWIG_IsNewObj(res)) delete ptr;
   }
-  result = (bool)Context::sampleRequest(arg1,arg2,arg3);
-  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  result = (int)Context::sampleRequest(arg1,arg2,arg3);
+  resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
   return NULL;
