@@ -3,7 +3,7 @@
 import base
 import trace_filters as f
 from oboeware import inst_redis # pylint: disable-msg=W0611
-import unittest
+import unittest2 as unittest
 
 # Filters for assertions re: inspecting Events in Traces
 is_redis_layer = f.prop_is('Layer', 'redis')

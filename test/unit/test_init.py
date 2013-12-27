@@ -3,7 +3,7 @@
 import base
 from oboeware import oninit
 import oboe
-import unittest
+import unittest2 as unittest
 import logging
 
 class TestOnInit(base.TraceTestCase):

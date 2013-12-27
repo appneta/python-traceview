@@ -6,7 +6,7 @@ N.B. has on-import behavior to use repo-local oboe and set OBOE_TEST environment
 import os
 import sys
 import trace_filters as f
-import unittest
+import unittest2 as unittest
 
 def force_local_oboe():
     basepath = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../..'))
