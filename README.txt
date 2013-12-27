@@ -14,3 +14,29 @@ For more help, please contact traceviewsupport@appneta.com or visit:
 Thanks for using TraceView!
 
 - The TraceView Team
+
+
+--
+
+
+Running the Tests
+=====================================================
+
+The instrumentation uses tox to test against different versions of python and
+instrumented modules.
+
+The tests currently run against 2.6 and 2.7.
+
+To set up multiple versions of python:
+
+    sudo add-apt-repository ppa:fkrull/deadsnakes
+    sudo apt-get update
+    sudo apt-get install python2.6 python2.6-dev
+
+To run tests:
+
+    tox
+
+Tests in test/unit are actually functional tests; naming is for historic
+reasons.  Tests in test/manual are for manual verification of certain
+behaviors.
