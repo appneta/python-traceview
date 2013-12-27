@@ -22,9 +22,6 @@ os.environ['OBOE_TEST'] = '1'
 import oboe
 print >>sys.stderr, "Using oboe: %s" % (oboe.__path__,)
 from oboe.oboe_test import OboeListener
-oboe.config['sample_rate'] = 1.0
-oboe.config['tracing_mode'] = 'always'
-
 
 class MockTrace(object):
     """ Mock trace.  Listens directly to events in mock oboe_ext. """
