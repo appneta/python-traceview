@@ -1,2 +1,0 @@
-pylibmc==1.2.3
-decorator==3.3.1
