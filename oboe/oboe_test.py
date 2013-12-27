@@ -108,6 +108,9 @@ class Event(object):
     def metadataString(self):
         return ''
 
+    def is_valid(self):
+        return True
+
     @staticmethod
     def startTrace(_=None):
         return Event()
