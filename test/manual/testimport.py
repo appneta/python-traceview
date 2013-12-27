@@ -1,32 +1,32 @@
-import imports, sys
+import oboeware.imports as imports, sys
 
-a = imports.lazyModule('base64')
+def try_imports_lib():
+    a = imports.lazyModule('base64')
 
-HOOKS={ 'binascii' : ['b2a_hex'],
-        'base64' : ['b64encode'],
-        'oboeware.django' : ['OboeDjangoMiddleware']}
+    HOOKS={ 'binascii' : ['b2a_hex'],
+            'base64' : ['b64encode'],
+            'oboeware.django' : ['OboeDjangoMiddleware']}
 
-def hook(module):
-    print "hook", module.__name__
+    def hook(module):
+        print "hook", module.__name__
 
-    def wrap(fn, *args, **kw):
-        print "wrapped", fn.__name__
-        return fn(*args, **kw)
+        def wrap(fn, *args, **kw):
+            print "wrapped", fn.__name__
+            return fn
 
-    # wrap callables we want to wrap
-    for attr in HOOKS[module.__name__]:
-        setattr(module, attr, wrap(getattr(module, attr)))
+        # wrap callables we want to wrap
+        for attr in HOOKS[module.__name__]:
+            setattr(module, attr, wrap(getattr(module, attr)))
 
-    #print repr(obj)
+        #print repr(obj)
 
-imports.whenImported('binascii', hook)
-imports.whenImported('base64', hook)
+    imports.whenImported('binascii', hook)
+    imports.whenImported('base64', hook)
 
-from binascii import b2a_hex
+    from binascii import b2a_hex
 
-print b2a_hex('yo')
+    print b2a_hex('yo')
 
-from base64 import b64encode
+    from base64 import b64encode
 
-print b64encode("blah")
-
+    print b64encode("blah")
