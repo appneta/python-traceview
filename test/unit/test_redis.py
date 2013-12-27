@@ -187,13 +187,13 @@ class TestRedis(base.TraceTestCase):
     def test_zset_zadd(self):
         self.client.delete('setkey')
         with self.new_trace():
-            ret = self.client.zadd('setkey', 'item', 7.1)
+            ret = self.client.zadd('setkey', 7, 'item')
         self.assertRedisTrace(KVOp='zadd', KVKey='setkey')
         self.assertEqual(ret, 1)
 
     def test_zset_srem(self):
         self.client.delete('setkey')
-        self.client.zadd('setkey', 'item', 7.1)
+        self.client.zadd('setkey', 7, 'item')
         with self.new_trace():
             ret = self.client.zrem('setkey', 'item')
         self.assertRedisTrace(KVOp='zrem', KVKey='setkey')
