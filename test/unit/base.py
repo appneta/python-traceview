@@ -18,9 +18,9 @@ def force_local_oboe():
 
 # dirty: using on import behaviors here, should be cleaned up
 force_local_oboe()
-
 os.environ['OBOE_TEST'] = '1'
 import oboe
+print >>sys.stderr, "Using oboe: %s" % (oboe.__path__,)
 from oboe.oboe_test import OboeListener
 oboe.config['sample_rate'] = 1.0
 oboe.config['tracing_mode'] = 'always'

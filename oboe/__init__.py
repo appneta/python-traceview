@@ -30,7 +30,7 @@ reporter_instance = None
 # test harness?  if not, check if we will run in no-op on this platform
 if 'OBOE_TEST' in os.environ:
     from oboe.oboe_test import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
-    _log.error("Tracelytics Oboe running in OBOE_TEST mode; will not emit trace events.")
+    _log.error("Tracelytics Oboe running in OBOE_TEST mode; will not emit UDP reports")
 else:
     try:
         from oboe.oboe_ext import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
