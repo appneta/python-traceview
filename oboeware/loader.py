@@ -22,4 +22,4 @@ def load_inst_modules():
         from oboeware import inst_httplib
     if _enabled('redis'):
         from oboeware import inst_redis
-    # additionally, in djangoware.py: 'django_orm'
+    # additionally, in djangoware.py: 'django_orm', 'django_templates'

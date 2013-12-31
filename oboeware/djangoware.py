@@ -141,6 +141,11 @@ def on_load_middleware():
             from oboeware import inst_django_orm
             imports.whenImported('django.db.backends', inst_django_orm.wrap)
 
+        # templates
+        if oboe.config['inst_enabled']['django_templates']:
+            from oboeware import inst_django_templates
+            imports.whenImported('django.template.base', inst_django_templates.wrap)
+
         # load pluggaable instrumentation
         from loader import load_inst_modules
         load_inst_modules()
