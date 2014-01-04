@@ -13,9 +13,9 @@ def wrap_execute(func, f_args, f_kwargs, res):
     kwargs = {}
     log_sql_args = not oboe.config.get('sanitize_sql', False) and len(f_args) > 2
     if log_sql_args:
-        kwargs['QueryArgs'] = f_args[2]
+        kwargs['QueryArgs'] = str(f_args[2]).encode('utf-8')
 
-    kwargs['Query'] = sql
+    kwargs['Query'] = sql.encode('utf-8')
     if 'NAME' in obj.db.settings_dict:
         kwargs['Database'] = obj.db.settings_dict['NAME']
     if 'HOST' in obj.db.settings_dict:
