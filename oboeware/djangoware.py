@@ -11,6 +11,7 @@ import oboe
 from oboeware import imports
 from oboeware import oninit
 import sys, threading, functools
+from distutils.version import StrictVersion
 
 class OboeWSGIHandler(object):
     """ Wrapper WSGI Handler for Django's django.core.handlers.wsgi:WSGIHandler
@@ -144,7 +145,11 @@ def on_load_middleware():
         # templates
         if oboe.config['inst_enabled']['django_templates']:
             from oboeware import inst_django_templates
-            imports.whenImported('django.template.base', inst_django_templates.wrap)
+            import django
+            if StrictVersion(django.get_version()) >= StrictVersion('1.3'):
+                imports.whenImported('django.template.base', inst_django_templates.wrap)
+            else:
+                imports.whenImported('django.template', inst_django_templates.wrap)
 
         # load pluggaable instrumentation
         from loader import load_inst_modules
