@@ -21,8 +21,10 @@ def wrap_execute(func, f_args, f_kwargs, res):
     if 'HOST' in obj.db.settings_dict:
         kwargs['RemoteHost'] = obj.db.settings_dict['HOST']
     if 'ENGINE' in obj.db.settings_dict:
-        if re.search('postgresql', obj.db.settings_dict['ENGINE']):
+        if re.search('post', obj.db.settings_dict['ENGINE']):
             kwargs['Flavor'] = 'postgresql'
+        elif re.search('oracle', obj.db.settings_dict['ENGINE']):
+            kwargs['Flavor'] = 'oracle'
     return kwargs
 
 class CursorOboeWrapper(object):
