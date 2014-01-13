@@ -40,7 +40,7 @@ else:
                    "and liboboe-dev installed, running in no-op mode.  Tracing disabled. "
                    "Contact traceviewsupport@appneta.com if this is unexpected.")
 
-__version__ = '1.5.0'
+__version__ = '1.5.5'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 
 import oboe.rum
