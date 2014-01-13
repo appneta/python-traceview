@@ -234,6 +234,7 @@ class Context(object):
                 event.add_info('SampleRate', int(sample_rate * 1e6))
             if avw:
                 event.add_info('X-TV-Meta', avw)
+            event.add_info('Language', 'Python') # in case we have an unclear layer name
         else:
             event = NullEvent()
 

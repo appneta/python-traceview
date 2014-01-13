@@ -11,6 +11,7 @@ import oboe
 from oboeware import imports
 from oboeware import oninit
 import sys, threading, functools
+from distutils.version import StrictVersion
 
 class OboeWSGIHandler(object):
     """ Wrapper WSGI Handler for Django's django.core.handlers.wsgi:WSGIHandler
@@ -28,6 +29,12 @@ class OboeWSGIHandler(object):
 # Middleware hooks listed here: http://docs.djangoproject.com/en/dev/ref/middleware/
 
 class OboeDjangoMiddleware(object):
+    def __init__(self):
+        from django.conf import settings
+        try:
+            self.layer = settings.OBOE_BASE_LAYER
+        except AttributeError, e:
+            self.layer = 'django'
 
     def _singleline(self, e): # some logs like single-line errors better
         return str(e).replace('\n', ' ').replace('\r', ' ')
@@ -36,7 +43,7 @@ class OboeDjangoMiddleware(object):
         try:
             xtr_hdr = request.META.get("HTTP_X-Trace",   request.META.get("HTTP_X_TRACE"))
             avw_hdr = request.META.get("HTTP_X-TV-Meta", request.META.get("HTTP_X_TV_META"))
-            oboe.start_trace('django', xtr=xtr_hdr, avw=avw_hdr, store_backtrace=False)
+            oboe.start_trace(self.layer, xtr=xtr_hdr, avw=avw_hdr, store_backtrace=False)
         except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
 
@@ -47,7 +54,7 @@ class OboeDjangoMiddleware(object):
             kvs = {'Controller': view_func.__module__,
                    # XXX Not Python2.4-friendly
                    'Action': view_func.__name__ if hasattr(view_func, '__name__') else None}
-            oboe.log('process_view', 'django', keys=kvs, store_backtrace=False)
+            oboe.log('process_view', None, keys=kvs, store_backtrace=False)
         except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
 
@@ -59,7 +66,7 @@ class OboeDjangoMiddleware(object):
                    'Method': request.META['REQUEST_METHOD'],
                    'URL': request.build_absolute_uri(),
                    'Status': response.status_code}
-            response['X-Trace'] = oboe.end_trace('django', keys=kvs)
+            response['X-Trace'] = oboe.end_trace(self.layer, keys=kvs)
         except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
         return response
@@ -144,7 +151,11 @@ def on_load_middleware():
         # templates
         if oboe.config['inst_enabled']['django_templates']:
             from oboeware import inst_django_templates
-            imports.whenImported('django.template.base', inst_django_templates.wrap)
+            import django
+            if StrictVersion(django.get_version()) >= StrictVersion('1.3'):
+                imports.whenImported('django.template.base', inst_django_templates.wrap)
+            else:
+                imports.whenImported('django.template', inst_django_templates.wrap)
 
         # load pluggaable instrumentation
         from loader import load_inst_modules
