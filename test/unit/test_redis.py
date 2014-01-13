@@ -3,7 +3,8 @@
 import base
 import trace_filters as f
 from oboeware import inst_redis # pylint: disable-msg=W0611
-import unittest
+import unittest2 as unittest
+from distutils.version import StrictVersion
 
 # Filters for assertions re: inspecting Events in Traces
 is_redis_layer = f.prop_is('Layer', 'redis')
@@ -13,6 +14,7 @@ is_redis_backtrace = f._and(f.has_prop('Backtrace'), is_redis_layer)
 class TestRedis(base.TraceTestCase):
     def __init__(self, *args, **kwargs):
         self.lib = __import__('redis')
+        self.lib_version = StrictVersion(self.lib.__version__)
         super(TestRedis, self).__init__(*args, **kwargs)
 
     def setUp(self):
@@ -93,7 +95,7 @@ class TestRedis(base.TraceTestCase):
         with self.new_trace():
             ret = self.client.delete('test1','test2')
         self.assertRedisTrace(KVOp='del')
-        if self.lib.__version__ <= '2.7.4':
+        if self.lib_version <= StrictVersion('2.7.4'):
             self.assertEqual(ret, True)
         else:
             self.assertEqual(ret, 2)
@@ -187,17 +189,25 @@ class TestRedis(base.TraceTestCase):
     def test_zset_zadd(self):
         self.client.delete('setkey')
         with self.new_trace():
-            ret = self.client.zadd('setkey', 'item', 7.1)
+            if self.lib_version >= StrictVersion('2.4.10'):
+                ret = self.client.zadd('setkey', 7, 'item')
+            else:
+                ret = self.client.zadd('setkey', 'item', 7)
         self.assertRedisTrace(KVOp='zadd', KVKey='setkey')
         self.assertEqual(ret, 1)
 
     def test_zset_srem(self):
         self.client.delete('setkey')
-        self.client.zadd('setkey', 'item', 7.1)
+
+        if self.lib_version >= StrictVersion('2.4.10'):
+            ret = self.client.zadd('setkey', 7, 'item')
+        else:
+            ret = self.client.zadd('setkey', 'item', 7)
+
         with self.new_trace():
             ret = self.client.zrem('setkey', 'item')
         self.assertRedisTrace(KVOp='zrem', KVKey='setkey')
-        if self.lib.__version__ <= '2.7.4':
+        if self.lib_version <= StrictVersion('2.7.4'):
             self.assertEqual(ret, True)
         else:
             self.assertEqual(ret, 1)
@@ -212,7 +222,7 @@ class TestRedis(base.TraceTestCase):
             p.set('key1', 'val1').hset('hashkey1', 'key1', 'val1')
             ret = p.execute()
         # not sure what the exact cutoff should be here, but older versions have extra arguments
-        if self.lib.__version__ <= '2.7':
+        if self.lib_version <= StrictVersion('2.7'):
             self.assertRedisTrace(KVOp='pipe:multi,set,hset,exec')
         else:
             self.assertRedisTrace(KVOp='pipe:set,hset')

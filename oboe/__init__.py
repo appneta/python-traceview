@@ -20,6 +20,25 @@ from oboe.backport import defaultdict
 
 from decorator import decorator
 
+# Constants from liboboe
+OBOE_TRACE_NEVER   = 0
+OBOE_TRACE_ALWAYS  = 1
+OBOE_TRACE_THROUGH = 2
+
+OBOE_SAMPLE_RATE_SOURCE_FILE                   = 1
+OBOE_SAMPLE_RATE_SOURCE_DEFAULT                = 2
+OBOE_SAMPLE_RATE_SOURCE_OBOE                   = 3
+OBOE_SAMPLE_RATE_SOURCE_LAST_OBOE              = 4
+OBOE_SAMPLE_RATE_SOURCE_DEFAULT_MISCONFIGURED  = 5
+OBOE_SAMPLE_RATE_SOURCE_OBOE_DEFAULT           = 6
+
+# Masks for bitwise ops
+ZERO_MASK = 0b00000000000000000000000000
+SAMPLE_RATE_MASK   = 0b00111111111111111111111111
+SAMPLE_SOURCE_MASK = 0b11000000000000000000000000
+ZERO_SAMPLE_RATE_MASK   = 0b11000000000000000000000000
+ZERO_SAMPLE_SOURCE_MASK = 0b00111111111111111111111111
+
 _log = logging.getLogger(__name__)
 if 'OBOE_DISABLE_DEFAULT_LOGGER' in os.environ:
     _log.addHandler(logging.NullHandler())
@@ -30,7 +49,7 @@ reporter_instance = None
 # test harness?  if not, check if we will run in no-op on this platform
 if 'OBOE_TEST' in os.environ:
     from oboe.oboe_test import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
-    _log.error("Tracelytics Oboe running in OBOE_TEST mode; will not emit trace events.")
+    _log.error("Tracelytics Oboe running in OBOE_TEST mode; will not emit UDP reports")
 else:
     try:
         from oboe.oboe_ext import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
@@ -40,7 +59,7 @@ else:
                    "and liboboe-dev installed, running in no-op mode.  Tracing disabled. "
                    "Contact traceviewsupport@appneta.com if this is unexpected.")
 
-__version__ = '1.5.0'
+__version__ = '1.5.5'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 
 import oboe.rum
@@ -219,7 +238,7 @@ class Context(object):
 
         if xtr and md:
             evt = md.createEvent()
-        elif SwigContext.sampleRequest(layer, xtr or '', avw or '') or force:
+        elif sample_request(layer, xtr or '', avw or '') or force:
             sample_rate = config['sample_rate']
             if not md:
                 md = Metadata.makeRandom()
@@ -234,6 +253,7 @@ class Context(object):
                 event.add_info('SampleRate', int(sample_rate * 1e6))
             if avw:
                 event.add_info('X-TV-Meta', avw)
+            event.add_info('Language', 'Python') # in case we have an unclear layer name
         else:
             event = NullEvent()
 
@@ -825,6 +845,21 @@ def _Event_addInfo_safe(func):
                 elif hasattr(args[2], '__repr__'):
                     return func(args[0], args[1], repr(args[2]))
     return wrapped
+
+def sample_request(layer, xtr, avw):
+        
+    rv = SwigContext.sampleRequest(layer, xtr or '', avw or '')
+    
+    # For older liboboe that returns true/false, just return that.
+    if rv.__class__ == bool or (rv == 0):
+      return rv
+
+    # liboboe version > 1.3.1 returning a bit masked integer with SampleRate and
+    # source embedded
+    config['sample_rate']   = ((rv & SAMPLE_RATE_MASK) / 1e6)
+    config['sample_source'] = (rv & SAMPLE_SOURCE_MASK) >> 24
+
+    return rv
 
 ###############################################################################
 # Backwards compatability

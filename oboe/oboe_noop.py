@@ -10,7 +10,7 @@ oboe_noop defines no-op classes for platforms we don't support building the c ex
 # "Missing docstring"
 # pylint: disable-msg=C0103
 
-class Metadata(object): 
+class Metadata(object):
     def __init__(self, _=None):
         pass
 
@@ -106,6 +106,9 @@ class Event(object):
 
     def metadataString(self):
         return ''
+
+    def is_valid(self):
+        return False
 
     @staticmethod
     def startTrace(_=None):

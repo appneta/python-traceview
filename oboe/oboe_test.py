@@ -40,6 +40,18 @@ class Context(object):
     def init():
         pass
 
+    @staticmethod
+    def setTracingMode(_):
+        return False
+
+    @staticmethod
+    def setDefaultSampleRate(_):
+        return False
+
+    @staticmethod
+    def sampleRequest(_, __, ___):
+        return True
+
     @classmethod
     def get(cls):
         return cls.md
@@ -95,6 +107,9 @@ class Event(object):
 
     def metadataString(self):
         return ''
+
+    def is_valid(self):
+        return True
 
     @staticmethod
     def startTrace(_=None):

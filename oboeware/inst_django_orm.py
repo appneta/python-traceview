@@ -13,16 +13,18 @@ def wrap_execute(func, f_args, f_kwargs, res):
     kwargs = {}
     log_sql_args = not oboe.config.get('sanitize_sql', False) and len(f_args) > 2
     if log_sql_args:
-        kwargs['QueryArgs'] = f_args[2]
+        kwargs['QueryArgs'] = str(f_args[2]).encode('utf-8')
 
-    kwargs['Query'] = sql
+    kwargs['Query'] = sql.encode('utf-8')
     if 'NAME' in obj.db.settings_dict:
         kwargs['Database'] = obj.db.settings_dict['NAME']
     if 'HOST' in obj.db.settings_dict:
         kwargs['RemoteHost'] = obj.db.settings_dict['HOST']
     if 'ENGINE' in obj.db.settings_dict:
-        if re.search('postgresql', obj.db.settings_dict['ENGINE']):
+        if re.search('post', obj.db.settings_dict['ENGINE']):
             kwargs['Flavor'] = 'postgresql'
+        elif re.search('oracle', obj.db.settings_dict['ENGINE']):
+            kwargs['Flavor'] = 'oracle'
     return kwargs
 
 class CursorOboeWrapper(object):
@@ -60,7 +62,7 @@ def wrap(module):
         if getattr(cursor_method, '_oboe_wrapped', False):
             return
 
-        oboe_wrapper = oboe.log_method('djangoORM', callback=wrap_execute, 
+        oboe_wrapper = oboe.log_method('djangoORM', callback=wrap_execute,
                           store_backtrace=oboe._collect_backtraces('django_orm'))
         setattr(CursorOboeWrapper, 'execute', oboe_wrapper(CursorOboeWrapper.execute))
         setattr(CursorOboeWrapper, 'executemany', oboe_wrapper(CursorOboeWrapper.executemany))

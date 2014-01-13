@@ -6,7 +6,7 @@ N.B. has on-import behavior to use repo-local oboe and set OBOE_TEST environment
 import os
 import sys
 import trace_filters as f
-import unittest
+import unittest2 as unittest
 
 def force_local_oboe():
     basepath = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../..'))
@@ -18,13 +18,10 @@ def force_local_oboe():
 
 # dirty: using on import behaviors here, should be cleaned up
 force_local_oboe()
-
 os.environ['OBOE_TEST'] = '1'
 import oboe
+print >>sys.stderr, "Using oboe: %s" % (oboe.__path__,)
 from oboe.oboe_test import OboeListener
-oboe.config['sample_rate'] = 1.0
-oboe.config['tracing_mode'] = 'always'
-
 
 class MockTrace(object):
     """ Mock trace.  Listens directly to events in mock oboe_ext. """

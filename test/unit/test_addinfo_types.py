@@ -1,6 +1,6 @@
 """ Tests for basic oboe event construction type safety. """
 import oboe
-import unittest
+import unittest2 as unittest
 
 # XXX do not use base.TraceTestCase here--we really do want it to fall through to c extension
 class TestOboeAddInfo(unittest.TestCase):

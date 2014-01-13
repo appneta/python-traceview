@@ -4,7 +4,7 @@ import base
 from distutils.version import LooseVersion # pylint: disable-msg=W0611
 from oboeware import inst_memcache # pylint: disable-msg=W0611
 import trace_filters as f
-import unittest
+import unittest2 as unittest
 
 
 MODULE_NAMES = set([ 'memcache', 'pylibmc' ])
