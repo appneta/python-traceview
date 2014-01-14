@@ -850,12 +850,12 @@ def sample_request(layer, xtr, avw):
         
     rv = SwigContext.sampleRequest(layer, xtr or '', avw or '')
     
-    # For older liboboe that returns true/false, just return that.
+    # For older binding to liboboe that returns true/false, just return that.
     if rv.__class__ == bool or (rv == 0):
       return rv
 
-    # liboboe version > 1.3.1 returning a bit masked integer with SampleRate and
-    # source embedded
+    # Newer binding to liboboe returns a bit masked integer with SampleRate and
+    # Source embedded
     config['sample_rate']   = ((rv & SAMPLE_RATE_MASK) / 1e6)
     config['sample_source'] = (rv & SAMPLE_SOURCE_MASK) >> 24
 
