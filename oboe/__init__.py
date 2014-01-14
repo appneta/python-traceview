@@ -127,7 +127,7 @@ class OboeConfig(object):
             SwigContext.setDefaultSampleRate(int(v * 1e6))
             self._config['sample_source'] = 1 # OBOE_SAMPLE_RATE_SOURCE_FILE
 
-        elif k in ['sanitize_sql', 'reporter_host', 'reporter_port', 'warn_deprecated']:
+        elif k in ['sample_source', 'sanitize_sql', 'reporter_host', 'reporter_port', 'warn_deprecated']:
             self._config[k] = v
 
         else:
