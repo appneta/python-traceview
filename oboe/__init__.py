@@ -59,7 +59,7 @@ else:
                    "and liboboe-dev installed, running in no-op mode.  Tracing disabled. "
                    "Contact traceviewsupport@appneta.com if this is unexpected.")
 
-__version__ = '1.5.5'
+__version__ = '1.6'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 
 import oboe.rum
@@ -86,6 +86,9 @@ class OboeConfig(object):
 
         # Initialize dictionaries for per instrumentation configuration
         self._config['inst'] = defaultdict(lambda: True)
+
+        self._config['inst']['celery'] = defaultdict(lambda: True)
+        self._config['inst']['celery']['wrap'] = set()
 
         self._config['inst']['django_orm'] = defaultdict(lambda: True)
         self._config['inst']['django_orm']['collect_backtraces'] = True
@@ -225,6 +228,12 @@ class Context(object):
 
         Takes sampling into account -- may return an (invalid Context, event) pair.
         """
+
+        # don't start a trace if already inside one
+        # this is currently used by the Celery instrumentation to prevent double
+        # entry in the case of retried tasks.
+        if cls.get_default().is_valid():
+            return cls(None), NullEvent()
 
         tracing_mode = config['tracing_mode']
         config.sync()
@@ -551,7 +560,7 @@ def _function_signature(func):
         argstrings.append('**'+keywords)
     return name+'('+', '.join(argstrings)+')'
 
-def trace(layer='Python', xtr_hdr=None, kvs=None):
+def trace(layer='Python', xtr_hdr=None, kvs=None, is_method=False):
     """ Decorator to begin a new trace on a block of code.  Takes into account
     oboe.config['tracing_mode'] as well as oboe.config['sample_rate'], so may
     not always start a trace.
@@ -561,6 +570,9 @@ def trace(layer='Python', xtr_hdr=None, kvs=None):
     :kvs: optional, dictionary of additional key/value pairs to report
     """
     def _trace_wrapper(func, *f_args, **f_kwargs):
+        if is_method:
+            # if so, will be bound at this point
+            f_args = f_args[1:]
         start_trace(layer, keys=kvs, xtr=xtr_hdr)
         try:
             res = func(*f_args, **f_kwargs)
@@ -579,6 +591,9 @@ def trace(layer='Python', xtr_hdr=None, kvs=None):
     def decorate_with_trace(f):
         if getattr(f, '_oboe_wrapped', False):   # has this function already been wrapped?
             return f                             # then pass through
+
+        if hasattr(f, 'im_func'):                # Is this a bound method of an object
+            f = f.im_func                        # then wrap the unbound method
         return decorator(_trace_wrapper, f)      # otherwise wrap function f with wrapper
 
     return decorate_with_trace
@@ -847,9 +862,9 @@ def _Event_addInfo_safe(func):
     return wrapped
 
 def sample_request(layer, xtr, avw):
-        
+
     rv = SwigContext.sampleRequest(layer, xtr or '', avw or '')
-    
+
     # For older binding to liboboe that returns true/false, just return that.
     if rv.__class__ == bool or (rv == 0):
       return rv

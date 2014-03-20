@@ -6,10 +6,9 @@ All rights reserved.
 # useful methods for instrumenting Tornado
 from __future__ import with_statement
 import oboe
-from oboeware import async
 from oboeware import oninit
 import functools
-    
+
 oninit.report_layer_init(layer='tornado')
 
 # instrumentation functions for tornado.web.RequestHandler
