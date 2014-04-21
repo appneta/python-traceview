@@ -96,6 +96,9 @@ class OboeConfig(object):
         self._config['inst']['memcache'] = defaultdict(lambda: True)
         self._config['inst']['memcache']['collect_backtraces'] = False
 
+        self._config['inst']['mysqldb'] = defaultdict(lambda: True)
+        self._config['inst']['mysqldb']['collect_backtraces'] = True
+
         self._config['inst']['pymongo'] = defaultdict(lambda: True)
         self._config['inst']['pymongo']['collect_backtraces'] = True
 
@@ -847,9 +850,9 @@ def _Event_addInfo_safe(func):
     return wrapped
 
 def sample_request(layer, xtr, avw):
-        
+
     rv = SwigContext.sampleRequest(layer, xtr or '', avw or '')
-    
+
     # For older binding to liboboe that returns true/false, just return that.
     if rv.__class__ == bool or (rv == 0):
       return rv
