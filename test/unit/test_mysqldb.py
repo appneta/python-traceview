@@ -40,6 +40,8 @@ class TestMySQLdb(base.TraceTestCase):
 
     def test_execute(self):
         """ Test cursor.execute() """
+        import oboe
+        oboe.config['sanitize_sql'] = False
         query = "select 1"
         with self.new_trace():
             db = self._connect()
@@ -47,11 +49,27 @@ class TestMySQLdb(base.TraceTestCase):
             c.execute(query);
         self.assertIsQuery(Query=query, RemoteHost=MYSQL_HOST)
 
+    def test_execute_sanitized(self):
+        """ Test cursor.execute() with sanitization """
+        import oboe
+        oboe.config['sanitize_sql'] = True
+
+        query = "select 1"
+        reported_query = "select ?"
+
+        with self.new_trace():
+            db = self._connect()
+            c = db.cursor()
+            c.execute(query);
+        self.assertIsQuery(Query=reported_query, RemoteHost=MYSQL_HOST)
+
     def test_executemany_and_errors(self):
-        """ Test cursor.executemany(), also tests that errors work. """
+        """ Test cursor.executemany(); also tests that errors work. """
+        import oboe
+        oboe.config['sanitize_sql'] = False
         query = """INSERT INTO breakfast (name, spam, eggs, sausage, price)
                   VALUES (%s, %s, %s, %s, %s)"""
-        vals = [ ("Spam and Sausage Lover's Plate", 5, 1, 8, 7.95 ) ]
+        vals = [ ("Spam and Sausage Lover's Plate", '5', 1, 8, 7.95 ) ]
 
         with self.new_trace():
             db = self._connect()
@@ -70,6 +88,35 @@ class TestMySQLdb(base.TraceTestCase):
         error = self._last_trace.pop_events(f.label_is('error'),
                                             f.prop_is('ErrorClass', 'ProgrammingError'))
         self.assertEqual(1, len(error))
+
+    def test_executemany_and_errors_sanitized(self):
+        """ Test cursor.executemany() with sanitizaiton of all arg types;
+            also tests that errors work. """
+        import oboe
+        oboe.config['sanitize_sql'] = True
+        query = """INSERT INTO breakfast (name, spam, eggs, sausage, price)
+                  VALUES (%s, %s, %s, %s, %s)"""
+        vals = [ ("Spam and Sausage Lover's Plate", '5', 1, 8, 7.95 ) ]
+        reported_query = """INSERT INTO breakfast (name, spam, eggs, sausage, price)
+                  VALUES (?, ?, ?, ?, ?)"""
+
+        with self.new_trace():
+            db = self._connect()
+
+            c = db.cursor()
+            try:
+                c.executemany(query, vals);
+            except Exception, e:
+                print e
+
+        # query vals
+        self.assertIsQuery(Query=reported_query, RemoteHost=MYSQL_HOST)
+
+        # error: table 'breakfast' does not exist
+        error = self._last_trace.pop_events(f.label_is('error'),
+                                            f.prop_is('ErrorClass', 'ProgrammingError'))
+        self.assertEqual(1, len(error))
+
 
 if __name__ == '__main__':
     unittest.main()

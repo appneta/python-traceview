@@ -4,14 +4,28 @@
  All rights reserved.
 """
 import oboe
+import re
 
-def wrap_do_query(func, f_args, _f_kwargs, _return_val):
-    # TODO: can't figure out how to get Database without state tracking
-    return { 'RemoteHost': f_args[0]._get_db().get_host_info().split(' ')[0],
-             'Query': f_args[1] }
+match = re.compile(r'''(?:[0-9\.]+)|'(?:[^'\\]|\\\')*?'|"(?:[^"\\]|\\\")*?"''')
+
+def sanitized(query):
+    return match.sub('?', query)
 
 def wrap(module, cursors):
     """ wrap MySQLdb methods of interest """
+
+    def wrap_do_query(func, f_args, _f_kwargs, _return_val):
+        # TODO: can't figure out how to get Database name without state tracking
+        db_conn = f_args[0]._get_db()
+        remote_host = db_conn.get_host_info().split(' ')[0]
+        query = f_args[1]
+
+        if oboe.config.get('sanitize_sql', False):
+            query = sanitized(f_args[1])
+
+        return { 'RemoteHost': remote_host,
+                 'Query': query }
+
     cls = getattr(cursors, 'BaseCursor', None)
     decorate = oboe.log_method('mysqldb',
                    store_backtrace=oboe._collect_backtraces('mysqldb'),
