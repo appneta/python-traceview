@@ -46,6 +46,12 @@ class CursorOboeWrapper(object):
         else:
             return getattr(self.cursor, attr)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()
+
     def __iter__(self):
         return iter(self.cursor)
 
