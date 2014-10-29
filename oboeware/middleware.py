@@ -151,6 +151,7 @@ class OboeMiddleware(object):
             evt.add_info("ErrorMsg", str(exc))
             evt.add_info("ErrorClass", exc.__class__.__name__)
             evt.add_info("Backtrace", "".join(tb.format_list(tb.extract_tb(trace))))
+            del trace # delete reference to traceback object to allow garbage collection
 
         # gets controller, action
         for k, v in environ.get('wsgiorg.routing_args', [{},{}])[1].items():
