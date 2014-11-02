@@ -53,7 +53,7 @@ if 'OBOE_TEST' in os.environ:
 else:
     try:
         from oboe.oboe_ext import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
-    except ImportError, e:
+    except ImportError as e:
         from oboe.oboe_noop import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
         _log.error("Tracelytics Oboe warning: module not built on a platform with liboboe "
                    "and liboboe-dev installed, running in no-op mode.  Tracing disabled. "

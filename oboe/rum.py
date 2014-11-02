@@ -7,7 +7,7 @@ import sys
 
 try:
     from oboe_ext import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
-except ImportError, e:
+except ImportError as e:
     from oboe_noop import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
 
 import hashlib, binascii, re, logging
@@ -31,7 +31,7 @@ def _initialize_rum():
     try:
         access_key = ([l.rstrip().split('=')[1] for l in open(TLY_CONF_FILE, 'r')
                        if l.startswith('tracelyzer.access_key=')] + [None])[0]
-    except IOError, e:
+    except IOError as e:
         _log.warn("RUM initialization: couldn't read %s (%s). "
                   "RUM will be disabled unless oboe.config['access_key'] is set.",
                   TLY_CONF_FILE, e.strerror)
