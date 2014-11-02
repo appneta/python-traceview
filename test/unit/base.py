@@ -69,7 +69,8 @@ class TraceTestCase(unittest.TestCase):
         return self._last_trace
 
     def print_events(self, *filters):
-        print ''.join(['%s\n' % (ev.props) for ev in self._last_trace.events(*filters)]),
+        for ev in self._last_trace.events(*filters):
+            print('%s\n' % (ev.props))
 
     def assertHasBaseEntryAndExit(self):
         self.print_events() # only really prints anything if test case fails
