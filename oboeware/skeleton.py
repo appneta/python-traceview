@@ -1,3 +1,5 @@
+from builtins import str
+from builtins import map
 # Modified from https://github.com/dcrosta/professor/blob/master/professor/skeleton.py
 #
 # Copyright (c) 2011, Daniel Crosta
@@ -36,9 +38,9 @@ import re
 
 BSON_TYPES = set([
     int,
-    long,
+    int,
     str,
-    unicode,
+    str,
     bool,
     float,
     datetime,
@@ -110,10 +112,10 @@ def sanitize(value):
     # "_,_" in keys
     t = type(value)
     if t == list:
-        return map(sanitize, value)
+        return list(map(sanitize, value))
     elif t == dict:
         return dict((k.replace('$', '_$_').replace('.', '_,_'), sanitize(v))
-                    for k, v in value.iteritems())
+                    for k, v in value.items())
     elif t not in BSON_TYPES:
         raise Exception(value)
     else:
@@ -123,10 +125,10 @@ def desanitize(value):
     # perform the inverse of sanitize()
     t = type(value)
     if t == list:
-        return map(desanitize, value)
+        return list(map(desanitize, value))
     elif t == dict:
         return dict((k.replace('_$_', '$').replace('_,_', '.'), desanitize(v))
-                    for k, v in value.iteritems())
+                    for k, v in value.items())
     elif t not in BSON_TYPES:
         raise Exception(value)
     else:
