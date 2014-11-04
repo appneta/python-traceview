@@ -7,6 +7,7 @@ oboe_noop defines no-op/test mock classes for:
 a) platforms we don't support building the c extension on
 b) running unit test
 """
+from builtins import object
 listeners = []
 
 class Metadata(object):

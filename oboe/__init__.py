@@ -3,6 +3,13 @@
 Copyright (C) 2012 by Tracelytics, Inc.
 All rights reserved.
 """
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
+from past.utils import old_div
+from builtins import object
 import logging
 import inspect
 import os
@@ -184,7 +191,7 @@ class Context(object):
     """ A wrapper around the swig Metadata """
 
     def __init__(self, md):
-        if isinstance(md, basestring):
+        if isinstance(md, str):
             self._md = Metadata.fromString(md)
         else:
             self._md = md
@@ -373,14 +380,14 @@ class NullEvent(object):
 ###############################################################################
 
 try:
-    import cStringIO, cProfile, pstats
+    import io, cProfile, pstats
     found_cprofile = True
 except ImportError:
     found_cprofile = False
 
 def _get_profile_info(p):
     """Returns a sorted set of stats from a cProfile instance."""
-    sio = cStringIO.StringIO()
+    sio = io.StringIO()
     s = pstats.Stats(p, stream=sio)
     s.sort_stats('time')
     s.print_stats(15)
@@ -392,7 +399,7 @@ def _log_event(evt, keys=None, store_backtrace=True, backtrace=None, edge_str=No
     if keys is None:
         keys = {}
 
-    for k, v in keys.items():
+    for k, v in list(keys.items()):
         evt.add_info(k, v)
 
     if store_backtrace:
@@ -840,7 +847,7 @@ def _Event_addInfo_safe(func):
             return func(*args, **kw)
         except NotImplementedError: # unrecognized type passed to addInfo SWIG binding
             # args: [self, KeyName, Value]
-            if len(args) == 3 and isinstance(args[1], basestring):
+            if len(args) == 3 and isinstance(args[1], str):
                 # report this error
                 func(args[0], '_Warning', 'Bad type for %s: %s' % (args[1], type(args[2])))
                 # last resort: coerce type to string
@@ -860,7 +867,7 @@ def sample_request(layer, xtr, avw):
 
     # Newer binding to liboboe returns a bit masked integer with SampleRate and
     # Source embedded
-    config['sample_rate']   = ((rv & SAMPLE_RATE_MASK) / 1e6)
+    config['sample_rate']   = (old_div((rv & SAMPLE_RATE_MASK), 1e6))
     config['sample_source'] = (rv & SAMPLE_SOURCE_MASK) >> 24
 
     return rv
