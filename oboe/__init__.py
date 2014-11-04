@@ -154,7 +154,7 @@ class OboeConfig(object):
 
     def get(self, k, default=None):
         """ Get the value of key k """
-        if self._config.has_key(k):
+        if k in self._config:
             return self._config[k]
         else:
             return default
@@ -750,7 +750,7 @@ def log_method(layer, store_return=False, store_args=False, store_backtrace=Fals
             entry_kvs['Backtrace'] = _str_backtrace()
         # is func an instance method?
         if 'im_class' in dir(func):
-            entry_kvs['Class'] = func.im_class.__name__
+            entry_kvs['Class'] = func.__self__.__class__.__name__
 
         if send_entry_event:
             # log entry event
@@ -820,7 +820,7 @@ def log_method(layer, store_return=False, store_args=False, store_backtrace=Fals
         if getattr(f, '_oboe_wrapped', False):   # has this function already been wrapped?
             return f                             # then pass through
         if hasattr(f, 'im_func'):                # Is this a bound method of an object
-            f = f.im_func                        # then wrap the unbound method
+            f = f.__func__                        # then wrap the unbound method
         return decorator(_log_method_wrapper, f) # otherwise wrap function f with wrapper
 
     # return decorator function with arguments to log_method() baked in
