@@ -3,6 +3,7 @@
 Copyright (C) 2012 by Tracelytics, Inc.
 All rights reserved.
 """
+from __future__ import unicode_literals
 import sys
 
 try:
@@ -10,7 +11,7 @@ try:
 except ImportError as e:
     from oboe_noop import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
 
-import hashlib, binascii, re, logging
+import hashlib, base64, re, logging
 _log = logging.getLogger('oboe')
 
 CUSTOMER_RUM_ID = None
@@ -19,9 +20,11 @@ _RUM_LOADED = None # either False (disabled), True, or None (not loaded)
 _UUID_RE = re.compile('[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\Z')
 
 def _access_key_to_rum_id(uuid):
-    # RFC 4648 base64url encoding
-    return binascii.b2a_base64(hashlib.sha1('RUM'+uuid).digest())\
-        .rstrip().replace('+', '-').replace('/', '_')
+    raw_key = ('RUM' + uuid).encode('utf-8')
+    digest = hashlib.sha1(raw_key).digest()
+
+    # base64 encode digest (url safe replacing + and \)
+    return base64.urlsafe_b64encode(digest)
 
 def _initialize_rum():
     TLY_CONF_FILE = '/etc/tracelytics.conf'
