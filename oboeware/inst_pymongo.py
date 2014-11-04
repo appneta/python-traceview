@@ -4,6 +4,7 @@ Copyright (C) 2012 by Tracelytics, Inc.
 All rights reserved.
 """
 from __future__ import print_function
+from builtins import str
 import sys
 
 import oboe
@@ -145,7 +146,7 @@ def profile_drop_collection(func, args, kwargs, func_results):
     (db, name_or_collection) = args[:2]
     report_kvs = {}
 
-    if isinstance(name_or_collection, basestring):
+    if isinstance(name_or_collection, str):
         collection_name = name_or_collection
     else:
         collection_name = name_or_collection.name
@@ -161,7 +162,7 @@ def profile_command(func, args, kwargs, func_results):
     report_kvs = {}
 
     _add_connection_info(report_kvs, db)
-    if not isinstance(command, basestring):
+    if not isinstance(command, str):
         command = _to_json(command)
 
     report_kvs['Command'] = command
@@ -226,7 +227,7 @@ def _command_fingerprint(query):
     """
     fp = None
     if query and isinstance(query, SON) and len(query) > 0:
-        cmd_args = [ {item[0] : item[1]} for item in query.items() ]
+        cmd_args = [ {item[0] : item[1]} for item in list(query.items()) ]
         try:
             fp = skeleton(cmd_args, preserve_first=True, no_wrap=True)
         except:
@@ -337,7 +338,7 @@ def wrap_class(cls, class_name, class_method_inst):
     """ wrap class methods with instrumentation calls """
     if not cls:
         return
-    for (method, method_log_args) in class_method_inst.iteritems():
+    for (method, method_log_args) in class_method_inst.items():
         fn = getattr(cls, method, None)
         if not fn:
             # Not all methods may be in all versions of pymongo...
