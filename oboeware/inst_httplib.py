@@ -6,6 +6,9 @@ Copyright (C) 2011 by Tracelytics, Inc.
 All rights reserved.
 """
 from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
 import sys
 import oboe
 
@@ -72,7 +75,7 @@ def wrap(module):
 
 
 try:
-    import httplib
+    import http.client
     wrap(httplib)
 except ImportError as e:
     pass
