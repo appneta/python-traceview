@@ -272,8 +272,8 @@ def lazyModule(modname, relativePath=None):
             except:
                 # Reset our state so that we can retry later
                 if '__file__' not in module.__dict__:
-                    LazyModule.__getattribute__ = oldGA.im_func
-                    LazyModule.__setattr__      = oldSA.im_func
+                    LazyModule.__getattribute__ = oldGA.__func__
+                    LazyModule.__setattr__      = oldSA.__func__
                 raise
 
             try:
