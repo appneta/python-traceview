@@ -338,7 +338,7 @@ def wrap_class(cls, class_name, class_method_inst):
     """ wrap class methods with instrumentation calls """
     if not cls:
         return
-    for (method, method_log_args) in class_method_inst.items():
+    for (method, method_log_args) in list(class_method_inst.items()):
         fn = getattr(cls, method, None)
         if not fn:
             # Not all methods may be in all versions of pymongo...
