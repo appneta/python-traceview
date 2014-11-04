@@ -51,7 +51,7 @@ def _check_rum_config():
     import oboe
     global CUSTOMER_RUM_ID, _RUM_LOADED
     access_key = oboe.config.get('access_key', None)
-    if isinstance(access_key, basestring) and _UUID_RE.match(access_key):
+    if isinstance(access_key, str) and _UUID_RE.match(access_key):
         CUSTOMER_RUM_ID = _access_key_to_rum_id(access_key)
         _RUM_LOADED = True  # success finding access key
     else:

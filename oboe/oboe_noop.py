@@ -5,6 +5,7 @@ All rights reserved.
 
 oboe_noop defines no-op classes for platforms we don't support building the c extension on
 """
+from builtins import object
 
 # No-op classes intentionally left undocumented
 # "Missing docstring"
