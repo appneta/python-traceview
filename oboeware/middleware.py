@@ -4,6 +4,10 @@ Copyright (C) 2011 by Tracelytics, Inc.
 All rights reserved.
 """
 from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import object
 
 import oboe
 import sys
@@ -100,7 +104,7 @@ class OboeMiddleware(object):
         try:
             if self.profile and ctx.is_valid():
                 try:
-                    import cStringIO, cProfile, pstats # XXX test cProfile and pstats exist
+                    import io, cProfile, pstats # XXX test cProfile and pstats exist
                 except ImportError:
                     self.profile = False
 
@@ -116,7 +120,7 @@ class OboeMiddleware(object):
                 body = ''.join(response_body)
                 result = [body]
 
-                sio = cStringIO.StringIO()
+                sio = io.StringIO()
                 s = pstats.Stats(p, stream=sio)
                 s.sort_stats('cumulative')
                 s.print_stats(15)
@@ -155,7 +159,7 @@ class OboeMiddleware(object):
             del trace # delete reference to traceback object to allow garbage collection
 
         # gets controller, action
-        for k, v in environ.get('wsgiorg.routing_args', [{},{}])[1].items():
+        for k, v in list(environ.get('wsgiorg.routing_args', [{},{}])[1].items()):
             if k == "action":
                  evt.add_info(str(k).capitalize(), str(v))
             elif k == "controller":
