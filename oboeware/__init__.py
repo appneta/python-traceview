@@ -3,7 +3,8 @@
 Copyright (C) 2011 by Tracelytics, Inc.
 All rights reserved.
 """
-from middleware import OboeMiddleware
+from __future__ import absolute_import
+from .middleware import OboeMiddleware
 
 __version__ = '1.5.8'
 __all__ = ('OboeMiddleware', 'djangoware', 'async', 'tornado', '__version__')

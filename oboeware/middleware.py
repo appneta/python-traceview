@@ -3,11 +3,12 @@
 Copyright (C) 2011 by Tracelytics, Inc.
 All rights reserved.
 """
+from __future__ import absolute_import
 
 import oboe
 import sys
-from loader import load_inst_modules
-import oninit
+from .loader import load_inst_modules
+from . import oninit
 import traceback as tb
 
 MODULE_INIT_REPORTED = False
