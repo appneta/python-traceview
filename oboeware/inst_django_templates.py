@@ -3,6 +3,7 @@
 Copyright (C) 2014 AppNeta, Inc.
 All rights reserved.
 """
+from __future__ import print_function
 import sys
 import oboe
 
@@ -37,5 +38,5 @@ def wrap(module):
         setattr(module.Template, 'render',
                 layer_wrapper_render(profile_wrapper_render(module.Template.render)))
 
-    except Exception, e:
-        print >> sys.stderr, "Oboe error:", str(e)
+    except Exception as e:
+        print("Oboe error:", str(e), file=sys.stderr)

@@ -37,17 +37,17 @@ def wrap(module, class_name, methods):
 try:
     import sqlalchemy.engine.default as sad
     wrap(sad, 'DefaultDialect', DEFAULT_METHODS)
-except ImportError, e:
+except ImportError as e:
     pass
 
 try:
     import sqlalchemy.dialects.mysql.base as sdmb
     wrap(sdmb, 'MySQLDialect', DIALECT_METHODS)
-except ImportError, e:
+except ImportError as e:
     pass
 
 try:
     import sqlalchemy.dialects.postgresql.base as sdpb
     wrap(sdpb, 'PGDialect', DIALECT_METHODS)
-except ImportError, e:
+except ImportError as e:
     pass

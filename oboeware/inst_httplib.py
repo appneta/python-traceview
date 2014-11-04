@@ -5,6 +5,7 @@ Instrumentation is done in urllib3.
 Copyright (C) 2011 by Tracelytics, Inc.
 All rights reserved.
 """
+from __future__ import print_function
 import sys
 import oboe
 
@@ -66,12 +67,12 @@ def wrap(module):
                                               send_entry_event=False)
         setattr(module.HTTPConnection, 'getresponse',
                 wrapper_getresponse(module.HTTPConnection.getresponse))
-    except Exception, e:
-        print >> sys.stderr, "Oboe error:", str(e)
+    except Exception as e:
+        print("Oboe error:", str(e), file=sys.stderr)
 
 
 try:
     import httplib
     wrap(httplib)
-except ImportError, e:
+except ImportError as e:
     pass

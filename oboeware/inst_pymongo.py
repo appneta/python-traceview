@@ -3,6 +3,7 @@
 Copyright (C) 2012 by Tracelytics, Inc.
 All rights reserved.
 """
+from __future__ import print_function
 import sys
 
 import oboe
@@ -209,7 +210,7 @@ def _add_connection_info(report_kvs, db):
 def _to_json(obj):
     try:
         return json.dumps(obj, cls=JSONEncoder)
-    except Exception, e:
+    except Exception as e:
         return "{'OboeError': 'Could not dump data to JSON.'}"
 
 def _query_fingerprint(query):
@@ -354,8 +355,8 @@ def wrap(module):
         wrap_class(module.collection.Collection, 'collection', COLLECTION_METHOD_INST)
         wrap_class(module.database.Database, 'database', DATABASE_METHOD_INST)
         wrap_class(module.cursor.Cursor, 'cursor', CURSOR_METHOD_INST)
-    except Exception, e:
-        print >> sys.stderr, "Oboe error:", str(e)
+    except Exception as e:
+        print("Oboe error:", str(e), file=sys.stderr)
 
 try:
     import pymongo
@@ -363,5 +364,5 @@ try:
     from oboeware.skeleton import skeleton
     from bson.son import SON
     wrap(pymongo)
-except ImportError, e:
+except ImportError as e:
     pass

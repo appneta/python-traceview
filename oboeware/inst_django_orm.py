@@ -3,6 +3,7 @@
 Copyright (C) 2011 by Tracelytics, Inc.
 All rights reserved.
 """
+from __future__ import print_function
 
 import oboe
 import re
@@ -76,11 +77,11 @@ def wrap(module):
         def cursor_wrap(self):
             try:
                 return CursorOboeWrapper(cursor_method(self), self)
-            except Exception, e:
-                print >> sys.stderr, "[oboe] Error in cursor_wrap", e
+            except Exception as e:
+                print("[oboe] Error in cursor_wrap", e, file=sys.stderr)
                 raise
         cursor_wrap._oboe_wrapped = True
 
         setattr(module.BaseDatabaseWrapper, 'cursor', cursor_wrap)
-    except Exception, e:
-        print >> sys.stderr, "[oboe] Error in module_wrap", e
+    except Exception as e:
+        print("[oboe] Error in module_wrap", e, file=sys.stderr)

@@ -3,6 +3,7 @@
 Copyright (C) 2011 by Tracelytics, Inc.
 All rights reserved.
 """
+from __future__ import print_function
 from functools import partial, wraps
 import oboe
 import operator
@@ -180,8 +181,8 @@ def wrap_send_packed_command(layer_name, func):
 
             oboe.log('info', layer_name, keys={'RemoteHost': host}, 
                 store_backtrace=oboe._collect_backtraces('redis'))
-        except Exception, e:
-            print >> sys.stderr, "Oboe error: %s" % e
+        except Exception as e:
+            print("Oboe error: %s" % e, file=sys.stderr)
         return ret
     return wrapper
 
@@ -233,11 +234,11 @@ def wrap(layer_name, module):
             oboe._log.error("Oboe error: couldn't find redis.client.PubSub class to instrument, "\
                             "redis coverage may be partial.")
 
-    except Exception, e:
-        print >> sys.stderr, "Oboe error:", str(e)
+    except Exception as e:
+        print("Oboe error:", str(e), file=sys.stderr)
 
 try:
     import redis
     wrap('redis', redis)
-except ImportError, ex:
+except ImportError as ex:
     pass

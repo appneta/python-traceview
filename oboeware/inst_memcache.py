@@ -3,6 +3,7 @@
 Copyright (C) 2011 by Tracelytics, Inc.
 All rights reserved.
 """
+from __future__ import print_function
 import sys
 import oboe
 import socket
@@ -56,8 +57,8 @@ def wrap_get_server(layer_name, func):
 
             oboe.log('info', layer_name, keys=args,
                 store_backtrace=oboe._collect_backtraces('memcache'))
-        except Exception, e:
-            print >> sys.stderr, "Oboe error: %s" % e
+        except Exception as e:
+            print("Oboe error: %s" % e, file=sys.stderr)
         return ret
     return wrapper
 
@@ -97,12 +98,12 @@ def wrap(layer_name, module):
             fn = getattr(cls, '_get_server', None)
             setattr(cls, '_get_server', wrap_get_server(layer_name, fn))
 
-    except Exception, e:
-        print >> sys.stderr, "Oboe error:", str(e)
+    except Exception as e:
+        print("Oboe error:", str(e), file=sys.stderr)
 
 for module_name in ['memcache', 'pylibmc']:
     try:
         mod = __import__(module_name)
         wrap(module_name, mod)
-    except ImportError, ex:
+    except ImportError as ex:
         pass
