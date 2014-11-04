@@ -1,6 +1,7 @@
 """ useful code for instrumenting asynchronous Python programs
 # (c) 2012 Tracelytics, Inc.
 """
+from builtins import object
 import oboe
 
 class OboeContextManager(object):

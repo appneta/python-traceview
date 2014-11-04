@@ -3,6 +3,7 @@
  Copyright (C) 2011 by Tracelytics, Inc.
  All rights reserved.
 """
+from builtins import str
 import oboe
 
 DEFAULT_METHODS = ['do_execute', 'do_executemany', 'do_rollback', 'do_commit']

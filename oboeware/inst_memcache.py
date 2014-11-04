@@ -4,6 +4,7 @@ Copyright (C) 2011 by Tracelytics, Inc.
 All rights reserved.
 """
 from __future__ import print_function
+from builtins import str
 import sys
 import oboe
 import socket

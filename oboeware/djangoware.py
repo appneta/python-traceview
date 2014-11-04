@@ -5,6 +5,8 @@
 """
 from __future__ import print_function
 from __future__ import absolute_import
+from builtins import str
+from builtins import object
 
 # django middleware for passing values to oboe
 __all__ = ("OboeDjangoMiddleware", "install_oboe_instrumentation")

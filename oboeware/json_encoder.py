@@ -3,6 +3,7 @@
 Copyright (C) 2012 by Tracelytics, Inc.
 All rights reserved.
 """
+from builtins import str
 try:
     import json
 except ImportError:
