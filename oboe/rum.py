@@ -4,12 +4,13 @@ Copyright (C) 2012 by Tracelytics, Inc.
 All rights reserved.
 """
 from __future__ import unicode_literals
+from __future__ import absolute_import
 import sys
 
 try:
-    from oboe_ext import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
+    from .oboe_ext import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
 except ImportError as e:
-    from oboe_noop import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
+    from .oboe_noop import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
 
 import hashlib, base64, re, logging
 _log = logging.getLogger('oboe')
