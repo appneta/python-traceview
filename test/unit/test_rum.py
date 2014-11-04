@@ -1,6 +1,7 @@
 """ Tests for oboe/rum.py functionality. """
+from __future__ import absolute_import
 
-import base
+from . import base
 import oboe
 from oboe import rum
 import unittest2 as unittest

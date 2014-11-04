@@ -1,7 +1,8 @@
 """ Test redis client instrumentation. """
+from __future__ import absolute_import
 
-import base
-import trace_filters as f
+from . import base
+from . import trace_filters as f
 from oboeware import inst_redis # pylint: disable-msg=W0611
 import unittest2 as unittest
 from distutils.version import StrictVersion
@@ -48,7 +49,7 @@ class TestRedis(base.TraceTestCase):
         import redis
         try:
             self.client.execute_command(command)
-        except redis.client.ResponseError, e:
+        except redis.client.ResponseError as e:
             if 'unknown command' in str(e):
                 return self.skipTest("Installed version of Redis server doesn't support %s, skipping." % command)
 

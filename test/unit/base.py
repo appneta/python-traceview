@@ -3,9 +3,10 @@
 N.B. has on-import behavior to use repo-local oboe and set OBOE_TEST environment variable.
 """
 from __future__ import print_function
+from __future__ import absolute_import
 import os
 import sys
-import trace_filters as f
+from . import trace_filters as f
 import unittest2 as unittest
 
 def force_local_oboe():

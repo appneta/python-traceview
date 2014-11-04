@@ -1,9 +1,10 @@
 """Test memcache client"""
+from __future__ import absolute_import
 
-import base
+from . import base
 from distutils.version import LooseVersion # pylint: disable-msg=W0611
 from oboeware import inst_memcache # pylint: disable-msg=W0611
-import trace_filters as f
+from . import trace_filters as f
 import unittest2 as unittest
 
 

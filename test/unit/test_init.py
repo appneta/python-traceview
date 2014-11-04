@@ -1,6 +1,7 @@
 """ Tests for oboeware/oninit.py functionality. """
+from __future__ import absolute_import
 
-import base
+from . import base
 from oboeware import oninit
 import oboe
 import unittest2 as unittest
