@@ -144,7 +144,7 @@ def importString(name, globalDict=defaultGlobalDict):
     if ':' in name:
         name = name.replace(':','.')
 
-    parts = filter(None,name.split('.'))
+    parts = [_f for _f in name.split('.') if _f]
     item = __import__(parts.pop(0), globalDict, globalDict, ['__name__'])
 
     # Fast path for the common case, where everything is imported already
@@ -260,7 +260,7 @@ def lazyModule(modname, relativePath=None):
         try:
             try:
                 # don't reload if already loaded!
-                if module.__dict__.keys()==['__name__']:
+                if list(module.__dict__.keys())==['__name__']:
                     # Get Python to do the real import!
                     reload(module)
                 try:
