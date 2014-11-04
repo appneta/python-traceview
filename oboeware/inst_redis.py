@@ -4,6 +4,7 @@ Copyright (C) 2011 by Tracelytics, Inc.
 All rights reserved.
 """
 from __future__ import print_function
+from builtins import str
 from functools import partial, wraps
 import oboe
 import operator
@@ -157,7 +158,7 @@ def wrap_execute_pipeline(func, f_args, f_kwargs, return_val):
         fp_cmds[args[0]] = fp_cmds.get(args[0], 0) + 1
 
     op = 'PIPE:' + ','.join([cmd for (cmd, _) in\
-                    sorted(fp_cmds.iteritems(), key=operator.itemgetter(1), reverse=True)])
+                    sorted(iter(fp_cmds.items()), key=operator.itemgetter(1), reverse=True)])
     kvs['KVOp'] = op.lower()
 
     return kvs
