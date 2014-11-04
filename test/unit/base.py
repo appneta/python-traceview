@@ -2,7 +2,7 @@
 
 N.B. has on-import behavior to use repo-local oboe and set OBOE_TEST environment variable.
 """
-
+from __future__ import print_function
 import os
 import sys
 import trace_filters as f
@@ -20,7 +20,7 @@ def force_local_oboe():
 force_local_oboe()
 os.environ['OBOE_TEST'] = '1'
 import oboe
-print >>sys.stderr, "Using oboe: %s" % (oboe.__path__,)
+print(["Using oboe: %s" % (oboe.__path__,)], file=sys.stderr)
 from oboe.oboe_test import OboeListener
 
 class MockTrace(object):
