@@ -1,5 +1,6 @@
 """ Test redis client instrumentation. """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from builtins import str
 
 from . import base
@@ -22,9 +23,9 @@ class TestRedis(base.TraceTestCase):
     def setUp(self):
         # use Redis class for versions < 2.4.10
         if not 'StrictRedis' in dir(self.lib):
-            self.client = self.lib.Redis(host='127.0.0.1', port=6379, db=0)
+            self.client = self.lib.Redis(host='127.0.0.1', port=6379, db=0, decode_responses=True)
         else:
-            self.client = self.lib.StrictRedis(host='127.0.0.1', port=6379, db=0)
+            self.client = self.lib.StrictRedis(host='127.0.0.1', port=6379, db=0, decode_responses=True)
 
     def tearDown(self):
         self.client = None
@@ -32,7 +33,7 @@ class TestRedis(base.TraceTestCase):
     def assertHasRedisCall(self, **kvs):
         self.assertEqual(1, len(self._last_trace.pop_events(f.is_entry_event, is_redis_layer)))
         preds = [f.is_exit_event, is_redis_layer]
-        for (k, v) in kvs.items():
+        for (k, v) in list(kvs.items()):
             preds.append(f.prop_is(k, v))
         exit_with_kvs = self._last_trace.pop_events(*preds)
         self.assertEqual(1, len(exit_with_kvs))
