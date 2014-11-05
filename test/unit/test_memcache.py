@@ -1,5 +1,8 @@
 """Test memcache client"""
-from __future__ import unicode_literals
+# Don't set unicode_literals for this test since
+# python-memcached doesn't support unicode strings
+# or python 3 (as of November 2014).
+#from __future__ import unicode_literals
 from __future__ import absolute_import
 
 from . import base
