@@ -3,6 +3,7 @@
 Copyright (C) 2011 by Tracelytics, Inc.
 All rights reserved.
 """
+from __future__ import unicode_literals
 import oboe
 import oboeware
 import sys

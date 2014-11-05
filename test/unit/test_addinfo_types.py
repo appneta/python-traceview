@@ -1,4 +1,6 @@
 """ Tests for basic oboe event construction type safety. """
+from __future__ import unicode_literals
+
 import oboe
 import unittest2 as unittest
 

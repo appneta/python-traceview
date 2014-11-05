@@ -1,4 +1,5 @@
 """ Helpers for examining MockTrace events. """
+from __future__ import unicode_literals
 
 def _and(*filters):
     def wrapped(*args, **kwargs):

@@ -3,8 +3,10 @@
 Copyright (C) 2011 by Tracelytics, Inc.
 All rights reserved.
 """
+from __future__ import unicode_literals
 from __future__ import print_function
 from builtins import str
+
 from functools import partial, wraps
 import oboe
 import operator

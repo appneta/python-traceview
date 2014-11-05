@@ -3,7 +3,9 @@
 Copyright (C) 2012 by Tracelytics, Inc.
 All rights reserved.
 """
+from __future__ import unicode_literals
 from builtins import str
+
 try:
     import json
 except ImportError:

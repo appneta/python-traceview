@@ -5,10 +5,12 @@ Instrumentation is done in urllib3.
 Copyright (C) 2011 by Tracelytics, Inc.
 All rights reserved.
 """
+from __future__ import unicode_literals
 from __future__ import print_function
 from future import standard_library
 standard_library.install_aliases()
 from builtins import str
+
 import sys
 import oboe
 

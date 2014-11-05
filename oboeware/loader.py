@@ -6,6 +6,7 @@ and djangoware.
 Copyright (C) 2012 by Tracelytics, Inc.
 All rights reserved.
 """
+from __future__ import unicode_literals
 import oboe
 
 def _enabled(m):

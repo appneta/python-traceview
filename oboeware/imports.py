@@ -43,6 +43,8 @@
 
 """Tools for doing dynamic imports"""
 
+from __future__ import unicode_literals
+
 __all__ = [
     'importString', 'importObject', 'importSequence', 'importSuite',
     'lazyModule', 'joinPath', 'whenImported', 'getModuleHooks',

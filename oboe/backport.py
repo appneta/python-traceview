@@ -1,5 +1,6 @@
 # from http://code.activestate.com/recipes/523034-emulate-collectionsdefaultdict/
 # Distributed under the PSF license.
+from __future__ import unicode_literals
 
 try:
     from collections import defaultdict

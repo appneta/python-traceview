@@ -3,10 +3,11 @@
 Copyright (C) 2012 by Tracelytics, Inc.
 All rights reserved.
 """
+from __future__ import unicode_literals
 from __future__ import print_function
 from builtins import str
-import sys
 
+import sys
 import oboe
 
 try:
