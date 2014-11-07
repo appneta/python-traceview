@@ -30,7 +30,7 @@ class TestLogExceptions(base.TraceTestCase):
         self.assertEqual(1, len(self._last_trace.pop_events(f.label_is('error'),
                                                             f.layer_is(None),
                                                             f.prop_is('ErrorClass', 'StringException'),
-                                                            f.prop_is('ErrorMsg', 'StringException()'))))
+                                                            f.prop_is('ErrorMsg', '\xe4\xf6\xfc'))))
         self.assertNoExtraEvents()
 
     def test_log_method_exception(self):
