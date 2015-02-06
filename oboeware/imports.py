@@ -332,6 +332,9 @@ def getModuleHooks(moduleName):
 
     """Get list of hooks for 'moduleName'; error if module already loaded"""
 
+    # In case of unicode_literals, enforce utf-8
+    moduleName = moduleName.encode('utf-8')
+
     acquire_lock()
     try:
         hooks = postLoadHooks.setdefault(moduleName,[])
@@ -343,6 +346,10 @@ def getModuleHooks(moduleName):
 
 
 def _setModuleHook(moduleName, hook):
+
+    # In case of unicode_literals, enforce utf-8
+    moduleName = moduleName.encode('utf-8')
+
     acquire_lock()
     try:
         if moduleName in modules and postLoadHooks.get(moduleName) is None:

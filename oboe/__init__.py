@@ -59,7 +59,7 @@ else:
                    "and liboboe-dev installed, running in no-op mode.  Tracing disabled. "
                    "Contact traceviewsupport@appneta.com if this is unexpected.")
 
-__version__ = '1.5.5'
+__version__ = '1.5.9'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 
 import oboe.rum
@@ -493,18 +493,21 @@ def log_exception(msg=None, store_backtrace=True):
     :store_backtrace: Whether to store the Exception backtrace.
     """
     typ, val, tb = sys.exc_info()
-    if typ is None:
-        raise OboeException('log_exception should only be called from an exception context (e.g., except: block)')
+    try:
+        if typ is None:
+            raise OboeException('log_exception should only be called from an exception context (e.g., except: block)')
 
-    if msg is None:
-        try:
-            msg = str(val)
-        except Exception:
-            msg = repr(val)
+        if msg is None:
+            try:
+                msg = str(val)
+            except Exception:
+                msg = repr(val)
 
-    log_error(typ.__name__, msg,
-              store_backtrace=store_backtrace,
-              backtrace=tb if store_backtrace else None)
+        log_error(typ.__name__, msg,
+                  store_backtrace=store_backtrace,
+                  backtrace=tb if store_backtrace else None)
+    finally:
+        del tb # delete reference to traceback object to allow garbage collection
 
 def log_exit(layer, keys=None, store_backtrace=True, backtrace=None, edge_str=None):
     """Report the last event of the current layer.
@@ -791,6 +794,7 @@ def log_method(layer, store_return=False, store_args=False, store_backtrace=Fals
                     type_, msg_, bt_ = sys.exc_info()
                     _log.error("Non-fatal error in log_method callback: %s, %s, %s"\
                                    % (str(type_), msg_, _str_backtrace(bt_)))
+                    del bt_
 
             # (optionally) report return value
             if store_return:
@@ -879,10 +883,14 @@ def _old_context_log_error(cls, exception=None, err_class=None, err_msg=None, ba
         err_class = exception.__class__.__name__
         err_msg = str(exception)
     store_backtrace = False
+    tb = None
     if backtrace:
         _, _, tb = sys.exc_info()
         store_backtrace = True
-    return log_error(err_class, err_msg, store_backtrace=store_backtrace, backtrace=tb)
+    try:
+        return log_error(err_class, err_msg, store_backtrace=store_backtrace, backtrace=tb)
+    finally:
+        del tb
 
 def _old_context_log_exception(cls, msg=None, exc_info=None, backtrace=True):
     if config['warn_deprecated']:
@@ -894,7 +902,10 @@ def _old_context_log_exception(cls, msg=None, exc_info=None, backtrace=True):
             msg = str(val)
         except Exception:
             msg = repr(val)
-    return log_error(typ.__name__, msg, store_backtrace=backtrace, backtrace=tb)
+    try:
+        return log_error(typ.__name__, msg, store_backtrace=backtrace, backtrace=tb)
+    finally:
+        del tb
 
 def _old_context_trace(cls, layer='Python', xtr_hdr=None, kvs=None):
     if config['warn_deprecated']:
