@@ -6,6 +6,7 @@ All rights reserved.
 from __future__ import unicode_literals
 from __future__ import print_function
 from builtins import str
+from future.utils import iteritems
 
 from functools import partial, wraps
 import oboe
@@ -159,8 +160,8 @@ def wrap_execute_pipeline(func, f_args, f_kwargs, return_val):
     for (args, options) in f_args[2]:
         fp_cmds[args[0]] = fp_cmds.get(args[0], 0) + 1
 
-    op = 'PIPE:' + ','.join([cmd for (cmd, _) in\
-                    sorted(iter(list(fp_cmds.items())), key=operator.itemgetter(1), reverse=True)])
+    op = 'PIPE:' + ','.join([cmd for (cmd, _) in 
+                    sorted(iteritems(fp_cmds), key=operator.itemgetter(1), reverse=True)])
     kvs['KVOp'] = op.lower()
 
     return kvs

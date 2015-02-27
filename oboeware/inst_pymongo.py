@@ -6,6 +6,7 @@ All rights reserved.
 from __future__ import unicode_literals
 from __future__ import print_function
 from builtins import str
+from future.utils import iteritems
 
 import sys
 import oboe
@@ -228,7 +229,7 @@ def _command_fingerprint(query):
     """
     fp = None
     if query and isinstance(query, SON) and len(query) > 0:
-        cmd_args = [ {item[0] : item[1]} for item in list(query.items()) ]
+        cmd_args = [ {item[0] : item[1]} for item in query.items() ]
         try:
             fp = skeleton(cmd_args, preserve_first=True, no_wrap=True)
         except:
@@ -339,7 +340,7 @@ def wrap_class(cls, class_name, class_method_inst):
     """ wrap class methods with instrumentation calls """
     if not cls:
         return
-    for (method, method_log_args) in list(class_method_inst.items()):
+    for (method, method_log_args) in iteritems(class_method_inst):
         fn = getattr(cls, method, None)
         if not fn:
             # Not all methods may be in all versions of pymongo...

@@ -160,7 +160,7 @@ class OboeMiddleware(object):
             del trace # delete reference to traceback object to allow garbage collection
 
         # gets controller, action
-        for k, v in list(environ.get('wsgiorg.routing_args', [{},{}])[1].items()):
+        for k, v in environ.get('wsgiorg.routing_args', [{},{}])[1].items():
             if k == "action":
                  evt.add_info(str(k).capitalize(), str(v))
             elif k == "controller":

@@ -78,6 +78,6 @@ def wrap(module):
 
 try:
     import http.client
-    wrap(httplib)
+    wrap(http.client)
 except ImportError as e:
     pass

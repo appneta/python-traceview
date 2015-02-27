@@ -401,7 +401,7 @@ def _log_event(evt, keys=None, store_backtrace=True, backtrace=None, edge_str=No
     if keys is None:
         keys = {}
 
-    for k, v in list(keys.items()):
+    for k, v in keys.items():
         evt.add_info(k, v)
 
     if store_backtrace:
@@ -757,8 +757,11 @@ def log_method(layer, store_return=False, store_args=False, store_backtrace=Fals
                 entry_kvs.update(extra_entry_kvs)
         if store_backtrace:
             entry_kvs['Backtrace'] = _str_backtrace()
-        # is func an instance method?
-        if 'im_class' in dir(func):
+        # is func an instance method? 
+        if '__self__' in dir(func) \
+                and func.__self__ \
+                and '__class__' in dir(func.__self__) \
+                and func.__self__.__class__:
             entry_kvs['Class'] = func.__self__.__class__.__name__
 
         if send_entry_event:
@@ -828,8 +831,8 @@ def log_method(layer, store_return=False, store_args=False, store_backtrace=Fals
     def decorate_with_log_method(f):
         if getattr(f, '_oboe_wrapped', False):   # has this function already been wrapped?
             return f                             # then pass through
-        if hasattr(f, 'im_func'):                # Is this a bound method of an object
-            f = f.__func__                        # then wrap the unbound method
+        if hasattr(f, '__func__'):               # Is this a bound method of an object
+            f = f.__func__                       # then wrap the unbound method
         return decorator(_log_method_wrapper, f) # otherwise wrap function f with wrapper
 
     # return decorator function with arguments to log_method() baked in

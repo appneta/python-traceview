@@ -45,6 +45,10 @@
 
 from __future__ import unicode_literals
 
+from future.utils import raise_
+from past.builtins import basestring
+
+
 __all__ = [
     'importString', 'importObject', 'importSequence', 'importSuite',
     'lazyModule', 'joinPath', 'whenImported', 'getModuleHooks',
@@ -52,7 +56,7 @@ __all__ = [
 
 import __main__, sys
 
-from types import StringTypes, ModuleType
+from types import ModuleType
 from sys import modules
 from imp import acquire_lock, release_lock
 
@@ -182,7 +186,7 @@ def importString(name, globalDict=defaultGlobalDict):
                 if '.' not in name:
                     # We've backed up all the way to the beginning, so reraise
                     # the first ImportError we got
-                    raise exc[0],exc[1],exc[2]
+                    raise_(exc[0], exc[1], exc[2])
 
                 # Otherwise back up one position and try again
                 parts = name.split('.')
@@ -427,7 +431,7 @@ def importObject(spec, globalDict=defaultGlobalDict):
     otherwise return it as-is.
     """
 
-    if isinstance(spec,StringTypes):
+    if isinstance(spec,basestring):
         return importString(spec, globalDict)
 
     return spec
@@ -446,7 +450,7 @@ def importSequence(specs, globalDict=defaultGlobalDict):
     imports.
     """
 
-    if isinstance(specs,StringTypes):
+    if isinstance(specs,basestring):
         return [importString(x.strip(),globalDict) for x in specs.split(',')]
     else:
         return [importObject(s,globalDict) for s in specs]
