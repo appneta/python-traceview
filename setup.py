@@ -5,6 +5,8 @@
 """
 
 import distutils.ccompiler
+import sys
+
 from setuptools import setup, Extension
 
 version = '1.5.8'
@@ -13,8 +15,9 @@ version = '1.5.8'
 # otherwise, will function in no-op mode: no tracing, but all API endpoints available
 compiler = distutils.ccompiler.new_compiler()
 if compiler.has_function('oboe_metadata_init', libraries=('oboe',)):
+    major_version = sys.version_info[0]
     oboe_module = Extension('oboe._oboe_ext',
-                            sources=['oboe/oboe_wrap.cxx'],
+                            sources=['oboe/oboe_wrap%d.cxx' % major_version],
                             depends=['oboe/oboe.hpp'],
                             libraries=['oboe'])
     ext_modules = [oboe_module]
