@@ -67,6 +67,12 @@ try:
 except ImportError:
     class AlreadyRead(Exception):pass
 
+if sys.version_info >= (3, 0, 0):
+    if sys.version_info >= (3, 4, 0):
+        from importlib import reload
+    else:
+        from imp import reload
+
 
 def importSuite(specs, globalDict=defaultGlobalDict):
     """Create a test suite from import specs"""
@@ -76,16 +82,6 @@ def importSuite(specs, globalDict=defaultGlobalDict):
     return TestSuite(
         [t() for t in importSequence(specs,globalDict)]
     )
-
-
-
-
-
-
-
-
-
-
 
 
 def joinPath(modname, relativePath):
@@ -102,31 +98,6 @@ def joinPath(modname, relativePath):
             module.append(p)
 
     return '.'.join(module)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def importString(name, globalDict=defaultGlobalDict):
@@ -206,9 +177,6 @@ def importString(name, globalDict=defaultGlobalDict):
             raise ImportError("%r has no %r attribute" % (item,attr))
 
     return item
-
-
-
 
 
 def lazyModule(modname, relativePath=None):
@@ -292,7 +260,6 @@ def lazyModule(modname, relativePath=None):
             release_lock()
 
 
-
     class LazyModule(ModuleType):
         __slots__ = ()
         def __init__(self, name):
@@ -331,16 +298,15 @@ def lazyModule(modname, relativePath=None):
 postLoadHooks = {}
 
 
-
-
+def normalize_module_name(name):
+    if sys.version_info < (3, 0, 0):
+        # In case of unicode_literals, enforce utf-8
+        return name.encode('utf-8')
+    return name
 
 def getModuleHooks(moduleName):
-
     """Get list of hooks for 'moduleName'; error if module already loaded"""
-
-    # In case of unicode_literals, enforce utf-8
-    moduleName = moduleName.encode('utf-8')
-
+    moduleName = normalize_module_name(moduleName)
     acquire_lock()
     try:
         hooks = postLoadHooks.setdefault(moduleName,[])
@@ -352,10 +318,7 @@ def getModuleHooks(moduleName):
 
 
 def _setModuleHook(moduleName, hook):
-
-    # In case of unicode_literals, enforce utf-8
-    moduleName = moduleName.encode('utf-8')
-
+    moduleName = normalize_module_name(moduleName)
     acquire_lock()
     try:
         if moduleName in modules and postLoadHooks.get(moduleName) is None:
@@ -368,18 +331,6 @@ def _setModuleHook(moduleName, hook):
         return lazyModule(moduleName)
     finally:
         release_lock()
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def whenImported(moduleName, hook=None):
@@ -420,9 +371,6 @@ def whenImported(moduleName, hook=None):
         return _setModuleHook(moduleName,hook)
 
 
-
-
-
 def importObject(spec, globalDict=defaultGlobalDict):
 
     """Convert a possible string specifier to an object
@@ -454,13 +402,3 @@ def importSequence(specs, globalDict=defaultGlobalDict):
         return [importString(x.strip(),globalDict) for x in specs.split(',')]
     else:
         return [importObject(s,globalDict) for s in specs]
-
-
-
-
-
-
-
-
-
-
