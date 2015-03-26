@@ -37,7 +37,10 @@ if sys.version_info >= (3, 1, 0):
     sys.meta_path.insert(0, finder)
 
     def listen(module_name, on_load):
-        finder.listen(module_name, on_load)
+        if module_name in sys.modules:
+            on_load(sys.modules[module_name])
+        else:
+            finder.listen(module_name, on_load)
 
 # Python 2
 else:
