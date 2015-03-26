@@ -67,12 +67,6 @@ try:
 except ImportError:
     class AlreadyRead(Exception):pass
 
-if sys.version_info >= (3, 0, 0):
-    if sys.version_info >= (3, 4, 0):
-        from importlib import reload
-    else:
-        from imp import reload
-
 
 def importSuite(specs, globalDict=defaultGlobalDict):
     """Create a test suite from import specs"""
