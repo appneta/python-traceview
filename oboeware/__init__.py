@@ -7,5 +7,5 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from .middleware import OboeMiddleware
 
-__version__ = '1.5.8'
+__version__ = '1.5.9'
 __all__ = ('OboeMiddleware', 'djangoware', 'async', 'tornado', '__version__')
