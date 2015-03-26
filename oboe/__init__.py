@@ -401,7 +401,7 @@ def _log_event(evt, keys=None, store_backtrace=True, backtrace=None, edge_str=No
     if keys is None:
         keys = {}
 
-    for k, v in list(keys.items()):
+    for k, v in keys.items():
         evt.add_info(k, v)
 
     if store_backtrace:
@@ -757,8 +757,11 @@ def log_method(layer, store_return=False, store_args=False, store_backtrace=Fals
                 entry_kvs.update(extra_entry_kvs)
         if store_backtrace:
             entry_kvs['Backtrace'] = _str_backtrace()
-        # is func an instance method?
-        if 'im_class' in dir(func):
+        # is func an instance method? 
+        if '__self__' in dir(func) \
+                and func.__self__ \
+                and '__class__' in dir(func.__self__) \
+                and func.__self__.__class__:
             entry_kvs['Class'] = func.__self__.__class__.__name__
 
         if send_entry_event:
@@ -828,8 +831,8 @@ def log_method(layer, store_return=False, store_args=False, store_backtrace=Fals
     def decorate_with_log_method(f):
         if getattr(f, '_oboe_wrapped', False):   # has this function already been wrapped?
             return f                             # then pass through
-        if hasattr(f, 'im_func'):                # Is this a bound method of an object
-            f = f.__func__                        # then wrap the unbound method
+        if hasattr(f, '__func__'):               # Is this a bound method of an object
+            f = f.__func__                       # then wrap the unbound method
         return decorator(_log_method_wrapper, f) # otherwise wrap function f with wrapper
 
     # return decorator function with arguments to log_method() baked in
@@ -839,29 +842,34 @@ def _reporter():
     global reporter_instance
 
     if not reporter_instance:
-        reporter_instance = UdpReporter(config['reporter_host'], str(config['reporter_port']))
+        reporter_instance = UdpReporter(unicode_to_bytes(config['reporter_host']),
+                                        unicode_to_bytes(str(config['reporter_port'])))
 
     return reporter_instance
 
-def _Event_addInfo_safe(func):
-    def wrapped(*args, **kw):
-        try: # call SWIG-generated Event.addInfo (from oboe_ext.py)
-            return func(*args, **kw)
-        except NotImplementedError: # unrecognized type passed to addInfo SWIG binding
-            # args: [self, KeyName, Value]
-            if len(args) == 3 and isinstance(args[1], str):
-                # report this error
-                func(args[0], '_Warning', 'Bad type for %s: %s' % (args[1], type(args[2])))
-                # last resort: coerce type to string
-                if hasattr(args[2], '__str__'):
-                    return func(args[0], args[1], str(args[2]))
-                elif hasattr(args[2], '__repr__'):
-                    return func(args[0], args[1], repr(args[2]))
+def _Event_addInfo_safe(base_addInfo):
+    def wrapped(event, k, v):
+        if isinstance(k, str):
+            k = unicode_to_bytes(k)
+        if isinstance(v, str):
+            v = unicode_to_bytes(v)
+        try:
+            return base_addInfo(event, k, v)
+        except NotImplementedError:
+            if isinstance(k, str):
+                msg = 'Bad type for %s: %s' % (k, type(v))
+                base_addInfo(event, unicode_to_bytes('_Warning'), unicode_to_bytes(msg))
+                try:
+                    return base_addInfo(event, any_to_bytes(k), any_to_bytes(v))
+                except TypeError:
+                    pass
     return wrapped
 
 def sample_request(layer, xtr, avw):
-        
-    rv = SwigContext.sampleRequest(layer, xtr or '', avw or '')
+    layer = unicode_to_bytes(layer)
+    xtr = unicode_to_bytes(xtr or '')
+    avw = unicode_to_bytes(avw or '')
+    rv = SwigContext.sampleRequest(layer, xtr, avw)
     
     # For older binding to liboboe that returns true/false, just return that.
     if rv.__class__ == bool or (rv == 0):
@@ -969,3 +977,25 @@ setattr(Context, 'toString',         types.MethodType(_old_context_to_string, Co
 setattr(Context, 'fromString',       types.MethodType(_old_context_from_string, Context))
 setattr(Context, 'isValid',          types.MethodType(_old_context_is_valid, Context))
 
+if sys.version_info < (3, 0, 0):
+    def unicode_to_bytes(u):
+        return bytes(u)
+
+    def any_to_bytes(u):
+        try:
+            return unicode_to_bytes(u)
+        except TypeError:
+            if hasattr(u, '__str__'):
+                return str(u)
+            elif hasattr(u, '__repr__'):
+                return repr(u)
+            else:
+                raise
+
+# Implement as needed
+else:
+    def unicode_to_bytes(u):
+        return u
+
+    def any_to_bytes(u):
+        return u

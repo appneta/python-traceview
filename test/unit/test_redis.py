@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from builtins import str
+from future.utils import iteritems
 
 import sys
 from . import base
@@ -34,7 +35,7 @@ class TestRedis(base.TraceTestCase):
     def assertHasRedisCall(self, **kvs):
         self.assertEqual(1, len(self._last_trace.pop_events(f.is_entry_event, is_redis_layer)))
         preds = [f.is_exit_event, is_redis_layer]
-        for (k, v) in list(kvs.items()):
+        for (k, v) in iteritems(kvs):
             preds.append(f.prop_is(k, v))
         exit_with_kvs = self._last_trace.pop_events(*preds)
         self.assertEqual(1, len(exit_with_kvs))
@@ -82,7 +83,7 @@ class TestRedis(base.TraceTestCase):
         self.client.mset(kvs)
         self.client.delete('missing')
         with self.new_trace():
-            ret = self.client.mget(list(kvs.keys()), 'missing')
+            ret = self.client.mget(kvs.keys(), 'missing')
         self.assertRedisTrace(KVOp='mget', KVKeyCount=3, KVHitCount=2)
         self.assertEqual(ret, list(kvs.values()) + [None])
 
@@ -91,7 +92,7 @@ class TestRedis(base.TraceTestCase):
         with self.new_trace():
             self.client.mset(kvs)
         self.assertRedisTrace(KVOp='mset')
-        self.assertEqual(list(kvs.values()), self.client.mget(list(kvs.keys())))
+        self.assertEqual(list(kvs.values()), self.client.mget(kvs.keys()))
 
     def test_delete(self):
         self.client.set('test1', 'get_val')

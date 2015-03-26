@@ -13,7 +13,7 @@ from builtins import object
 __all__ = ("OboeDjangoMiddleware", "install_oboe_instrumentation")
 
 import oboe
-from oboeware import imports
+from oboeware import import_listener
 from oboeware import oninit
 import sys, threading, functools
 from distutils.version import StrictVersion
@@ -145,22 +145,22 @@ def on_load_middleware():
             if dot < 0 or dot+1 == len(i):
                 continue
             objname = i[dot+1:]
-            imports.whenImported(i[:dot],
-                                 functools.partial(middleware_hooks, objname=objname))  # XXX Not Python2.4-friendly
+            import_listener.listen(i[:dot],
+                                   functools.partial(middleware_hooks, objname=objname))
 
         # ORM
         if oboe.config['inst_enabled']['django_orm']:
             from oboeware import inst_django_orm
-            imports.whenImported('django.db.backends', inst_django_orm.wrap)
+            import_listener.listen('django.db.backends', inst_django_orm.wrap)
 
         # templates
         if oboe.config['inst_enabled']['django_templates']:
             from oboeware import inst_django_templates
             import django
             if StrictVersion(django.get_version()) >= StrictVersion('1.3'):
-                imports.whenImported('django.template.base', inst_django_templates.wrap)
+                import_listener.listen('django.template.base', inst_django_templates.wrap)
             else:
-                imports.whenImported('django.template', inst_django_templates.wrap)
+                import_listener.listen('django.template', inst_django_templates.wrap)
 
         # load pluggaable instrumentation
         from .loader import load_inst_modules
@@ -205,7 +205,7 @@ def install_oboe_middleware(module):
         print("Oboe error:", str(e), file=sys.stderr)
 
 try:
-    imports.whenImported('django.core.handlers.base', install_oboe_middleware)
+    import_listener.listen('django.core.handlers.base', install_oboe_middleware)
     # phone home
     oninit.report_layer_init(layer='django')
 except ImportError as e:

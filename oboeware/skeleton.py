@@ -26,7 +26,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from __future__ import unicode_literals
 from builtins import str
+from past.builtins import long
 from builtins import map
+from future.utils import iteritems
 
 __all__ = ('skeleton', 'sanitize')
 
@@ -39,9 +41,9 @@ import re
 
 BSON_TYPES = set([
     int,
-    int,
+    long,
     str,
-    str,
+    bytes,
     bool,
     float,
     datetime,
@@ -113,10 +115,10 @@ def sanitize(value):
     # "_,_" in keys
     t = type(value)
     if t == list:
-        return list(map(sanitize, value))
+        return [sanitize(v) for v in value]
     elif t == dict:
         return dict((k.replace('$', '_$_').replace('.', '_,_'), sanitize(v))
-                    for k, v in value.items())
+                    for k, v in iteritems(value))
     elif t not in BSON_TYPES:
         raise Exception(value)
     else:
@@ -126,10 +128,10 @@ def desanitize(value):
     # perform the inverse of sanitize()
     t = type(value)
     if t == list:
-        return list(map(desanitize, value))
+        return [desanitize(v) for v in value]
     elif t == dict:
         return dict((k.replace('_$_', '$').replace('_,_', '.'), desanitize(v))
-                    for k, v in value.items())
+                    for k, v in iteritems(value))
     elif t not in BSON_TYPES:
         raise Exception(value)
     else:
