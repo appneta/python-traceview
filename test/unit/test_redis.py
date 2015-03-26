@@ -83,7 +83,7 @@ class TestRedis(base.TraceTestCase):
         self.client.mset(kvs)
         self.client.delete('missing')
         with self.new_trace():
-            ret = self.client.mget(kvs.keys(), 'missing')
+            ret = self.client.mget(list(kvs.keys()), 'missing')
         self.assertRedisTrace(KVOp='mget', KVKeyCount=3, KVHitCount=2)
         self.assertEqual(ret, list(kvs.values()) + [None])
 
