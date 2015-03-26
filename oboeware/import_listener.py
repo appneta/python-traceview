@@ -3,7 +3,6 @@ import sys
 if sys.version_info >= (3, 1, 0):
     import collections
     import importlib
-    import importlib.abc
 
     class ListeningFinder:
         def __init__(self):
