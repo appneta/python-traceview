@@ -4,7 +4,6 @@
  All rights reserved.
 """
 from __future__ import unicode_literals
-from builtins import str
 import oboe
 
 DEFAULT_METHODS = ['do_execute', 'do_executemany', 'do_rollback', 'do_commit']

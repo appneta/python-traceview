@@ -4,7 +4,6 @@ Copyright (C) 2014 AppNeta, Inc.
 All rights reserved.
 """
 from __future__ import print_function
-from builtins import str
 
 import sys
 import oboe

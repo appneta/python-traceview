@@ -1,7 +1,6 @@
 """ Test redis client instrumentation. """
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from builtins import str
 from six import iteritems
 
 import sys

@@ -5,7 +5,6 @@ N.B. has on-import behavior to use repo-local oboe and set OBOE_TEST environment
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from builtins import object
 
 import os
 import sys

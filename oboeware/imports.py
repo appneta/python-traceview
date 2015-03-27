@@ -45,8 +45,7 @@
 
 from __future__ import unicode_literals
 
-from future.utils import raise_
-from past.builtins import basestring
+from six import reraise, string_types
 
 
 __all__ = [
@@ -373,7 +372,7 @@ def importObject(spec, globalDict=defaultGlobalDict):
     otherwise return it as-is.
     """
 
-    if isinstance(spec,basestring):
+    if isinstance(spec, string_types):
         return importString(spec, globalDict)
 
     return spec
@@ -392,7 +391,7 @@ def importSequence(specs, globalDict=defaultGlobalDict):
     imports.
     """
 
-    if isinstance(specs,basestring):
+    if isinstance(specs, string_types):
         return [importString(x.strip(),globalDict) for x in specs.split(',')]
     else:
         return [importObject(s,globalDict) for s in specs]

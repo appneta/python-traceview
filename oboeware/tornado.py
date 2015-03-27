@@ -4,8 +4,6 @@ Copyright (C) 2012 by Tracelytics, Inc.
 All rights reserved.
 """
 from __future__ import unicode_literals
-from builtins import str
-from builtins import object
 
 # useful methods for instrumenting Tornado
 from __future__ import with_statement

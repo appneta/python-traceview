@@ -1,6 +1,7 @@
 """ Tests for exception string handling. """
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import sys
 
 from . import base
 from . import trace_filters as f
@@ -19,18 +20,26 @@ class TestLogExceptions(base.TraceTestCase):
 
     def test_unicode(self):
         """ Safely report an exception with a unicode message. """
+        ucode = '\xe4\xf6\xfc'
+
         with self.new_trace():
-            ucode = u'\xe4\xf6\xfc'
             try:
                 raise StringException(ucode)
             except:
                 oboe.log_exception()
+
         self.assertHasBaseEntryAndExit()
+
         # XXX possible desired API change: ErrorMsg not set as user might expect
+        if sys.version_info < (3, 0, 0):
+            expected_msg = 'StringException()'
+        else:
+            expected_msg = ucode
+
         self.assertEqual(1, len(self._last_trace.pop_events(f.label_is('error'),
                                                             f.layer_is(None),
                                                             f.prop_is('ErrorClass', 'StringException'),
-                                                            f.prop_is('ErrorMsg', '\xe4\xf6\xfc'))))
+                                                            f.prop_is('ErrorMsg', expected_msg))))
         self.assertNoExtraEvents()
 
     def test_log_method_exception(self):

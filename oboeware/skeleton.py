@@ -25,10 +25,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 from __future__ import unicode_literals
-from builtins import str
-from past.builtins import long
-from builtins import map
-from six import iteritems
+from six import iteritems, integer_types
 
 __all__ = ('skeleton', 'sanitize')
 
@@ -38,24 +35,23 @@ from bson.son import SON
 from bson.dbref import DBRef
 from datetime import datetime
 import re
+import sys
 
-BSON_TYPES = set([
-    int,
-    long,
-    str,
-    bytes,
-    bool,
-    float,
-    datetime,
-    ObjectId,
-    type(re.compile('')),
-    Code,
-    type(None),
-    DBRef,
-    SON,
-])
-
-
+BSON_TYPES = set(
+    integer_types + (
+        str,
+        bytes,
+        bool,
+        float,
+        datetime,
+        ObjectId,
+        type(re.compile('')),
+        Code,
+        type(None),
+        DBRef,
+        SON,
+    )
+)
 
 def skeleton(query_part, preserve_first=False, keep_values=False, no_wrap=False):
     """

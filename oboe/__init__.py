@@ -5,13 +5,8 @@ All rights reserved.
 """
 from __future__ import unicode_literals
 from __future__ import division
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
-from builtins import range
-from past.utils import old_div
-from builtins import object
-import six
+from six import string_types
+from six.moves import range
 
 import logging
 import inspect
@@ -194,7 +189,7 @@ class Context(object):
     """ A wrapper around the swig Metadata """
 
     def __init__(self, md):
-        if isinstance(md, str):
+        if isinstance(md, string_types):
             self._md = Metadata.fromString(md)
         else:
             self._md = md
@@ -383,14 +378,15 @@ class NullEvent(object):
 ###############################################################################
 
 try:
-    import io, cProfile, pstats
+    import cProfile, pstats
+    from six.moves import cStringIO as StringIO
     found_cprofile = True
 except ImportError:
     found_cprofile = False
 
 def _get_profile_info(p):
     """Returns a sorted set of stats from a cProfile instance."""
-    sio = io.StringIO()
+    sio = StringIO()
     s = pstats.Stats(p, stream=sio)
     s.sort_stats('time')
     s.print_stats(15)
@@ -551,7 +547,7 @@ def _function_signature(func):
         argstrings = args[:first]
         for i in range(first, len(args)):
             d = defaults[i-first]
-            if isinstance(d, str):
+            if isinstance(d, string_types):
                 d = "'"+d+"'"
             else:
                 d = str(d)
@@ -850,14 +846,14 @@ def _reporter():
 
 def _Event_addInfo_safe(base_addInfo):
     def wrapped(event, k, v):
-        if isinstance(k, str):
+        if isinstance(k, string_types):
             k = to_std_string(k)
-        if isinstance(v, str):
+        if isinstance(v, string_types):
             v = to_std_string(v)
         try:
             return base_addInfo(event, k, v)
         except NotImplementedError:
-            if isinstance(k, str):
+            if isinstance(k, string_types):
                 msg = to_std_string('Bad type for %s: %s' % (k, type(v)))
                 base_addInfo(event, to_std_string('_Warning'), msg)
                 try:
@@ -878,7 +874,7 @@ def sample_request(layer, xtr, avw):
 
     # Newer binding to liboboe returns a bit masked integer with SampleRate and
     # Source embedded
-    config['sample_rate']   = (old_div((rv & SAMPLE_RATE_MASK), 1e6))
+    config['sample_rate']   = (rv & SAMPLE_RATE_MASK) // 1e6
     config['sample_source'] = (rv & SAMPLE_SOURCE_MASK) >> 24
 
     return rv

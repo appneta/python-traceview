@@ -5,7 +5,6 @@
 # the SWIG interface file instead.
 from __future__ import unicode_literals
 from __future__ import absolute_import
-from builtins import object
 
 from sys import version_info
 if version_info >= (2,6,0):

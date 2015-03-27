@@ -7,9 +7,6 @@ All rights reserved.
 """
 from __future__ import unicode_literals
 from __future__ import print_function
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
 
 import sys
 import oboe
@@ -77,7 +74,7 @@ def wrap(module):
 
 
 try:
-    import http.client
-    wrap(http.client)
+    from six.moves import http_client
+    wrap(http_client)
 except ImportError as e:
     pass
