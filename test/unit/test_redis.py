@@ -14,6 +14,28 @@ from distutils.version import StrictVersion
 is_redis_layer = f.prop_is('Layer', 'redis')
 is_redis_backtrace = f._and(f.has_prop('Backtrace'), is_redis_layer)
 
+def parse_kvops(v):
+    header, all_parts = v.split(':')
+    operations = all_parts.split(',')
+    return header, set(operations)
+
+def kvops_present(k, v):
+    try:
+        header, operations = parse_kvops(v)
+    except ValueError:
+        return f.prop_is(k, v)
+
+    def t(event):
+        if k in event.props:
+            try:
+                event_header, event_operations = parse_kvops(event.props[k])
+            except ValueError:
+                return False
+            else:
+                return header == event_header and operations == event_operations
+        return False
+
+    return t
 
 class TestRedis(base.TraceTestCase):
     def __init__(self, *args, **kwargs):
@@ -22,11 +44,11 @@ class TestRedis(base.TraceTestCase):
         super(TestRedis, self).__init__(*args, **kwargs)
 
     def setUp(self):
-        # use Redis class for versions < 2.4.10
-        if not 'StrictRedis' in dir(self.lib):
-            self.client = self.lib.Redis(host='127.0.0.1', port=6379, db=0, decode_responses=True)
+        Redis = getattr(self.lib, 'StrictRedis', self.lib.Redis)
+        if sys.version_info < (3, 0, 0):
+            self.client = Redis(host='127.0.0.1', port=6379, db=0)
         else:
-            self.client = self.lib.StrictRedis(host='127.0.0.1', port=6379, db=0, decode_responses=True)
+            self.client = Redis(host='127.0.0.1', port=6379, db=0, decode_responses=True)
 
     def tearDown(self):
         self.client = None
@@ -35,7 +57,10 @@ class TestRedis(base.TraceTestCase):
         self.assertEqual(1, len(self._last_trace.pop_events(f.is_entry_event, is_redis_layer)))
         preds = [f.is_exit_event, is_redis_layer]
         for (k, v) in iteritems(kvs):
-            preds.append(f.prop_is(k, v))
+            if k == 'KVOp':
+                preds.append(kvops_present(k, v))
+            else:
+                preds.append(f.prop_is(k, v))
         exit_with_kvs = self._last_trace.pop_events(*preds)
         self.assertEqual(1, len(exit_with_kvs))
 
@@ -220,8 +245,6 @@ class TestRedis(base.TraceTestCase):
 
     def test_transaction(self):
         """ Tests atomic transaction execution of pipeline. """
-        if sys.version_info > (2,7,0):
-            self.skipTest('FIXME: Returned KVOp is out of order on Python 3.  Breaks this test.')
         self.client.delete('key1', 'hashkey1')
         p = self.client.pipeline()
         with self.new_trace():
