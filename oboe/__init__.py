@@ -11,6 +11,7 @@ from builtins import str
 from builtins import range
 from past.utils import old_div
 from builtins import object
+import six
 
 import logging
 import inspect
@@ -842,23 +843,23 @@ def _reporter():
     global reporter_instance
 
     if not reporter_instance:
-        reporter_instance = UdpReporter(unicode_to_bytes(config['reporter_host']),
-                                        unicode_to_bytes(str(config['reporter_port'])))
+        reporter_instance = UdpReporter(six.b(config['reporter_host']),
+                                        six.b(str(config['reporter_port'])))
 
     return reporter_instance
 
 def _Event_addInfo_safe(base_addInfo):
     def wrapped(event, k, v):
         if isinstance(k, str):
-            k = unicode_to_bytes(k)
+            k = six.b(k)
         if isinstance(v, str):
-            v = unicode_to_bytes(v)
+            v = six.b(v)
         try:
             return base_addInfo(event, k, v)
         except NotImplementedError:
             if isinstance(k, str):
-                msg = 'Bad type for %s: %s' % (k, type(v))
-                base_addInfo(event, unicode_to_bytes('_Warning'), unicode_to_bytes(msg))
+                msg = six.b('Bad type for %s: %s' % (k, type(v)))
+                base_addInfo(event, b'_Warning', msg)
                 try:
                     return base_addInfo(event, any_to_bytes(k), any_to_bytes(v))
                 except TypeError:
@@ -866,10 +867,9 @@ def _Event_addInfo_safe(base_addInfo):
     return wrapped
 
 def sample_request(layer, xtr, avw):
-    layer = unicode_to_bytes(layer)
-    xtr = unicode_to_bytes(xtr or '')
-    avw = unicode_to_bytes(avw or '')
-    rv = SwigContext.sampleRequest(layer, xtr, avw)
+    rv = SwigContext.sampleRequest(six.b(layer or ''),
+                                   six.b(xtr or ''),
+                                   six.b(avw or ''))
     
     # For older binding to liboboe that returns true/false, just return that.
     if rv.__class__ == bool or (rv == 0):
@@ -977,25 +977,13 @@ setattr(Context, 'toString',         types.MethodType(_old_context_to_string, Co
 setattr(Context, 'fromString',       types.MethodType(_old_context_from_string, Context))
 setattr(Context, 'isValid',          types.MethodType(_old_context_is_valid, Context))
 
-if sys.version_info < (3, 0, 0):
-    def unicode_to_bytes(u):
-        return bytes(u)
-
-    def any_to_bytes(u):
-        try:
-            return unicode_to_bytes(u)
-        except TypeError:
-            if hasattr(u, '__str__'):
-                return str(u)
-            elif hasattr(u, '__repr__'):
-                return repr(u)
-            else:
-                raise
-
-# Implement as needed
-else:
-    def unicode_to_bytes(u):
-        return u
-
-    def any_to_bytes(u):
-        return u
+def any_to_bytes(u):
+    try:
+        return six.b(u)
+    except:
+        if hasattr(u, '__str__'):
+            return str(u)
+        elif hasattr(u, '__repr__'):
+            return repr(u)
+        else:
+            raise TypeError(u)
