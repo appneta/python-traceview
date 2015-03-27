@@ -843,33 +843,34 @@ def _reporter():
     global reporter_instance
 
     if not reporter_instance:
-        reporter_instance = UdpReporter(six.b(config['reporter_host']),
-                                        six.b(str(config['reporter_port'])))
+        reporter_instance = UdpReporter(to_std_string(config['reporter_host']),
+                                        to_std_string(str(config['reporter_port'])))
 
     return reporter_instance
 
 def _Event_addInfo_safe(base_addInfo):
     def wrapped(event, k, v):
         if isinstance(k, str):
-            k = six.b(k)
+            k = to_std_string(k)
         if isinstance(v, str):
-            v = six.b(v)
+            v = to_std_string(v)
         try:
             return base_addInfo(event, k, v)
         except NotImplementedError:
             if isinstance(k, str):
-                msg = six.b('Bad type for %s: %s' % (k, type(v)))
-                base_addInfo(event, b'_Warning', msg)
+                msg = to_std_string('Bad type for %s: %s' % (k, type(v)))
+                base_addInfo(event, to_std_string('_Warning'), msg)
                 try:
-                    return base_addInfo(event, any_to_bytes(k), any_to_bytes(v))
-                except TypeError:
+                    return base_addInfo(event, to_std_string(k), to_std_string(v))
+                except:
                     pass
     return wrapped
 
 def sample_request(layer, xtr, avw):
-    rv = SwigContext.sampleRequest(six.b(layer or ''),
-                                   six.b(xtr or ''),
-                                   six.b(avw or ''))
+    layer = to_std_string(layer or '')
+    xtr = to_std_string(xtr or '')
+    avw = to_std_string(avw or '')
+    rv = SwigContext.sampleRequest(layer, xtr, avw)
     
     # For older binding to liboboe that returns true/false, just return that.
     if rv.__class__ == bool or (rv == 0):
@@ -977,13 +978,16 @@ setattr(Context, 'toString',         types.MethodType(_old_context_to_string, Co
 setattr(Context, 'fromString',       types.MethodType(_old_context_from_string, Context))
 setattr(Context, 'isValid',          types.MethodType(_old_context_is_valid, Context))
 
-def any_to_bytes(u):
+def to_std_string(o):
+    """
+    Coerces an object to a type that maps to `std::string` in our SWIG bindings.
+    """
     try:
-        return six.b(u)
+        return str(o)
     except:
-        if hasattr(u, '__str__'):
-            return str(u)
-        elif hasattr(u, '__repr__'):
-            return repr(u)
+        if hasattr(o, '__str__'):
+            return str(o)
+        elif hasattr(o, '__repr__'):
+            return repr(o)
         else:
-            raise TypeError(u)
+            raise TypeError(o)

@@ -24,18 +24,17 @@ if compiler.has_function('oboe_metadata_init', libraries=('oboe',)):
 else:
     ext_modules = []
 
-setup(name = 'oboe',
-      version = version,
-      author = 'AppNeta',
-      author_email = 'traceviewsupport@appneta.com',
-      url = 'http://dev.appneta.com',
-      download_url = 'https://pypi.python.org/pypi/oboe',
-      description  = 'AppNeta TraceView Oboe libraries, instrumentation, and web middleware components '
+setup(name='oboe',
+      version=version,
+      author='AppNeta',
+      author_email='traceviewsupport@appneta.com',
+      url='http://dev.appneta.com',
+      download_url='https://pypi.python.org/pypi/oboe',
+      description ='AppNeta TraceView Oboe libraries, instrumentation, and web middleware components '
       'for WSGI, Django, and Tornado.',
-      long_description = open('README.txt').read(),
+      long_description=open('README.txt').read(),
       keywords='appneta traceview tracelytics oboe liboboe instrumentation performance wsgi middleware django',
-      ext_modules = ext_modules,
-      packages = ['oboe', 'oboeware'],
-      license = 'LICENSE.txt',
-      install_requires = ['decorator', 'future'],
-      )
+      ext_modules=ext_modules,
+      packages=['oboe', 'oboeware'],
+      license='LICENSE.txt',
+      install_requires=['decorator', 'future', 'six'])

@@ -28,7 +28,7 @@ from __future__ import unicode_literals
 from builtins import str
 from past.builtins import long
 from builtins import map
-from future.utils import iteritems
+from six import iteritems
 
 __all__ = ('skeleton', 'sanitize')
 

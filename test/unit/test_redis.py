@@ -2,7 +2,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from builtins import str
-from future.utils import iteritems
+from six import iteritems
 
 import sys
 from . import base

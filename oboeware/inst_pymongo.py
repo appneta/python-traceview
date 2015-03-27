@@ -6,7 +6,7 @@ All rights reserved.
 from __future__ import unicode_literals
 from __future__ import print_function
 from builtins import str
-from future.utils import iteritems
+from six import iteritems
 
 import sys
 import oboe
