@@ -36,6 +36,11 @@ class OboeDjangoMiddleware(object):
         except AttributeError, e:
             self.layer = 'django'
 
+        try:
+            self.app_name = settings.OBOE_APP_NAME
+        except AttributeError, e:
+            self.app_name = None
+
     def _singleline(self, e): # some logs like single-line errors better
         return str(e).replace('\n', ' ').replace('\r', ' ')
 
@@ -66,6 +71,8 @@ class OboeDjangoMiddleware(object):
                    'Method': request.META['REQUEST_METHOD'],
                    'URL': request.build_absolute_uri(),
                    'Status': response.status_code}
+            if self.app_name is not None:
+                kvs['AppName'] = self.app_name
             response['X-Trace'] = oboe.end_trace(self.layer, keys=kvs)
         except Exception, e:
             print >> sys.stderr, "Oboe middleware error:", self._singleline(e)
