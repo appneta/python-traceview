@@ -13,7 +13,7 @@ import traceback as tb
 MODULE_INIT_REPORTED = False
 
 class OboeMiddleware(object):
-    def __init__(self, app, oboe_config=None, layer="wsgi", profile=False):
+    def __init__(self, app, oboe_config=None, layer="wsgi", profile=False, app_name=None):
         """
         Install instrumentation for tracing a WSGI app.
 
@@ -24,6 +24,7 @@ class OboeMiddleware(object):
               - oboe.sample_rate: a number from 0 to 1000000 denoting fraction of requests to trace
             layer - (optional) layer name to use, default is "wsgi"
             profile - (optional) profile entire calls to app (don't use in production)
+            app_name - (optional) app this middleware is reporting data into
         """
         if oboe_config == None:
             oboe_config = {}
@@ -32,6 +33,7 @@ class OboeMiddleware(object):
         self.oboe_config = oboe_config
         self.layer = layer
         self.profile = profile
+        self.app_name = app_name
 
         if self.oboe_config.get('oboe.tracing_mode'):
             oboe.config['tracing_mode'] = self.oboe_config['oboe.tracing_mode']
@@ -75,6 +77,9 @@ class OboeMiddleware(object):
                 startEvt.add_info("Method", environ['REQUEST_METHOD'])
             if 'QUERY_STRING' in environ:
                 startEvt.add_info("Query-String", environ['QUERY_STRING'])
+
+            if self.app_name is not None:
+                startEvt.add_info("AppName", self.app_name)
 
             ctx.report(startEvt)
             endEvt = ctx.create_event('exit', self.layer)
