@@ -37,7 +37,7 @@ def do_execute(f, args, kwargs, ret):
     self, cursor, stmt, params = args[:4]
     info = {
         'Query': stmt,
-        'RemoteHost': hostname_from_cursor(self, cursor)
+        'RemoteHost': remotehost_from_connection(self, cursor.connection)
     }
     if not oboe.config.get('sanitize_sql', False):
         info['QueryArgs'] = str(params)
@@ -48,7 +48,7 @@ def do_commit(f, args, kwargs, ret):
     self, conn_fairy = args[:2]
     return {
         'Query': 'COMMIT',
-        'RemoteHost': hostname_from_connection_fairy(self, conn_fairy)
+        'RemoteHost': remotehost_from_connection(self, conn_fairy.connection)
     }
 
 
@@ -57,7 +57,7 @@ def do_rollback(f, args, kwargs, ret):
     dialect = self.dialect_description
     return {
         'Query': 'ROLLBACK',
-        'RemoteHost': hostname_from_connection_fairy(self, conn_fairy)
+        'RemoteHost': remotehost_from_connection(self, conn_fairy.connection)
     }
 
 
@@ -69,16 +69,9 @@ do_commit_dialect   = do_commit
 do_rollback_dialect = do_rollback
 
 
-def hostname_from_connection_fairy(dialect, conn_fairy):
-    dialect = dialect.dialect_description
-    if dialect == 'mysql+mysqldb':
-        return conn_fairy.connection.get_host_info().split()[0].lower()
-
-
-def hostname_from_cursor(dialect, cursor):
-    dialect = dialect.dialect_description
-    if dialect == 'mysql+mysqldb':
-        return cursor.connection.get_host_info().split()[0].lower()
+def remotehost_from_connection(dialect, conn):
+    if dialect.dialect_description == 'mysql+mysqldb':
+        return conn.get_host_info().split()[0].lower()
 
 
 def wrap_methods(cls, mappings):
