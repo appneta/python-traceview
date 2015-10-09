@@ -29,6 +29,7 @@ The tests currently run against 2.6 and 2.7.
 
 To set up multiple versions of python:
 
+    sudo apt-get install python-software-properties software-properties-common
     sudo add-apt-repository ppa:fkrull/deadsnakes
     sudo apt-get update
     sudo apt-get install python2.6 python2.6-dev
