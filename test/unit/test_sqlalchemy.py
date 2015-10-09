@@ -1,7 +1,7 @@
 """Test SQLAlchemy instrumentation."""
 from oboeware import inst_sqlalchemy
 
-from . import base
+from . import base, trace_filters as filters
 
 
 TEST_DB = 'test_inst_sqlalchemy'
@@ -35,7 +35,18 @@ class TestWrappers(base.TraceTestCase):
         conn.close()
 
     def test_execute(self):
-        self.conn.execute('SELECT x FROM a')
+        with self.new_trace():
+            self.conn.execute('SELECT x FROM a')
+
+        self.assertHasBaseEntryAndExit()
+        self.assertEqual(1, len(self._last_trace.pop_events(
+            filters.is_entry_event, filters.layer_is('sqlalchemy'))))
+
+        exit = self._last_trace.pop_events(
+            filters.is_exit_event, filters.layer_is('sqlalchemy'))
+        self.assertEqual(1, len(exit))
+        self.assertEqual('127.0.0.1', exit[0].props.get('RemoteHost'))
+        self.assertEqual('mysql', exit[0].props.get('Flavor'))
 
 
 def tcp_dsn(dbname):
