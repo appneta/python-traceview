@@ -48,22 +48,12 @@ def wrap_methods(cls, mappings):
 
 def do_commit(_f, args, _kwargs, _ret):
     self, conn_fairy = args[:2]
-    flavor = DIALECT_FLAVOR_NAMES.get(self.dialect_description)
-    return {
-        'Flavor': flavor,
-        'Query': 'COMMIT',
-        'RemoteHost': remotehost_from_connection(flavor, conn_fairy.connection)
-    }
+    return base_info(self, conn_fairy.connection, 'COMMIT')
 
 
 def do_execute(_f, args, _kwargs, _ret):
     self, cursor, stmt, params = args[:4]
-    flavor = DIALECT_FLAVOR_NAMES.get(self.dialect_description)
-    info = {
-        'Flavor': flavor,
-        'Query': stmt,
-        'RemoteHost': remotehost_from_connection(flavor, cursor.connection)
-    }
+    info = base_info(self, cursor.connection, stmt)
     if not oboe.config.get('sanitize_sql', False):
         info['QueryArgs'] = str(params)
     return info
@@ -71,10 +61,15 @@ def do_execute(_f, args, _kwargs, _ret):
 
 def do_rollback(_f, args, _kwargs, _ret):
     self, conn_fairy = args[:2]
-    flavor = DIALECT_FLAVOR_NAMES.get(self.dialect_description)
+    return base_info(self, conn_fairy.connection, 'ROLLBACK')
+
+
+def base_info(dialect, conn, query):
+    flavor = DIALECT_FLAVOR_NAMES.get(dialect.dialect_description)
     return {
-        'Query': 'ROLLBACK',
-        'RemoteHost': remotehost_from_connection(flavor, conn_fairy.connection)
+        'Flavor': flavor,
+        'Query': query,
+        'RemoteHost': remotehost_from_connection(flavor, conn)
     }
 
 
