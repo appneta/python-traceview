@@ -13,14 +13,28 @@ QUERY_MAP = {'do_rollback': 'ROLLBACK',
              'do_commit': 'COMMIT' }
 
 def wrap_execute(func, f_args, _f_kwargs, _return_val):
+    info = {}
+
+    if len(f_args) >= 2:
+        info['RemoteHost'] = remote_host_from_pool(f_args[1])
+
     if func.__name__ in QUERY_MAP:
-        return { 'Query': QUERY_MAP[func.__name__] }
-    elif len(f_args) >= 4 and not oboe.config.get('sanitize_sql', False):
-        return { 'Query': f_args[2], 'QueryArgs': str(f_args[3]) }
+        info['Query'] = QUERY_MAP[func.__name__]
     elif len(f_args) >= 3:
-        return { 'Query': f_args[2] }
-    else:
-        return {}
+        info['Query'] = f_args[2]
+
+    if len(f_args) >= 4 and not oboe.config.get('sanitize_sql', False):
+        info['QueryArgs'] = str(f_args[3])
+
+    return info
+
+
+def remote_host_from_pool(pool):
+    try:
+        return pool.connection.get_host_info().split()[0].lower()
+    except:
+        pass
+
 
 def wrap(module, class_name, methods):
     """ wrap default SQLAlchemy dialect, to catch execute calls to the cursor. """
