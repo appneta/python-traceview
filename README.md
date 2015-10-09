@@ -11,7 +11,7 @@ For more help, please contact traceviewsupport@appneta.com or visit: https://sup
 
 Thanks for using TraceView!
 
-- The TraceView Team
+\- The TraceView Team
 
 ##Running the Tests
 
