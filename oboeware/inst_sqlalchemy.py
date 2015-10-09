@@ -61,11 +61,11 @@ def do_rollback(f, args, kwargs, ret):
     }
 
 
-do_execute_default  = do_execute
-do_commit_default   = do_commit
+do_execute_default = do_execute
+do_commit_default = do_commit
 do_rollback_default = do_rollback
 
-do_commit_dialect   = do_commit
+do_commit_dialect = do_commit
 do_rollback_dialect = do_rollback
 
 
