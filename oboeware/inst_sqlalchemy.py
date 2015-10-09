@@ -6,6 +6,11 @@
 import oboe
 
 
+DIALECT_FLAVOR_NAMES = {
+    'mysql+mysqldb': 'mysql'
+}
+
+
 def main():
     dialect_wrappers = {
         'do_commit': do_commit,
@@ -43,17 +48,21 @@ def wrap_methods(cls, mappings):
 
 def do_commit(_f, args, _kwargs, _ret):
     self, conn_fairy = args[:2]
+    flavor = DIALECT_FLAVOR_NAMES.get(self.dialect_description)
     return {
+        'Flavor': flavor,
         'Query': 'COMMIT',
-        'RemoteHost': remotehost_from_connection(self, conn_fairy.connection)
+        'RemoteHost': remotehost_from_connection(flavor, conn_fairy.connection)
     }
 
 
 def do_execute(_f, args, _kwargs, _ret):
     self, cursor, stmt, params = args[:4]
+    flavor = DIALECT_FLAVOR_NAMES.get(self.dialect_description)
     info = {
+        'Flavor': flavor,
         'Query': stmt,
-        'RemoteHost': remotehost_from_connection(self, cursor.connection)
+        'RemoteHost': remotehost_from_connection(flavor, cursor.connection)
     }
     if not oboe.config.get('sanitize_sql', False):
         info['QueryArgs'] = str(params)
@@ -62,15 +71,15 @@ def do_execute(_f, args, _kwargs, _ret):
 
 def do_rollback(_f, args, _kwargs, _ret):
     self, conn_fairy = args[:2]
-    dialect = self.dialect_description
+    flavor = DIALECT_FLAVOR_NAMES.get(self.dialect_description)
     return {
         'Query': 'ROLLBACK',
-        'RemoteHost': remotehost_from_connection(self, conn_fairy.connection)
+        'RemoteHost': remotehost_from_connection(flavor, conn_fairy.connection)
     }
 
 
-def remotehost_from_connection(dialect, conn):
-    if dialect.dialect_description == 'mysql+mysqldb':
+def remotehost_from_connection(flavor_name, conn):
+    if flavor_name == 'mysql':
         return conn.get_host_info().split()[0].lower()
 
 
