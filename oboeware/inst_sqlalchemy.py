@@ -14,9 +14,9 @@ def main():
 
     module_class_mappings = (
         ('sqlalchemy.engine.default', 'DefaultDialect', {
+            'do_commit': do_commit,
             'do_execute': do_execute,
             'do_executemany': do_execute,
-            'do_commit': do_commit,
             'do_rollback': do_rollback
         },),
         ('sqlalchemy.dialects.mysql.base', 'MySQLDialect', dialect_wrappers,),
@@ -31,7 +31,25 @@ def main():
             pass
 
 
-def do_execute(f, args, kwargs, ret):
+def wrap_methods(cls, mappings):
+    for name, fn in mappings.items():
+        base_method = getattr(cls, name)
+        oboe_fn = oboe.log_method(
+            'sqlalchemy',
+            store_backtrace=oboe._collect_backtraces('sqlalchemy'),
+            callback=fn)(base_method)
+        setattr(cls, name, oboe_fn)
+
+
+def do_commit(_f, args, _kwargs, _ret):
+    self, conn_fairy = args[:2]
+    return {
+        'Query': 'COMMIT',
+        'RemoteHost': remotehost_from_connection(self, conn_fairy.connection)
+    }
+
+
+def do_execute(_f, args, _kwargs, _ret):
     self, cursor, stmt, params = args[:4]
     info = {
         'Query': stmt,
@@ -42,15 +60,7 @@ def do_execute(f, args, kwargs, ret):
     return info
 
 
-def do_commit(f, args, kwargs, ret):
-    self, conn_fairy = args[:2]
-    return {
-        'Query': 'COMMIT',
-        'RemoteHost': remotehost_from_connection(self, conn_fairy.connection)
-    }
-
-
-def do_rollback(f, args, kwargs, ret):
+def do_rollback(_f, args, _kwargs, _ret):
     self, conn_fairy = args[:2]
     dialect = self.dialect_description
     return {
@@ -62,16 +72,6 @@ def do_rollback(f, args, kwargs, ret):
 def remotehost_from_connection(dialect, conn):
     if dialect.dialect_description == 'mysql+mysqldb':
         return conn.get_host_info().split()[0].lower()
-
-
-def wrap_methods(cls, mappings):
-    for name, fn in mappings.items():
-        base_method = getattr(cls, name)
-        oboe_fn = oboe.log_method(
-            'sqlalchemy',
-            store_backtrace=oboe._collect_backtraces('sqlalchemy'),
-            callback=fn)(base_method)
-        setattr(cls, name, oboe_fn)
 
 
 main()
