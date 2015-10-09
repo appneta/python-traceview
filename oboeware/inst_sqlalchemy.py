@@ -7,20 +7,18 @@ import oboe
 
 
 def main():
-    default_wrappers = {
-        'do_execute': do_execute_default,
-        'do_executemany': do_execute_default,
-        'do_commit': do_commit_default,
-        'do_rollback': do_rollback_default
-    }
-
     dialect_wrappers = {
-        'do_commit': do_commit_dialect,
-        'do_rollback': do_rollback_dialect
+        'do_commit': do_commit,
+        'do_rollback': do_rollback
     }
 
     module_class_mappings = (
-        ('sqlalchemy.engine.default', 'DefaultDialect', default_wrappers,),
+        ('sqlalchemy.engine.default', 'DefaultDialect', {
+            'do_execute': do_execute,
+            'do_executemany': do_execute,
+            'do_commit': do_commit,
+            'do_rollback': do_rollback
+        },),
         ('sqlalchemy.dialects.mysql.base', 'MySQLDialect', dialect_wrappers,),
         ('sqlalchemy.dialects.postgresql.base', 'PGDialect', dialect_wrappers,),
     )
@@ -59,14 +57,6 @@ def do_rollback(f, args, kwargs, ret):
         'Query': 'ROLLBACK',
         'RemoteHost': remotehost_from_connection(self, conn_fairy.connection)
     }
-
-
-do_execute_default = do_execute
-do_commit_default = do_commit
-do_rollback_default = do_rollback
-
-do_commit_dialect = do_commit
-do_rollback_dialect = do_rollback
 
 
 def remotehost_from_connection(dialect, conn):
