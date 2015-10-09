@@ -42,3 +42,6 @@ To run tests (requires `virtualenv` >= 1.11.2 and a running
 Tests in test/unit are actually functional tests; naming is for historic
 reasons.  Tests in test/manual are for manual verification of certain
 behaviors.
+
+SQLAlchemy tests require zero-config MySQL auth (local user should be able to
+add and drop databases without password).

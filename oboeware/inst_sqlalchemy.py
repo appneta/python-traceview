@@ -5,63 +5,90 @@
 """
 import oboe
 
-DEFAULT_METHODS = ['do_execute', 'do_executemany', 'do_rollback', 'do_commit']
-DIALECT_METHODS = ['do_rollback', 'do_commit']
 
-# Mapping of method names to assumed SQL statements.
-QUERY_MAP = {'do_rollback': 'ROLLBACK',
-             'do_commit': 'COMMIT' }
+def main():
+    default_wrappers = {
+        'do_execute': do_execute_default,
+        'do_executemany': do_execute_default,
+        'do_commit': do_commit_default,
+        'do_rollback': do_rollback_default
+    }
 
-def wrap_execute(func, f_args, _f_kwargs, _return_val):
-    info = {}
+    dialect_wrappers = {
+        'do_commit': do_commit_dialect,
+        'do_rollback': do_rollback_dialect
+    }
 
-    if len(f_args) >= 2:
-        info['RemoteHost'] = remote_host_from_pool(f_args[1])
+    module_class_mappings = (
+        ('sqlalchemy.engine.default', 'DefaultDialect', default_wrappers,),
+        ('sqlalchemy.dialects.mysql.base', 'MySQLDialect', dialect_wrappers,),
+        ('sqlalchemy.dialects.postgresql.base', 'PGDialect', dialect_wrappers,),
+    )
 
-    if func.__name__ in QUERY_MAP:
-        info['Query'] = QUERY_MAP[func.__name__]
-    elif len(f_args) >= 3:
-        info['Query'] = f_args[2]
+    for mod, cls, mappings in module_class_mappings:
+        try:
+            cls = getattr(__import__(mod, fromlist=[cls]), cls)
+            wrap_methods(cls, mappings)
+        except ImportError:
+            pass
 
-    if len(f_args) >= 4 and not oboe.config.get('sanitize_sql', False):
-        info['QueryArgs'] = str(f_args[3])
 
+def do_execute(f, args, kwargs, ret):
+    self, cursor, stmt, params = args[:4]
+    info = {
+        'Query': stmt,
+        'RemoteHost': hostname_from_cursor(self, cursor)
+    }
+    if not oboe.config.get('sanitize_sql', False):
+        info['QueryArgs'] = str(params)
     return info
 
 
-def remote_host_from_pool(pool):
-    try:
-        return pool.connection.get_host_info().split()[0].lower()
-    except:
-        pass
+def do_commit(f, args, kwargs, ret):
+    self, conn_fairy = args[:2]
+    return {
+        'Query': 'COMMIT',
+        'RemoteHost': hostname_from_connection_fairy(self, conn_fairy)
+    }
 
 
-def wrap(module, class_name, methods):
-    """ wrap default SQLAlchemy dialect, to catch execute calls to the cursor. """
-    cls = getattr(module, class_name, None)
-    decorate = oboe.log_method('sqlalchemy', 
-                   store_backtrace=oboe._collect_backtraces('sqlalchemy'),
-                   callback=wrap_execute)
-    if cls:
-        for method_name in methods:
-            method = getattr(cls, method_name, None)
-            if method:
-                setattr(cls, method_name, decorate(method))
+def do_rollback(f, args, kwargs, ret):
+    self, conn_fairy = args[:2]
+    dialect = self.dialect_description
+    return {
+        'Query': 'ROLLBACK',
+        'RemoteHost': hostname_from_connection_fairy(self, conn_fairy)
+    }
 
-try:
-    import sqlalchemy.engine.default as sad
-    wrap(sad, 'DefaultDialect', DEFAULT_METHODS)
-except ImportError, e:
-    pass
 
-try:
-    import sqlalchemy.dialects.mysql.base as sdmb
-    wrap(sdmb, 'MySQLDialect', DIALECT_METHODS)
-except ImportError, e:
-    pass
+do_execute_default  = do_execute
+do_commit_default   = do_commit
+do_rollback_default = do_rollback
 
-try:
-    import sqlalchemy.dialects.postgresql.base as sdpb
-    wrap(sdpb, 'PGDialect', DIALECT_METHODS)
-except ImportError, e:
-    pass
+do_commit_dialect   = do_commit
+do_rollback_dialect = do_rollback
+
+
+def hostname_from_connection_fairy(dialect, conn_fairy):
+    dialect = dialect.dialect_description
+    if dialect == 'mysql+mysqldb':
+        return conn_fairy.connection.get_host_info().split()[0].lower()
+
+
+def hostname_from_cursor(dialect, cursor):
+    dialect = dialect.dialect_description
+    if dialect == 'mysql+mysqldb':
+        return cursor.connection.get_host_info().split()[0].lower()
+
+
+def wrap_methods(cls, mappings):
+    for name, fn in mappings.items():
+        base_method = getattr(cls, name)
+        oboe_fn = oboe.log_method(
+            'sqlalchemy',
+            store_backtrace=oboe._collect_backtraces('sqlalchemy'),
+            callback=fn)(base_method)
+        setattr(cls, name, oboe_fn)
+
+
+main()
