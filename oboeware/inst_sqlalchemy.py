@@ -6,11 +6,6 @@
 import oboe
 
 
-DIALECT_FLAVOR_NAMES = {
-    'mysql+mysqldb': 'mysql'
-}
-
-
 def main():
     dialect_wrappers = {
         'do_commit': do_commit,
@@ -65,7 +60,7 @@ def do_rollback(_f, args, _kwargs, _ret):
 
 
 def base_info(dialect, conn, query):
-    flavor = DIALECT_FLAVOR_NAMES.get(dialect.dialect_description)
+    flavor = dialect.name
     return {
         'Flavor': flavor,
         'Query': query,
