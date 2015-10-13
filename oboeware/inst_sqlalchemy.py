@@ -26,9 +26,10 @@ def main():
     for mod, cls, mappings in module_class_mappings:
         try:
             cls = getattr(__import__(mod, fromlist=[cls]), cls)
-            wrap_methods(cls, mappings)
-        except ImportError:
+        except AttributeError, ImportError:
             pass
+        else:
+            wrap_methods(cls, mappings)
 
 
 def wrap_methods(cls, mappings):
