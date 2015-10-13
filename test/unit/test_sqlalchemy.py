@@ -48,32 +48,15 @@ class TestQueryAndArgs(SqlAlchemyTest):
         self.assertEqual(query, exit.props.get('Query'))
         self.assertEqual('(1,)', exit.props.get('QueryArgs'))
 
-    # TODO refactor
     def test_commit(self):
-        engine = self.lib.create_engine(mysql_tcp_dsn('mysql'))
-        query = 'SELECT 1'
-
-        with engine.connect() as conn:
-            with self.new_trace():
-                t = conn.begin()
-                conn.execute(query)
-                t.commit()
-
-        self.assertHasBaseEntryAndExit()
-
-        entries = self._last_trace.pop_events(
-            filters.is_entry_event, filters.layer_is('sqlalchemy'))
-        exits = self._last_trace.pop_events(
-            filters.is_exit_event, filters.layer_is('sqlalchemy'))
-
-        self.assertEqual(2, len(entries))
-        self.assertEqual(2, len(exits))
-
-        self.assertEqual(query, exits[0].props.get('Query'))
+        exits = self.do_transaction(rollback=False)
         self.assertEqual('COMMIT', exits[1].props.get('Query'))
 
-    # TODO refactor
     def test_rollback(self):
+        exits = self.do_transaction(rollback=True)
+        self.assertEqual('ROLLBACK', exits[1].props.get('Query'))
+
+    def do_transaction(self, rollback):
         engine = self.lib.create_engine(mysql_tcp_dsn('mysql'))
         query = 'SELECT 1'
 
@@ -81,7 +64,10 @@ class TestQueryAndArgs(SqlAlchemyTest):
             with self.new_trace():
                 t = conn.begin()
                 conn.execute(query)
-                t.rollback()
+                if rollback:
+                    t.rollback()
+                else:
+                    t.commit()
 
         self.assertHasBaseEntryAndExit()
 
@@ -94,7 +80,7 @@ class TestQueryAndArgs(SqlAlchemyTest):
         self.assertEqual(2, len(exits))
 
         self.assertEqual(query, exits[0].props.get('Query'))
-        self.assertEqual('ROLLBACK', exits[1].props.get('Query'))
+        return exits
 
 
 class TestRemoteHostAndFlavor(SqlAlchemyTest):
