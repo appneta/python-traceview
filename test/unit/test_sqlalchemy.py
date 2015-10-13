@@ -48,6 +48,8 @@ class TestQueryAndArgs(SqlAlchemyTest):
         self.assertEqual(query, exit.props.get('Query'))
         self.assertEqual('(1,)', exit.props.get('QueryArgs'))
 
+
+class TestTransaction(SqlAlchemyTest):
     def test_commit(self):
         exits = self.do_transaction(rollback=False)
         self.assertEqual('COMMIT', exits[1].props.get('Query'))
