@@ -3,7 +3,12 @@
  Copyright (C) 2011 by Tracelytics, Inc.
  All rights reserved.
 """
+import logging
+
 import oboe
+
+
+log = logging.getLogger('oboeware')
 
 
 def main():
@@ -27,7 +32,7 @@ def main():
         try:
             cls = getattr(__import__(mod, fromlist=[cls]), cls)
         except AttributeError, ImportError:
-            pass
+            log.warn('Failed to import %s from %s for patch', cls, mod)
         else:
             wrap_methods(cls, mappings)
 
@@ -37,7 +42,7 @@ def wrap_methods(cls, mappings):
         try:
             base_method = getattr(cls, name)
         except AttributeError:
-            pass
+            log.warn('Failed to patch %s on %s', name, cls.__name__)
         else:
             oboe_fn = oboe.log_method(
                 'sqlalchemy',
