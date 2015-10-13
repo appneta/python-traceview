@@ -34,12 +34,16 @@ def main():
 
 def wrap_methods(cls, mappings):
     for name, fn in mappings.items():
-        base_method = getattr(cls, name)
-        oboe_fn = oboe.log_method(
-            'sqlalchemy',
-            store_backtrace=oboe._collect_backtraces('sqlalchemy'),
-            callback=fn)(base_method)
-        setattr(cls, name, oboe_fn)
+        try:
+            base_method = getattr(cls, name)
+        except AttributeError:
+            pass
+        else:
+            oboe_fn = oboe.log_method(
+                'sqlalchemy',
+                store_backtrace=oboe._collect_backtraces('sqlalchemy'),
+                callback=fn)(base_method)
+            setattr(cls, name, oboe_fn)
 
 
 def do_commit(_f, args, _kwargs, _ret):
