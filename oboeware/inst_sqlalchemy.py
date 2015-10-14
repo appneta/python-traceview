@@ -28,9 +28,9 @@ def main():
         ('sqlalchemy.dialects.postgresql.base', 'PGDialect', dialect_wrappers,),
     )
 
-    for mod, cls, mappings in module_class_mappings:
+    for mod, classname, mappings in module_class_mappings:
         try:
-            cls = getattr(__import__(mod, fromlist=[cls]), cls)
+            cls = getattr(__import__(mod, fromlist=[classname]), classname)
         except AttributeError, ImportError:
             log.warn('Failed to import %s from %s for patch', cls, mod)
         else:
