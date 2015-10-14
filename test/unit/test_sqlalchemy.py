@@ -4,9 +4,6 @@ from oboeware import inst_sqlalchemy
 from . import base, trace_filters as filters
 
 
-TEST_DB = 'test_inst_sqlalchemy'
-
-
 class SqlAlchemyTest(base.TraceTestCase):
     def __init__(self, *args, **kwargs):
         super(SqlAlchemyTest, self).__init__(*args, **kwargs)
