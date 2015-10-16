@@ -72,11 +72,15 @@ def do_rollback_cb(_f, args, _kwargs, _ret):
 def base_info(dialect_name, conn, query):
     # This could be a real connection object, or a connection fairy (proxy)
     conn = getattr(conn, 'connection', conn)
-    return {
+    info = {
         'Flavor': dialect_name,
         'Query': query,
-        'RemoteHost': remotehost_from_connection(dialect_name, conn)
     }
+    try:
+        info['RemoteHost'] = remotehost_from_connection(dialect_name, conn)
+    except:
+        pass
+    return info
 
 
 def remotehost_from_connection(flavor_name, conn):
