@@ -4,6 +4,13 @@ from oboeware import inst_sqlalchemy
 from . import base, trace_filters as filters
 
 
+TEST_DSNS = (
+    'sqlite://',
+    'postgresql+psycopg2://postgres@127.0.0.1/?host=127.0.0.1?port=5432',
+    'mysql+mysqldb://127.0.0.1/?host=127.0.0.1?port=3306',
+)
+
+
 class SqlAlchemyTest(base.TraceTestCase):
     def __init__(self, *args, **kwargs):
         super(SqlAlchemyTest, self).__init__(*args, **kwargs)
@@ -21,42 +28,59 @@ class SqlAlchemyTest(base.TraceTestCase):
 
 class TestQueryAndArgs(SqlAlchemyTest):
     def test_simple(self):
-        engine = self.lib.create_engine(mysql_tcp_dsn('mysql'))
-        query = 'SELECT 1'
+        for dsn in TEST_DSNS:
+            flavor = flavor_from_dsn(dsn)
+            engine = self.lib.create_engine(dsn)
+            query = 'SELECT 1'
 
-        with engine.connect() as conn:
-            with self.new_trace():
-                conn.execute(query)
+            with engine.connect() as conn:
+                with self.new_trace():
+                    conn.execute(query)
 
-        exit = self.assertSaneTrace()
-        self.assertEqual(query, exit.props.get('Query'))
-        self.assertEqual('()', exit.props.get('QueryArgs'))
+            exit = self.assertSaneTrace()
+            self.assertEqual(query, exit.props.get('Query'))
+
+            if flavor == 'postgresql':
+                args_s = '{}'
+            else:
+                args_s = '()'
+
+            self.assertEqual(args_s, exit.props.get('QueryArgs'))
 
 
     def test_args(self):
-        engine = self.lib.create_engine(mysql_tcp_dsn('mysql'))
-        query = 'SELECT 1 LIMIT %s'
+        for dsn in TEST_DSNS:
+            flavor = flavor_from_dsn(dsn)
+            engine = self.lib.create_engine(dsn)
 
-        with engine.connect() as conn:
-            with self.new_trace():
-                conn.execute(query, 1)
+            if flavor == 'sqlite':
+                query = 'SELECT 1 LIMIT ?'
+            else:
+                query = 'SELECT 1 LIMIT %s'
 
-        exit = self.assertSaneTrace()
-        self.assertEqual(query, exit.props.get('Query'))
-        self.assertEqual('(1,)', exit.props.get('QueryArgs'))
+            with engine.connect() as conn:
+                with self.new_trace():
+                    conn.execute(query, 1)
+
+            exit = self.assertSaneTrace()
+            self.assertEqual(query, exit.props.get('Query'))
+            self.assertEqual('(1,)', exit.props.get('QueryArgs'))
 
 
 class TestTransaction(SqlAlchemyTest):
     def test_commit(self):
-        exits = self.do_transaction(rollback=False)
-        self.assertEqual('COMMIT', exits[1].props.get('Query'))
+        for dsn in TEST_DSNS:
+            exits = self.do_transaction(dsn, rollback=False)
+            self.assertEqual('COMMIT', exits[1].props.get('Query'))
 
     def test_rollback(self):
-        exits = self.do_transaction(rollback=True)
-        self.assertEqual('ROLLBACK', exits[1].props.get('Query'))
+        for dsn in TEST_DSNS:
+            exits = self.do_transaction(dsn, rollback=True)
+            self.assertEqual('ROLLBACK', exits[1].props.get('Query'))
 
-    def do_transaction(self, rollback):
-        engine = self.lib.create_engine(mysql_tcp_dsn('mysql'))
+    def do_transaction(self, dsn, rollback):
+        engine = self.lib.create_engine(dsn)
+        flavor = flavor_from_dsn(dsn)
         query = 'SELECT 1'
 
         with engine.connect() as conn:
@@ -75,48 +99,32 @@ class TestTransaction(SqlAlchemyTest):
         exits = self._last_trace.pop_events(
             filters.is_exit_event, filters.layer_is('sqlalchemy'))
 
-        self.assertEqual(2, len(entries))
-        self.assertEqual(2, len(exits))
+        # Postgres creates an extra event for ROLLBACK/COMMIT
+        if flavor == 'postgresql':
+            nevents = 3
+        else:
+            nevents = 2
+
+        self.assertEqual(nevents, len(entries))
+        self.assertEqual(nevents, len(exits))
 
         self.assertEqual(query, exits[0].props.get('Query'))
         return exits
 
 
 class TestRemoteHostAndFlavor(SqlAlchemyTest):
-    def do_trace(self, engine):
-        with engine.connect() as conn:
-            with self.new_trace():
-                conn.execute('SELECT 1')
-
-    def test_mysql(self):
-        engine = self.lib.create_engine(mysql_tcp_dsn('mysql'))
-        self.do_trace(engine)
-        exit = self.assertSaneTrace()
-        self.assertEqual('127.0.0.1', exit.props.get('RemoteHost'))
-        self.assertEqual('mysql', exit.props.get('Flavor'))
-
-    def test_postgresql(self):
-        engine = self.lib.create_engine(postgresql_tcp_dsn('', auth='postgres'))
-        self.do_trace(engine)
-        exit = self.assertSaneTrace()
-        self.assertEqual('127.0.0.1', exit.props.get('RemoteHost'))
-        self.assertEqual('postgresql', exit.props.get('Flavor'))
-
-    def test_sqlite(self):
-        engine = self.lib.create_engine('sqlite://')
-        self.do_trace(engine)
-        exit = self.assertSaneTrace()
-        self.assertIsNone(exit.props.get('RemoteHost'))
-        self.assertEqual('sqlite', exit.props.get('Flavor'))
+    def test_simple(self):
+        for dsn in TEST_DSNS:
+            flavor = flavor_from_dsn(dsn)
+            engine = self.lib.create_engine(dsn)
+            with engine.connect() as conn:
+                with self.new_trace():
+                    conn.execute('SELECT 1')
+            exit = self.assertSaneTrace()
+            if flavor != 'sqlite':
+                self.assertEqual('127.0.0.1', exit.props.get('RemoteHost'))
+            self.assertEqual(flavor, exit.props.get('Flavor'))
 
 
-def mysql_tcp_dsn(dbname, auth=None):
-    return tcp_dsn('mysql+mysqldb', dbname, 3306, auth=auth)
-
-def postgresql_tcp_dsn(dbname, auth=None):
-    return tcp_dsn('postgresql+psycopg2', dbname, 5432, auth=auth)
-
-def tcp_dsn(driver, dbname, port, auth=None):
-    if auth:
-        auth += '@'
-    return '%s://%s127.0.0.1/%s?host=127.0.0.1?port=%d' % (driver, auth, dbname, port)
+def flavor_from_dsn(dsn):
+    return dsn.split(':')[0].split('+')[0]
