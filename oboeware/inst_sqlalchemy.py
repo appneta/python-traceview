@@ -13,16 +13,16 @@ log = logging.getLogger('oboeware')
 
 def main():
     dialect_wrappers = {
-        'do_commit': do_commit,
-        'do_rollback': do_rollback
+        'do_commit': do_commit_cb,
+        'do_rollback': do_rollback_cb
     }
 
     module_class_mappings = (
         ('sqlalchemy.engine.default', 'DefaultDialect', {
-            'do_commit': do_commit,
-            'do_execute': do_execute,
-            'do_executemany': do_execute,
-            'do_rollback': do_rollback
+            'do_commit': do_commit_cb,
+            'do_execute': do_execute_cb,
+            'do_executemany': do_execute_cb,
+            'do_rollback': do_rollback_cb
         },),
         ('sqlalchemy.dialects.mysql.base', 'MySQLDialect', dialect_wrappers,),
         ('sqlalchemy.dialects.postgresql.base', 'PGDialect', dialect_wrappers,),
@@ -51,12 +51,12 @@ def wrap_methods(cls, mappings):
             setattr(cls, name, oboe_fn)
 
 
-def do_commit(_f, args, _kwargs, _ret):
+def do_commit_cb(_f, args, _kwargs, _ret):
     self, conn_fairy = args[:2]
     return base_info(self.name, conn_fairy.connection, 'COMMIT')
 
 
-def do_execute(_f, args, _kwargs, _ret):
+def do_execute_cb(_f, args, _kwargs, _ret):
     self, cursor, stmt, params = args[:4]
     info = base_info(self.name, cursor.connection, stmt)
     if not oboe.config.get('sanitize_sql', False):
@@ -64,7 +64,7 @@ def do_execute(_f, args, _kwargs, _ret):
     return info
 
 
-def do_rollback(_f, args, _kwargs, _ret):
+def do_rollback_cb(_f, args, _kwargs, _ret):
     self, conn_fairy = args[:2]
     return base_info(self.name, conn_fairy.connection, 'ROLLBACK')
 
