@@ -52,8 +52,8 @@ def wrap_methods(cls, mappings):
 
 
 def do_commit_cb(_f, args, _kwargs, _ret):
-    self, conn_fairy = args[:2]
-    return base_info(self.name, conn_fairy, 'COMMIT')
+    self, conn = args[:2]
+    return base_info(self.name, conn, 'COMMIT')
 
 
 def do_execute_cb(_f, args, _kwargs, _ret):
@@ -65,8 +65,8 @@ def do_execute_cb(_f, args, _kwargs, _ret):
 
 
 def do_rollback_cb(_f, args, _kwargs, _ret):
-    self, conn_fairy = args[:2]
-    return base_info(self.name, conn_fairy, 'ROLLBACK')
+    self, conn = args[:2]
+    return base_info(self.name, conn, 'ROLLBACK')
 
 
 def base_info(dialect_name, conn, query):
