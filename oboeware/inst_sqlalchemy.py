@@ -3,12 +3,7 @@
  Copyright (C) 2011 by Tracelytics, Inc.
  All rights reserved.
 """
-import logging
-
 import oboe
-
-
-log = logging.getLogger('oboeware')
 
 
 def main():
@@ -31,8 +26,8 @@ def main():
     for mod, classname, mappings in module_class_mappings:
         try:
             cls = getattr(__import__(mod, fromlist=[classname]), classname)
-        except AttributeError, ImportError:
-            log.warn('Failed to import %s from %s for patch', cls, mod)
+        except (AttributeError, ImportError):
+            pass
         else:
             wrap_methods(cls, mappings)
 
