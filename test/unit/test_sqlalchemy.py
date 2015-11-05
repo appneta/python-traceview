@@ -8,6 +8,7 @@ TEST_DSNS = (
     'sqlite://',
     'postgresql+psycopg2://postgres@127.0.0.1/?host=127.0.0.1?port=5432',
     'mysql+mysqldb://127.0.0.1/?host=127.0.0.1?port=3306',
+    'mysql+pymysql://127.0.0.1/?host=127.0.0.1?port=3306',
 )
 
 

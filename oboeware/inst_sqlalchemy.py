@@ -64,15 +64,15 @@ def do_rollback_cb(_f, args, _kwargs, _ret):
     return base_info(self.name, conn, 'ROLLBACK')
 
 
-def base_info(dialect_name, conn, query):
+def base_info(flavor_name, conn, query):
     # This could be a real connection object, or a connection fairy (proxy)
     conn = getattr(conn, 'connection', conn)
     info = {
-        'Flavor': dialect_name,
+        'Flavor': flavor_name,
         'Query': query,
     }
     try:
-        info['RemoteHost'] = remotehost_from_connection(dialect_name, conn)
+        info['RemoteHost'] = remotehost_from_connection(flavor_name, conn)
     except:
         pass
     return info
@@ -80,7 +80,15 @@ def base_info(dialect_name, conn, query):
 
 def remotehost_from_connection(flavor_name, conn):
     if flavor_name == 'mysql':
-        return conn.get_host_info().split()[0].lower()
+        host_info = conn.get_host_info()
+
+        # "127.0.0.1 via TCP/IP" (MySQLdb)
+        if host_info.endswith('TCP/IP'):
+            return host_info.split()[0].lower()
+
+        # "socket 127.0.0.1:3306" (pymysql)
+        if host_info.startswith('socket'):
+            return host_info.split()[1].split(':')[0]
 
     if flavor_name == 'postgresql':
         host_part = [part for part in conn.dsn.split()
