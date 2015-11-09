@@ -5,49 +5,96 @@
 """
 import oboe
 
-DEFAULT_METHODS = ['do_execute', 'do_executemany', 'do_rollback', 'do_commit']
-DIALECT_METHODS = ['do_rollback', 'do_commit']
 
-# Mapping of method names to assumed SQL statements.
-QUERY_MAP = {'do_rollback': 'ROLLBACK',
-             'do_commit': 'COMMIT' }
+def main():
+    dialect_wrappers = {
+        'do_commit': do_commit_cb,
+        'do_rollback': do_rollback_cb
+    }
 
-def wrap_execute(func, f_args, _f_kwargs, _return_val):
-    if func.__name__ in QUERY_MAP:
-        return { 'Query': QUERY_MAP[func.__name__] }
-    elif len(f_args) >= 4 and not oboe.config.get('sanitize_sql', False):
-        return { 'Query': f_args[2], 'QueryArgs': str(f_args[3]) }
-    elif len(f_args) >= 3:
-        return { 'Query': f_args[2] }
-    else:
-        return {}
+    module_class_mappings = (
+        ('sqlalchemy.engine.default', 'DefaultDialect', {
+            'do_commit': do_commit_cb,
+            'do_execute': do_execute_cb,
+            'do_executemany': do_execute_cb,
+            'do_rollback': do_rollback_cb
+        },),
+        ('sqlalchemy.dialects.mysql.base', 'MySQLDialect', dialect_wrappers,),
+        ('sqlalchemy.dialects.postgresql.base', 'PGDialect', dialect_wrappers,),
+    )
 
-def wrap(module, class_name, methods):
-    """ wrap default SQLAlchemy dialect, to catch execute calls to the cursor. """
-    cls = getattr(module, class_name, None)
-    decorate = oboe.log_method('sqlalchemy', 
-                   store_backtrace=oboe._collect_backtraces('sqlalchemy'),
-                   callback=wrap_execute)
-    if cls:
-        for method_name in methods:
-            method = getattr(cls, method_name, None)
-            if method:
-                setattr(cls, method_name, decorate(method))
+    for mod, classname, mappings in module_class_mappings:
+        try:
+            cls = getattr(__import__(mod, fromlist=[classname]), classname)
+        except (AttributeError, ImportError):
+            pass
+        else:
+            wrap_methods(cls, mappings)
 
-try:
-    import sqlalchemy.engine.default as sad
-    wrap(sad, 'DefaultDialect', DEFAULT_METHODS)
-except ImportError, e:
-    pass
 
-try:
-    import sqlalchemy.dialects.mysql.base as sdmb
-    wrap(sdmb, 'MySQLDialect', DIALECT_METHODS)
-except ImportError, e:
-    pass
+def wrap_methods(cls, mappings):
+    for name, fn in mappings.items():
+        try:
+            base_method = getattr(cls, name)
+        except AttributeError:
+            log.warn('Failed to patch %s on %s', name, cls.__name__)
+        else:
+            oboe_fn = oboe.log_method(
+                'sqlalchemy',
+                store_backtrace=oboe._collect_backtraces('sqlalchemy'),
+                callback=fn)(base_method)
+            setattr(cls, name, oboe_fn)
 
-try:
-    import sqlalchemy.dialects.postgresql.base as sdpb
-    wrap(sdpb, 'PGDialect', DIALECT_METHODS)
-except ImportError, e:
-    pass
+
+def do_commit_cb(_f, args, _kwargs, _ret):
+    self, conn = args[:2]
+    return base_info(self.name, conn, 'COMMIT')
+
+
+def do_execute_cb(_f, args, _kwargs, _ret):
+    self, cursor, stmt, params = args[:4]
+    info = base_info(self.name, cursor.connection, stmt)
+    if not oboe.config.get('sanitize_sql', False):
+        info['QueryArgs'] = str(params)
+    return info
+
+
+def do_rollback_cb(_f, args, _kwargs, _ret):
+    self, conn = args[:2]
+    return base_info(self.name, conn, 'ROLLBACK')
+
+
+def base_info(flavor_name, conn, query):
+    # This could be a real connection object, or a connection fairy (proxy)
+    conn = getattr(conn, 'connection', conn)
+    info = {
+        'Flavor': flavor_name,
+        'Query': query,
+    }
+    try:
+        info['RemoteHost'] = remotehost_from_connection(flavor_name, conn)
+    except:
+        pass
+    return info
+
+
+def remotehost_from_connection(flavor_name, conn):
+    if flavor_name == 'mysql':
+        host_info = conn.get_host_info()
+
+        # "127.0.0.1 via TCP/IP" (MySQLdb)
+        if host_info.endswith('TCP/IP'):
+            return host_info.split()[0].lower()
+
+        # "socket 127.0.0.1:3306" (pymysql)
+        if host_info.startswith('socket'):
+            return host_info.split()[1].split(':')[0]
+
+    if flavor_name == 'postgresql':
+        host_part = [part for part in conn.dsn.split()
+                     if part.startswith('host=')]
+        if host_part:
+            return host_part[0].split('=')[1]
+
+
+main()
