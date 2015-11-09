@@ -5,5 +5,5 @@ All rights reserved.
 """
 from middleware import OboeMiddleware
 
-__version__ = '1.5.9'
+__version__ = '1.5.10'
 __all__ = ('OboeMiddleware', 'djangoware', 'async', 'tornado', '__version__')

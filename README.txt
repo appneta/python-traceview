@@ -34,11 +34,18 @@ To set up multiple versions of python:
     sudo apt-get update
     sudo apt-get install python2.6 python2.6-dev
 
-To run tests (requires `virtualenv` >= 1.11.2 and a running
-[Redis](http://redis.io/) server):
+To run tests (requires `virtualenv` >= 1.11.2 and a running a
+Redis <http://redis.io/> server):
 
     tox
 
 Tests in test/unit are actually functional tests; naming is for historic
 reasons.  Tests in test/manual are for manual verification of certain
 behaviors.
+
+MySQL SQLAlchemy tests require no-auth TCP connection (as testing user).
+
+PostgreSQL SQLAlchemy tests requires no-auth (trust) TCP connection (as testing user).
+
+    # in pg_hba.conf: Don't use this in production!!
+    host    all             all             127.0.0.1/32            trust
