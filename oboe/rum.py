@@ -26,7 +26,7 @@ def _access_key_to_rum_id(uuid):
     digest = hashlib.sha1(raw_key).digest()
 
     # base64 encode digest (url safe replacing + and \)
-    return base64.urlsafe_b64encode(digest)
+    return base64.urlsafe_b64encode(digest).decode('utf-8')
 
 def _initialize_rum():
     TLY_CONF_FILE = '/etc/tracelytics.conf'
