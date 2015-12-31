@@ -9,7 +9,7 @@ import sys
 
 from setuptools import setup, Extension
 
-version = '1.5.9'
+version = '1.5.10'
 
 # conditionally build extensions if liboboe and liboboe-dev are available on this platform
 # otherwise, will function in no-op mode: no tracing, but all API endpoints available
