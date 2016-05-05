@@ -125,16 +125,17 @@ class OboeMiddleware(object):
                 result = self.wrapped_app(environ, wrapped_start_response)
 
         except Exception:
-            if oboe.Context.get_default().is_valid():
-                endEvt.add_edge(oboe.Context.get_default())
-            self.send_end(ctx, endEvt, environ, threw_error=True)
+            if endEvt:
+                if oboe.Context.get_default().is_valid():
+                    endEvt.add_edge(oboe.Context.get_default())
+                self.send_end(ctx, endEvt, environ, threw_error=True)
             raise
 
-        # check current TLS context and add to end event if valid
-        if oboe.Context.get_default().is_valid():
-            endEvt.add_edge(oboe.Context.get_default())
-
-        self.send_end(ctx, endEvt, environ, stats=stats)
+        if endEvt:
+            # check current TLS context and add to end event if valid
+            if oboe.Context.get_default().is_valid():
+                endEvt.add_edge(oboe.Context.get_default())
+            self.send_end(ctx, endEvt, environ, stats=stats)
 
         return result
 
