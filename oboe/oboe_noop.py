@@ -40,6 +40,22 @@ class Context(object):
         pass
 
     @staticmethod
+    def get_apptoken():
+        pass
+
+    @staticmethod
+    def get_apptoken_value():
+        pass
+
+    @staticmethod
+    def get_apptoken_settings_value():
+        pass
+
+    @staticmethod
+    def get_apptoken_counters_value():
+        pass
+
+    @staticmethod
     def setTracingMode(_):
         return False
 
@@ -76,6 +92,22 @@ class Context(object):
         return False
 
     @staticmethod
+    def raw_send():
+        pass
+
+    @staticmethod
+    def disconnect():
+        pass
+
+    @staticmethod
+    def reconnect():
+        pass
+
+    @staticmethod
+    def shutdown():
+        pass
+
+    @staticmethod
     def toString():
         return ''
 
@@ -107,12 +139,22 @@ class Event(object):
     def metadataString(self):
         return ''
 
+    def send(self):
+        pass
+
     def is_valid(self):
         return False
 
     @staticmethod
     def startTrace(_=None):
         return Event()
+
+class Reporter(object):
+    def __init__(self, _, __=None):
+        pass
+
+    def sendReport(self, _, __=None):
+        pass
 
 class UdpReporter(object):
     def __init__(self, _, __=None):
@@ -121,3 +163,50 @@ class UdpReporter(object):
     def sendReport(self, _, __=None):
         pass
 
+class FileReporter(object):
+    def __init__(self, _, __=None):
+        pass
+
+    def sendReport(self, _, __=None):
+        pass
+
+class DebugLogger(object):
+    def log(self, _):
+        pass
+
+class DebugLog(object):
+    @staticmethod
+    def getLevelName():
+        pass
+
+    @staticmethod
+    def getModuleName():
+        pass
+
+    @staticmethod
+    def getLevel():
+        pass
+
+    @staticmethod
+    def setLevel():
+        pass
+
+    @staticmethod
+    def setOutputStream():
+        pass
+
+    @staticmethod
+    def setOutputFile():
+        pass
+
+    @staticmethod
+    def addDebugLogger():
+        pass
+
+    @staticmethod
+    def removeDebugLogger():
+        pass
+
+    @staticmethod
+    def logMessage():
+        pass

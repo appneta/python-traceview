@@ -41,6 +41,22 @@ class Context(object):
         pass
 
     @staticmethod
+    def get_apptoken():
+        pass
+
+    @staticmethod
+    def get_apptoken_value():
+        pass
+
+    @staticmethod
+    def get_apptoken_settings_value():
+        pass
+
+    @staticmethod
+    def get_apptoken_counters_value():
+        pass
+
+    @staticmethod
     def setTracingMode(_):
         return False
 
@@ -77,6 +93,22 @@ class Context(object):
         return cls.md != None
 
     @staticmethod
+    def raw_send():
+        pass
+
+    @staticmethod
+    def disconnect():
+        pass
+
+    @staticmethod
+    def reconnect():
+        pass
+
+    @staticmethod
+    def shutdown():
+        pass
+
+    @staticmethod
     def toString():
         return ''
 
@@ -108,6 +140,9 @@ class Event(object):
     def metadataString(self):
         return ''
 
+    def send(self):
+        pass
+
     def is_valid(self):
         return True
 
@@ -115,8 +150,8 @@ class Event(object):
     def startTrace(_=None):
         return Event()
 
-class UdpReporter(object):
-    """ Mock UDP Reported; no-op for unsupported platforms, or unit test harness
+class Reporter(object):
+    """ Mock Reporter; no-op for unsupported platforms, or unit test harness
         if in OBOE_TEST mode. """
     def __init__(self, _, __=None):
         pass
@@ -125,6 +160,66 @@ class UdpReporter(object):
         for listener in listeners:
             listener.send(event)
 
+class UdpReporter(object):
+    """ Mock UDP Reporter; no-op for unsupported platforms, or unit test harness
+        if in OBOE_TEST mode. """
+    def __init__(self, _, __=None):
+        pass
+
+    def sendReport(self, event, __=None):
+        for listener in listeners:
+            listener.send(event)
+
+class FileReporter(object):
+    """ Mock File Reporter; no-op for unsupported platforms, or unit test harness
+        if in OBOE_TEST mode. """
+    def __init__(self, _, __=None):
+        pass
+
+    def sendReport(self, event, __=None):
+        for listener in listeners:
+            listener.send(event)
+
+class DebugLogger(object):
+    def log(self, _):
+        pass
+
+class DebugLog(object):
+    @staticmethod
+    def getLevelName():
+        pass
+
+    @staticmethod
+    def getModuleName():
+        pass
+
+    @staticmethod
+    def getLevel():
+        pass
+
+    @staticmethod
+    def setLevel():
+        pass
+
+    @staticmethod
+    def setOutputStream():
+        pass
+
+    @staticmethod
+    def setOutputFile():
+        pass
+
+    @staticmethod
+    def addDebugLogger():
+        pass
+
+    @staticmethod
+    def removeDebugLogger():
+        pass
+
+    @staticmethod
+    def logMessage():
+        pass
 
 class OboeListener(object):
     """ Simple test harness for intercepting event reports. """

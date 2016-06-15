@@ -17,7 +17,7 @@ echo mysql-server mysql-server/root_password select | sudo debconf-set-selection
 echo mysql-server mysql-server/root_password_again select | sudo debconf-set-selections
 
 sudo DEBIAN_FRONTEND=noninteractive apt-get -y install \
-  build-essential git software-properties-common \
+  build-essential swig git software-properties-common \
   python-dev python-pip python-tox python-software-properties \
   libmysqlclient-dev libmemcached-dev libpq-dev libkrb5-dev \
   mongodb-org mysql-server-5.6 postgresql postgresql-contrib \

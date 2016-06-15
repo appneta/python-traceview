@@ -1,16 +1,61 @@
+/**
+ * @file oboe.h
+ *
+ * API header for Appneta's Oboe application tracing library for use with TraceView.
+ *
+ * @package             Oboe
+ * @author              Appneta
+ * @copyright           Copyright (c) 2014, Appneta
+ * @license
+ * @link                http://appneta.com
+ **/
+
 #ifndef LIBOBOE_H
 #define LIBOBOE_H
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#include <stdio.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <inttypes.h>
+#if defined _WIN32
+    #include <unistd.h> // On Windows ssize_t definition was put in this header.
+#endif
 #include "bson/bson.h"
+#include "oboe_debug.h"
 
-#define OBOE_SAMPLE_RATE_DEFAULT 300000 // 30%
-#define OBOE_SAMPLE_RESOLUTION 1000000
+/** Compile time debug logging detail level - cannot log more detailed than this. */
+#define OBOE_DEBUG_LEVEL OBOE_DEBUG_HIGH
+
+/** Limit for number of messages at specified level before demoting to debug MEDIUM. */
+#define MAX_DEBUG_MSG_COUNT 1
+
+/**
+ * Default configuration settings update interval in seconds.
+ *
+ * Borrowed from the Tracelyzer's oboe.h.
+ */
+#define OBOE_DEFAULT_SETTINGS_INTERVAL 30
+
+/**
+ * Default heartbeat status update interval in seconds.
+ */
+#define OBOE_DEFAULT_HEARTBEAT_INTERVAL 60
+
+/**
+ * Default keepalive interval in seconds.
+ *
+ * A keepalive message will be sent after communications are idle for this interval.
+ */
+#define OBOE_DEFAULT_KEEPALIVE_INTERVAL 20
+
+#define OBOE_SAMPLE_RATE_DEFAULT 300000     /*!< Default sample rate of 30% */
+#define OBOE_SAMPLE_RESOLUTION 1000000      /*!< Maximum sample rate of 100% */
+#define OBOE_SAMPLE_PARAM_BUFFER_MAX 1024   /*!< Recommended size of sample parameter return buffer. */
 
 #define OBOE_MAX_TASK_ID_LEN 20
 #define OBOE_MAX_OP_ID_LEN 8
@@ -19,6 +64,20 @@ extern "C" {
 #define XTR_CURRENT_VERSION 1
 #define XTR_UDP_PORT 7831
 
+#define OBOE_REPORTER_PROTOCOL_FILE "file"
+#define OBOE_REPORTER_PROTOCOL_UDP "udp"
+#if 0
+#define OBOE_REPORTER_PROTOCOL_SSL "ssl"
+#endif
+#define OBOE_REPORTER_PROTOCOL_DEFAULT OBOE_REPORTER_PROTOCOL_UDP
+
+/** Maximum reasonable length of an arguments string for configuring a reporter. */
+#define OBOE_REPORTER_ARGS_SIZE 4000
+
+#ifdef _WIN32
+/// SRv1 bitwise value mask for the RUM_ENABLE flag.
+#define SETTINGS_RUM_ENABLE_MASK 0x00000001
+#endif
 
 // structs
 
@@ -38,6 +97,28 @@ typedef struct oboe_event {
     bson_buffer     bbuf;
     char *          bb_str;
 } oboe_event_t;
+
+/** Type of key-value pair to add to an event message. */
+enum oboe_event_kv_type {
+    OBOE_EVENT_KV_TYPE_FIN = 0,         /* last item in a list of oboe_info_kvs */
+    OBOE_EVENT_KV_TYPE_STR,             /* val is NULL terminated string, vlen includes terminator */
+    OBOE_EVENT_KV_TYPE_INT,             /* vlen should be 4 or 8 */
+    OBOE_EVENT_KV_TYPE_DOUBLE,          /* vlen 8 */
+    OBOE_EVENT_KV_TYPE_BIN,             /* vlen is important */
+    OBOE_EVENT_KV_TYPE_BSON,            /* vlen not important (length in buffer) */
+    OBOE_EVENT_KV_TYPE_EDGE,
+    OBOE_EVENT_KV_TYPE_BACKTRACE,       /* TODO: What is val? */
+    OBOE_EVENT_KV_TYPE_EDGE_STRING,
+    OBOE_EVENT_KV_TYPE_BOOL,
+};
+
+/** Details for a key-value pair to add to an event message. */
+typedef struct oboe_event_kv {
+	enum oboe_event_kv_type kvtype;     /* Type of the value */
+	const char *key;                    /* Null-terminated key name string */
+	const void *val;                    /* little-endian byte order assumed? */
+	size_t vlen;                        /* length of the val data in bytes */
+} oboe_event_kv_t;
 
 
 // oboe_metadata
@@ -62,6 +143,7 @@ int oboe_metadata_fromstr   (oboe_metadata_t *, const char *, size_t);
 
 int oboe_event_init     (oboe_event_t *, const oboe_metadata_t *);
 int oboe_event_destroy  (oboe_event_t *);
+int oboe_event_kv_destroy(oboe_event_kv_t *kv);
 
 int oboe_event_add_info (oboe_event_t *, const char *, const char *);
 int oboe_event_add_info_binary (oboe_event_t *, const char *, const char *, size_t);
@@ -72,6 +154,34 @@ int oboe_event_add_info_fmt (oboe_event_t *, const char *key, const char *fmt, .
 int oboe_event_add_info_bson (oboe_event_t *, const char *key, const bson *val);
 int oboe_event_add_edge (oboe_event_t *, const oboe_metadata_t *);
 int oboe_event_add_edge_fromstr(oboe_event_t *, const char *, size_t);
+
+/**
+ * Add one key-value pair to the event.
+ */
+int oboe_event_add_info_kv(oboe_event_t *evt, struct oboe_event_kv* kv);
+
+/**
+ * Add an array of key-value pairs to the event.
+ *
+ * Note that the last kv must have a FIN (ie. zero) type code.
+ */
+int oboe_event_add_info_kvs(oboe_event_t *evt, struct oboe_event_kv* kvs);
+
+/**
+ * Add an array of key-value pairs as BSON array to the event.
+ *
+ * Note that the last kv must have a FIN (ie. zero) type code.
+ */
+int oboe_event_add_info_array(oboe_event_t *evt, const char *key, struct oboe_event_kv* kvs);
+
+/**
+ * Send event message using the default reporter.
+ *
+ * @param evt The event message.
+ * @param md The X-Trace metadata.
+ * @return Length of message sent in bytes on success; otherwise -1.
+ */
+int oboe_event_send(oboe_event_t *evt, oboe_metadata_t *md);
 
 
 // oboe_context
@@ -87,31 +197,122 @@ int oboe_context_is_valid();
 
 // oboe_reporter
 
+struct oboe_reporter;
 typedef ssize_t (*reporter_send)(void *, const char *, size_t);
 typedef int (*reporter_destroy)(void *);
 
 typedef struct oboe_reporter {
-    void *              descriptor;
-    reporter_send       send;
-    reporter_destroy    destroy;
+    void *              descriptor;     /*!< Reporter's context. */
+    reporter_send       send;           /*!< Send a trace event message. */
+    reporter_destroy    destroy;        /*!< Destroy the reporter - release all resources. */
 } oboe_reporter_t;
 
 int oboe_reporter_udp_init  (oboe_reporter_t *, const char *, const char *);
+int oboe_reporter_udp_init_str(oboe_reporter_t *, const char *);
 int oboe_reporter_file_init (oboe_reporter_t *, const char *);
+int oboe_reporter_file_init_str(oboe_reporter_t *, const char *);
+#if 0
+int oboe_reporter_ssl_init (oboe_reporter_t *, const char *);
+#endif
 
-int oboe_reporter_send(oboe_reporter_t *, oboe_metadata_t *, oboe_event_t *);
-int oboe_reporter_destroy(oboe_reporter_t *);
+/**
+ * Initialize a reporter structure for use with the specified protocol.
+ *
+ * @param rep Pointer to an uninitialized reporter structure.
+ * @param protocol One of  OBOE_REPORTER_PROTOCOL_FILE, OBOE_REPORTER_PROTOCOL_UDP,
+ *      or OBOE_REPORTER_PROTOCOL_SSL.
+ * @param args A configuration string for the specified protocol (protocol dependent syntax).
+ * @return Zero on success; otherwise -1.
+ */
+int oboe_reporter_init (oboe_reporter_t *rep, const char *protocol, const char *args);
+
+/**
+ * Check if the reporter is ready to send.
+ *
+ * The concept of 'ready' is depends on the specific reporter being used.
+ *
+ * @param rep The reporter context (optional).
+ * @return Non-zero if the reporter is ready to send.
+ */
+int oboe_reporter_is_ready(oboe_reporter_t *rep);
+
+/**
+ * Send an event message using the selected reporter context.
+ *
+ * @param rep The reporter context.
+ * @param evt The event message.
+ * @param md The X-Trace metadata.
+ * @return Length of message sent in bytes on success; otherwise -1.
+ */
+int oboe_reporter_send(oboe_reporter_t *rep, oboe_metadata_t *md, oboe_event_t *evt);
+
+/**
+ * Release any resources held by the reporter context.
+ *
+ * @param rep Pointer to a reporter context structure.
+ * @return Zero on success; otherwise non-zero to indicate an error.
+ */
+int oboe_reporter_destroy(oboe_reporter_t *rep);
+
+/**
+ * Disconnect or shut down the Oboe reporter, but allow it to be reconnect()ed.
+ *
+ * @param rep Pointer to the active reporter object.
+ */
+void oboe_disconnect(oboe_reporter_t *rep);
+
+/**
+ * Reconnect or restart the Oboe reporter.
+ *
+ * @param rep Pointer to the active reporter object.
+ */
+void oboe_reconnect(oboe_reporter_t *rep);
+
+/* Deprecated? Use oboe_reporter_send() */
 ssize_t oboe_reporter_udp_send(void *desc, const char *data, size_t len);
 
 
 // initialization
 
+/**
+ * Initialize the Oboe subsystems.
+ *
+ * This should be called before any other oboe_* functions.  However, in order
+ * to make the library easier to work with, checks are in place so that it
+ * will be called by any of the other functions that depend on it.
+ *
+ * Note that while calling this will be handled automatically, the application
+ * must still initialize one of the reporters directly since each reporter
+ * requires unique parameters.  The use of oboe_reporter_init() is recommended
+ * so that the selection of the reporter and values for its configuration
+ * parameters
+ */
 void oboe_init();
+
+/**
+ * Shut down the Oboe subsystems.
+ *
+ * This may be called on exit in order to release any resources held by
+ * the Oboe library including any child threads.
+ */
+void oboe_shutdown();
+
+/**
+ * Send a raw message using the current reporter.
+ *
+ * Use oboe_event_send() unless you are handling all the details of constructing
+ * the messages for a valid trace.
+ *
+ * @param data A BSON-encoded event message.
+ * @param len The length of the message data in bytes.
+ * @return Length of message sent in bytes on success; otherwise -1.
+ */
+int oboe_raw_send(const char *data, size_t len);
 
 
 // Settings interface
 
-#define OBOE_SETTINGS_VERSION 1
+#define OBOE_SETTINGS_VERSION 2
 #define OBOE_SETTINGS_MAGIC_NUMBER 0x6f626f65
 #define OBOE_SETTINGS_TYPE_SKIP 0
 #define OBOE_SETTINGS_TYPE_STOP 1
@@ -128,10 +329,17 @@ void oboe_init();
 #define OBOE_SETTINGS_FLAG_SAMPLE_THROUGH 0x8
 #define OBOE_SETTINGS_FLAG_SAMPLE_THROUGH_ALWAYS 0x10
 #define OBOE_SETTINGS_FLAG_SAMPLE_AVW_ALWAYS     0x20
+#define OBOE_SETTINGS_FLAG_SAMPLE_BUCKET_ENABLED 0x40
 #define OBOE_SETTINGS_MAX_STRLEN 256
+#define OBOE_SETTINGS_APP_TOKEN_SZ 16                   /*!< Size of the binary-encode app token. */
 
 #define OBOE_SETTINGS_UNSET -1
 #define OBOE_SETTINGS_MIN_REFRESH_INTERVAL 30
+
+// Header bit flags for reporting headers found in the sample parameters ('_SP') flags value.
+#define OBOE_HDR_FLAG_XTRACE         0x100              /*!< request has a valid trace identifier (ie. X-Trace header) so it's a THROUGH request */
+#define OBOE_HDR_FLAG_AVW            0x200              /*!< request has a valid AVW header */
+#define OBOE_HDR_FLAG_SOURCE_TRACE   0x400              /*!< request has a source trace header from a background job request */
 
 // Value for "SampleSource" info key
 // where was the sample rate specified? (oboe settings, config file, hard-coded default, etc)
@@ -140,7 +348,7 @@ void oboe_init();
 #define OBOE_SAMPLE_RATE_SOURCE_OBOE 3
 #define OBOE_SAMPLE_RATE_SOURCE_LAST_OBOE 4
 #define OBOE_SAMPLE_RATE_SOURCE_DEFAULT_MISCONFIGURED 5
-#define OBOE_SAMPLE_RATE_SOURCE_OBOE_DEFAULT 6 
+#define OBOE_SAMPLE_RATE_SOURCE_OBOE_DEFAULT 6
 
 #define OBOE_SAMPLE_RESOLUTION 1000000
 
@@ -149,6 +357,13 @@ void oboe_init();
 #define OBOE_TRACE_ALWAYS  1
 #define OBOE_TRACE_THROUGH 2
 
+#define TOKEN_BUCKET_CAPACITY_DEFAULT 16               // bucket capacity (how many tokens fit into the bucket)
+#define TOKEN_BUCKET_RATE_PER_SECOND_DEFAULT 8         // rate per second (number of tokens per second)
+
+
+#if defined _WIN32
+    #pragma pack(push, 1)
+#endif
 typedef struct {
     volatile uint32_t magic;
     volatile uint32_t timestamp;
@@ -158,31 +373,132 @@ typedef struct {
     uint32_t _pad;
     char layer[OBOE_SETTINGS_MAX_STRLEN];
     char arg[OBOE_SETTINGS_MAX_STRLEN];
-} __attribute__((packed)) oboe_settings_t;
+}
+#if defined _WIN32
+    oboe_settings_t;
+    #pragma pack(pop)
+#else
+    __attribute__((packed)) oboe_settings_t;
+#endif
+
+typedef struct {
+    volatile float capacity;
+    volatile float available;
+    volatile float rate_per_usec; // time is usecs from gettimeofday
+    struct timeval last_check;
+}
+#if defined _WIN32
+    __declspec(align(8)) token_bucket_t;
+#else
+    __attribute__((aligned)) token_bucket_t; // Max alignment for a scalar data type. 8 bytes on x64.
+#endif
+
+/**
+ * Typedef the app token value so the compiler can help track the type.
+ *
+ * Unfortunately C is a little inconsistent in that sometimes arrays are
+ * treated as arrays and sometimes as pointers, which causes confusion and
+ * ugliness in code. So we typedef the bytes and always work with a pointer.
+ * We have to assume that an apptoken value pointer is pointing to an
+ * appropriately sized buffer.  Suboptimal but better than nothing.
+ */
+typedef unsigned char oboe_apptoken_value_t;
+
+typedef struct {
+    char name[OBOE_SETTINGS_MAX_STRLEN];        /*!< Trace layer name. */
+    oboe_apptoken_value_t app_token[OBOE_SETTINGS_APP_TOKEN_SZ];    /*!< Binary encoded app ID token. */
+    token_bucket_t bucket;                      /*!< Token bucket rate limiting parameters. */
+    volatile uint32_t request_count;            // all the requests that came through this layer
+    volatile uint32_t exhaustion_count;         // # of times the token bucket limiting caused a trace to not occur
+    volatile uint32_t trace_count;              // # of traces that were sent (includes "always", "through", or "AVW" traces)
+    volatile uint32_t sample_count;             // # of traces that caused a random coin-flip (not "through" traces)
+    volatile uint32_t through_count;            // # of through traces
+    volatile uint32_t through_ignored_count;    // # of new requests, that are rejected due to start_always_flag == 0
+                                                // that have through_always_flag == 1
+    volatile uint32_t avw_count;                // # of AppView Web (AVW) traces
+    volatile uint32_t last_used_sample_rate;
+    volatile uint32_t last_used_sample_source;
+}
+#if defined _WIN32
+    __declspec(align(8)) entry_layer_t;
+#else
+    __attribute__((aligned)) entry_layer_t;
+#endif
 
 // Current settings configuration:
 typedef struct {
     int tracing_mode;          // loaded from config file
     int sample_rate;           // loaded from config file
     int default_sample_rate;   // default sample rate (fallback)
+//    oboe_reporter_t *reporter; // the initialized event reporter
     oboe_settings_t *settings; // cached settings, updated by tracelyzer (init to NULL)
-    int last_auto_sample_rate; // stores last known automatic sampling rate 
-    uint16_t last_auto_flags;  // stores last known flags associated with above 
+    int last_auto_sample_rate; // stores last known automatic sampling rate
+    uint16_t last_auto_flags;  // stores last known flags associated with above
     uint32_t last_auto_timestamp; // timestamp from last *settings lookup
     uint32_t last_refresh;        // last refresh time
+    entry_layer_t *entry_layer;
 } oboe_settings_cfg_t;
 
+/**
+ * Overlay structure for the arg field of the settings records.
+ */
+#if defined _WIN32
+    #pragma pack(push, 1)
+#endif
+typedef struct {
+    double bucket_capacity;
+    double bucket_rate_per_sec;
+    oboe_apptoken_value_t app_token[OBOE_SETTINGS_APP_TOKEN_SZ];    /*!< Binary encoded app ID token. */
+    char   _pad[OBOE_SETTINGS_MAX_STRLEN - sizeof(double) - sizeof(double) - OBOE_SETTINGS_APP_TOKEN_SZ];
+#if defined _WIN32
+} oboe_settings_args_t;
+    #pragma pack(pop)
+#else
+} __attribute__((packed)) oboe_settings_args_t;
+#endif
+
+int oboe_settings_init_local();
 oboe_settings_t* oboe_settings_get(uint16_t type, const char* layer, const char* arg);
+oboe_settings_t* oboe_settings_get_record(uint16_t type, const char* layer, const oboe_apptoken_value_t *app_token);
 oboe_settings_t* oboe_settings_get_layer_tracing_mode(const char* layer);
 oboe_settings_t* oboe_settings_get_layer_sample_rate(const char* layer);
-oboe_settings_t* oboe_settings_get_layer_app_sample_rate(const char* layer, const char* app);
+oboe_settings_t* oboe_settings_get_layer_app_sample_rate(const char* layer, const oboe_apptoken_value_t *app_token);
 uint32_t oboe_settings_get_latest_timestamp(const char* layer);
 int oboe_settings_get_value(oboe_settings_t *s, int *outval, unsigned short *outflags, uint32_t *outtimestamp);
+entry_layer_t* oboe_settings_entry_layer_get(const char* name, const oboe_apptoken_value_t *app_token);
 
 oboe_settings_cfg_t* oboe_settings_cfg_get();
+void oboe_settings_cfg_set(oboe_settings_cfg_t*);
 void oboe_settings_cfg_init(oboe_settings_cfg_t *cfg);
 void oboe_settings_cfg_tracing_mode_set(int new_mode);
 void oboe_settings_cfg_sample_rate_set(int new_rate);
+
+int oboe_rand_get_value();
+
+/*
+ * Convert bytes to a hex string.
+ *
+ * Note that the output string is NOT null terminated.
+ *
+ * @param bytes The bytes to be converted.
+ * @param str The string buffer to receive the hex string - must be twice the size of len.
+ * @param len The number of bytes to convert.
+ */
+void oboe_btoh(const uint8_t *bytes, char *str, size_t len);
+
+/**
+ * Convert a tracing mode to a printable string.
+ */
+const char *oboe_tracing_mode_to_string(int tracing_mode);
+
+/**
+ * Check if sampling is enabled.
+ *
+ * @param cfg Optional pointer to the settings configuration for the current
+ *          thread, as an optimization to avoid retrieving it.  May be NULL.
+ * @return Non-zero if sampling is now enabled.
+ */
+int oboe_sample_is_enabled(oboe_settings_cfg_t *cfg);
 
 /**
  * Check if this request should be sampled (deprecated - use oboe_sample_layer() instead).
@@ -198,14 +514,16 @@ void oboe_settings_cfg_sample_rate_set(int new_rate);
  */
 int oboe_sample_request(const char *layer, const char *in_xtrace, oboe_settings_cfg_t *cfg,
                       int *sample_rate_out, int *sample_source_out);
-int oboe_rand_get_value();
 
 /**
  * Check if this request should be sampled.
  *
- * Checks for sample rate flags and settings for the specified layer, considers any
- * special features in the X-Trace and X-TV-Meta HTTP headers, and, if appropriate,
- * rolls the virtual dice to decide if this request should be sampled.
+ * Checks for sample rate flags and settings for the specified layer, considers
+ * the current tracing mode and any special features in the X-Trace and
+ * X-TV-Meta HTTP headers, and, if appropriate, rolls the virtual dice to
+ * decide if this request should be sampled.
+ *
+ * This is designed to be called once per layer per request.
  *
  * This replaces oboe_sample_request with a version that uses the settings
  * configuration kept in thread-local storage and takes the X-TV-Meta HTTP
@@ -227,6 +545,103 @@ int oboe_sample_layer(
     int *sample_rate_out,
     int *sample_source_out
 );
+
+/** The context for a specific tracing configuration. */
+typedef struct oboe_settings_ctx_s oboe_settings_ctx_t;
+
+/**
+ * Create an optimized sampling context for the given parameters.
+ *
+ * This is intended to be stored and re-used for every sampling test
+ * for these parameters. Once created it will be considered immutable
+ * and therefore thread-safe.
+ *
+ * @param layer Layer name as used in oboe_settings_t.layer (may be NULL to use default settings)
+ * @param app App token string as configured. This string must be reported as "AApp" if the
+ *      request is traced.
+ * @param flags Bit-wise combination of OBOE_SETTINGS_FLAG_* values or -1 to use defaults.
+ * @param sample_rate Local sample rate configuration or -1 to use smart sampling.
+ *
+ * @return Pointer to a new tracing context or NULL on error.
+ */
+oboe_settings_ctx_t *
+oboe_settings_ctx_create(const char *layer, const char *app, int flags, int sample_rate);
+
+/**
+ * Get the locally configured layer name.
+ *
+ * @param ctx Pointer to a tracing context.
+ */
+const char *oboe_settings_ctx_get_layer(const oboe_settings_ctx_t *ctx);
+
+/**
+ * Get the locally configured application token string.
+ *
+ * @param ctx Pointer to a tracing context.
+ */
+const char *oboe_settings_ctx_get_app(const oboe_settings_ctx_t *ctx);
+
+/**
+ * Get the locally configured bit-wise combination of OBOE_SETTINGS_FLAG_*.
+ *
+ * @param ctx Pointer to a tracing context.
+ */
+int oboe_settings_ctx_get_flags(const oboe_settings_ctx_t *ctx);
+
+/**
+ * Get the locally configured sample rate.
+ *
+ * @param ctx Pointer to a tracing context.
+ */
+int oboe_settings_ctx_get_sample_rate(const oboe_settings_ctx_t *ctx);
+
+/**
+ * Set the parameters in a settings context.
+ *
+ * Use this only if the parameters need to be set or updated during configuration.
+ * This should not be used once tracing has started since it defeats optimizations
+ * done for sampling.
+ *
+ * @param ctx Pointer to a tracing context.
+ * @param layer Layer name as used in oboe_settings_t.layer (may be NULL to use default settings)
+ * @param app App token string as configured. This string must be reported as "AApp" if the
+ *      request is traced.
+ * @param flags Bit-wise combination of OBOE_SETTINGS_FLAG_* values or -1 to use defaults.
+ * @param sample_rate Local sample rate configuration or -1 to use smart sampling.
+ *
+ * @return Non-zero on failure (an error should be logged.
+ */
+int oboe_settings_ctx_set(oboe_settings_ctx_t *ctx, const char *layer, const char *app, int flags, int sample_rate);
+
+/** Destroy a tracing context structure. */
+int oboe_settings_ctx_destroy(oboe_settings_ctx_t *ctx);
+
+/**
+ * Convert a tracing mode to the corresponding settings flags value.
+ */
+int oboe_tracing_mode_to_flags(int tracing_mode);
+
+/**
+ * Check if a request or job should be traced.
+ *
+ * Checks sample rate settings for the specified layer and app, considers
+ * the mode and the context's parameters, and, if appropriate, rolls the
+ * virtual dice to decide if this request should be traced.
+ *
+ * This should be called for every request or job since it is updating throughput counters.
+ *
+ * @param ctx Pointer to a tracing context.
+ * @param retbuf Pointer to a buffer to receive the parameters used in the sampling decision
+ * @param retlen Pointer to integer to receive length of data written to retbuf
+ *      (initialize with buffer size - recommend OBOE_SAMPLE_PARAM_BUFFER_MAX or 1024)
+ * @param xtrace The X-Trace header value if applicable, otherwise NULL.
+ * @param url String containing the URL of the request, or NULL if not applicable.
+ * @param kvs String of comma-delimited, key=value pairs.
+ *
+ * @return Non-zero if the given layer should be traced.
+ */
+int oboe_should_trace(oboe_settings_ctx_t *ctx, char *retbuf, int *retlen, const char *xtrace, const char *url, const char *kvs);
+
 
 /* Oboe configuration interface. */
 
@@ -252,6 +667,261 @@ extern int oboe_config_check_version(int version, int revision);
 extern int oboe_config_get_version();
 
 /**
+ * Prototype for a logger call-back function.
+ *
+ * A logging function of this form can be added to the logger chain using
+ * oboe_debug_log_add().
+ *
+ * @param context The context pointer that was registered in the call to
+ *          oboe_debug_log_add().  Use it to pass the pointer-to-self for
+ *          objects (ie. "this" in C++) or just a structure in C,  May be
+ *          NULL.
+ * @param module The module identifier as passed to oboe_debug_logger().
+ * @param level The diagnostic detail level as passed to oboe_debug_logger().
+ * @param source_name Name of the source file as passed to oboe_debug_logger().
+ * @param source_lineno Number of the line in the source file where message is
+ *          logged from as passed to oboe_debug_logger().
+ * @param msg The formatted message produced from the format string and its
+ *          arguments as passed to oboe_debug_logger().
+ */
+typedef void (*OboeDebugLoggerFcn)(void *context, int module, int level, const char *source_name, int source_lineno, const char *msg);
+
+/**
+ * Get a printable name for a diagnostics logging level.
+ */
+extern const char *oboe_debug_log_level_name(int level);
+
+/**
+ * Get a printable name for a diagnostics logging module identifier.
+ */
+extern const char *oboe_debug_module_name(int module);
+
+/**
+ * Get the maximum logging detail level for a module or for all modules.
+ *
+ * This level applies to the stderr logger only.  Added loggers get all messages
+ * below their registed detail level and need to do their own module-specific
+ * filtering.
+ *
+ * @param module One of the OBOE_MODULE_* values.  Use OBOE_MODULE_ALL (-1) to
+ *          get the overall maximum detail level.
+ * @return Maximum detail level value for module (or overall) where zero is the
+ *          lowest and higher values generate more detailed log messages.
+ */
+extern int oboe_debug_log_level_get(int module);
+
+/**
+ * Set the maximum logging detail level for a module or for all modules.
+ *
+ * This level applies to the stderr logger only.  Added loggers get all messages
+ * below their registered detail level and need to do their own module-specific
+ * filtering.
+ *
+ * @param module One of the OBOE_MODULE_* values.  Use OBOE_MODULE_ALL to set
+ *          the overall maximum detail level.
+ * @param newLevel Maximum detail level value where zero is the lowest and higher
+ *          values generate more detailed log messages.
+ */
+extern void oboe_debug_log_level_set(int module, int newLevel);
+
+/**
+ * Set the output stream for the default logger.
+ *
+ * @param newStream A valid, open FILE* stream or NULL to disable the default logger.
+ * @return Zero on success; otherwise an error code (normally from errno).
+ */
+extern int oboe_debug_log_to_stream(FILE *newStream);
+
+/**
+ * Set the default logger to write to the specified file.
+ *
+ * A NULL or empty path name will disable the default logger.
+ *
+ * If the file exists then it will be opened in append mode.
+ *
+ * @param pathname The path name of the
+ * @return Zero on success; otherwise an error code (normally from errno).
+ */
+extern int oboe_debug_log_to_file(const char *pathname);
+
+/**
+ * Add a logger that takes messages up to a given logging detail level.
+ *
+ * This adds the logger to a chain in order of the logging level.  Log messages
+ * are passed to each logger down the chain until the remaining loggers only
+ * accept messages of a lower detail level.
+ *
+ * @return Zero on success, one if re-registered with the new logging level, and
+ *          otherwise a negative value to indicate an error.
+ */
+extern int oboe_debug_log_add(OboeDebugLoggerFcn newLogger, void *context, int logLevel);
+
+/**
+ * Remove a logger.
+ *
+ * Remove the logger from the message handling chain.
+ *
+ * @return Zero on success, one if it was not found, and otherwise a negative
+ *          value to indicate an error.
+ */
+extern int oboe_debug_log_remove(OboeDebugLoggerFcn oldLogger, void *context);
+
+/*
+ * Log the application's Oboe configuration.
+ *
+ * We use this to get a reasonable standard format between apps.
+ *
+ * @param module An OBOE_MODULE_* module identifier.  Use zero for undefined.
+ * @param app_name Either NULL or a pointer to a string containing a name for
+ *          the application - will prefix the log entry.  Useful when multiple
+ *          apps log to the same destination.
+ * @param trace_mode A string identifying the configured tracing mode, one of:
+ *          "never", "always", "never", "unset", or "undef" (for invalid values)
+ *          Use the oboe_tracing_mode_to_string() function to convert from
+ *          numeric values.
+ * @param sample_rate The configured sampling rate: -1 for unset or a
+ *          integer fraction of 1000000.
+ * @param reporter_type String identifying the type of reporter configured:
+ *          One of 'udp' (the default), 'ssl', or 'file'.
+ * @param reporter_args The string of comma-separated key=value settings
+ *          used to initialize the reporter.
+ * @param extra: Either NULL or a pointer to a string to be appended to
+ *          the log message and designed to include a few other
+ *          configuration parameters of interest.
+ */
+#if OBOE_DEBUG_LEVEL >= OBOE_DEBUG_INFO
+# define OBOE_DEBUG_LOG_CONFIG(module, app_name, trace_mode, sample_rate, reporter_type, reporter_args, extra) \
+  {                                                                                 \
+    oboe_debug_logger(module, OBOE_DEBUG_INFO, __FILE__, __LINE__,                  \
+        "%s Oboe config: tracing=%s, sampling=%d, reporter=('%s', '%s') %s",        \
+        (app_name == NULL ? "" : app_name),                                         \
+        trace_mode,                                                                 \
+        sample_rate,                                                                \
+        (reporter_type == NULL ? "?" : reporter_type),                              \
+        (reporter_args == NULL ? "?" : reporter_args),                              \
+        (extra == NULL ? "" : extra));                                              \
+  }
+#else
+# define OBOE_DEBUG_LOG_CONFIG(module, app_name, trace_mode, sample_rate, reporter_type, reporter_args, extra) {}
+#endif
+
+/**
+ * Log a fatal error.
+ */
+#if OBOE_DEBUG_LEVEL >= OBOE_DEBUG_FATAL
+# define OBOE_DEBUG_LOG_FATAL(module, ...)                   \
+  {                                                          \
+    oboe_debug_logger(module, OBOE_DEBUG_FATAL, __FILE__, __LINE__, __VA_ARGS__); \
+  }
+#else
+# define OBOE_DEBUG_LOG_FATAL(module, format_string, ...) {}
+#endif
+
+/**
+ * Log a recoverable error.
+ *
+ * Each message is limited in the number of times that it will be reported at the
+ * ERROR level after which it will be logged at the debug MEDIUM level.
+ */
+#if OBOE_DEBUG_LEVEL >= OBOE_DEBUG_ERROR
+# define OBOE_DEBUG_LOG_ERROR(module, ...)                   \
+  {                                                          \
+    static int usage_counter = 0;                            \
+    int loglev = (++usage_counter <= MAX_DEBUG_MSG_COUNT ? OBOE_DEBUG_ERROR : OBOE_DEBUG_MEDIUM); \
+    oboe_debug_logger(module, loglev, __FILE__, __LINE__, __VA_ARGS__); \
+  }
+#else
+# define OBOE_DEBUG_LOG_ERROR(module, format_string, ...) {}
+#endif
+
+/**
+ * Log a warning.
+ *
+ * Each message is limited in the number of times that it will be reported at the
+ * WARNING level after which it will be logged at the debug MEDIUM level.
+ */
+#if OBOE_DEBUG_LEVEL >= OBOE_DEBUG_WARNING
+# define OBOE_DEBUG_LOG_WARNING(module, ...)                 \
+  {                                                          \
+    static int usage_counter = 0;                            \
+    int loglev = (++usage_counter <= MAX_DEBUG_MSG_COUNT ? OBOE_DEBUG_WARNING : OBOE_DEBUG_MEDIUM); \
+    oboe_debug_logger(module, loglev, __FILE__, __LINE__, __VA_ARGS__); \
+  }
+#else
+# define OBOE_DEBUG_LOG_WARNING(module, format_string,...) {}
+#endif
+
+/**
+ * Log an informative message.
+ *
+ * Each message is limited in the number of times that it will be reported at the
+ * INFO level after which it will be logged at the debug MEDIUM level.
+ */
+#if OBOE_DEBUG_LEVEL >= OBOE_DEBUG_INFO
+# define OBOE_DEBUG_LOG_INFO(module, ...)                    \
+  {                                                                     \
+    static int usage_counter = 0;                            \
+    int loglev = (++usage_counter <= MAX_DEBUG_MSG_COUNT ? OBOE_DEBUG_INFO : OBOE_DEBUG_MEDIUM); \
+    oboe_debug_logger(module, loglev, __FILE__, __LINE__, __VA_ARGS__); \
+  }
+#else
+# define OBOE_DEBUG_LOG_INFO(module, format_string, ...) {}
+#endif
+
+/**
+ * Log a low-detail diagnostic message.
+ */
+#if OBOE_DEBUG_LEVEL >= OBOE_DEBUG_LOW
+# define OBOE_DEBUG_LOG_LOW(module, ...)                    \
+  {                                                                     \
+    oboe_debug_logger(module, OBOE_DEBUG_LOW, __FILE__, __LINE__, __VA_ARGS__); \
+  }
+#else
+# define OBOE_DEBUG_LOG_LOW(module, format_string, ...) {}
+#endif
+
+/**
+ * Log a medium-detail diagnostic message.
+ */
+#if OBOE_DEBUG_LEVEL >= OBOE_DEBUG_MEDIUM
+# define OBOE_DEBUG_LOG_MEDIUM(module, ...)                    \
+  {                                                                     \
+    oboe_debug_logger(module, OBOE_DEBUG_MEDIUM, __FILE__, __LINE__, __VA_ARGS__); \
+  }
+#else
+# define OBOE_DEBUG_LOG_MEDIUM(module, ...) {}
+#endif
+
+/**
+ * Log a high-detail diagnostic message.
+ */
+#if OBOE_DEBUG_LEVEL >= OBOE_DEBUG_HIGH
+# define OBOE_DEBUG_LOG_HIGH(module, ...)                    \
+  {                                                                     \
+    oboe_debug_logger(module, OBOE_DEBUG_HIGH, __FILE__, __LINE__, __VA_ARGS__); \
+  }
+#else
+# define OBOE_DEBUG_LOG_HIGH(module, format_string, ...) {}
+#endif
+
+
+/**
+ * Low-level diagnostics logging function.
+ *
+ * This is normally used only by the OBOE_DEBUG_LOG_* function macros and not used directly.
+ *
+ * This function may be adapted to format and route diagnostic log messages as desired.
+ *
+ * @param module One of the numeric module identifiers defined in debug.h - used to control logging detail by module.
+ * @param level Diagnostic detail level of this message - used to control logging volume by detail level.
+ * @param source_name Name of the source file, if available, or another useful name, or NULL.
+ * @param source_lineno Number of the line in the source file where message is logged from, if available, or zero.
+ * @param format A C language printf format specification string.
+ * @param args A variable argument list in VA_ARG format containing arguments for each argument specifier in the format.
+ */
+void oboe_debug_logger(int module, int level, const char *source_name, int source_lineno, const char *format, ...);
+
+/**
  * Get the Oboe library revision number.
  *
  * This is the revision of the current version which is updated whenever
@@ -267,6 +937,42 @@ extern int oboe_config_get_revision();
  * Returns the complete VERSION string or null
  */
 const char* oboe_config_get_version_string();
+
+/*
+ * Generate UUID for RUM
+ *
+ * @param access_key User Access Key
+ * @param uuid_length Size of the UUID to generate
+ * @param digest Pointer to array where the digest value gets stored
+ * @param dlen Number of bytes of data stored
+ */
+void oboe_rum_create_digest(const char* access_key, unsigned int uuid_length, unsigned char* digest, unsigned int *dlen);
+
+/**
+ * Load and cache host app token string as defined in /etc/appneta/traceview.cfg
+ *
+ * @return host app token string
+ */
+const char* oboe_get_apptoken();
+
+/**
+ * Load and cache the app token value decoded for settings records from /etc/appneta/traceview.cfg
+ *
+ * @return host app token value or a special value (000...001) for malformed tokens.
+ */
+const oboe_apptoken_value_t *oboe_get_apptoken_settings_value();
+
+/**
+ * Load and cache the app token value decoded for counters records from /etc/appneta/traceview.cfg
+ *
+ * @return host app token value or a truncated string for malformed tokens.
+ */
+const oboe_apptoken_value_t *oboe_get_apptoken_counters_value();
+
+/**
+ * Modified version of bson_print_raw() to properly print the _SP binary value
+ */
+void oboe_bson_print_raw( const char * data , int depth );
 
 #ifdef __cplusplus
 } // extern "C"
