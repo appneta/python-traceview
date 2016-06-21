@@ -41,7 +41,7 @@ class Context(object):
 
     @staticmethod
     def get_apptoken():
-        pass
+        return ''
 
     @staticmethod
     def get_apptoken_value():
@@ -118,6 +118,12 @@ class Context(object):
     @staticmethod
     def startTrace(_=None):
         return Event()
+
+    def __init__(self, layer, app_token, flags, sample_rate):
+        pass
+
+    def should_trace(self, xtr, url, avw):
+        return 'test'
 
 
 class Event(object):

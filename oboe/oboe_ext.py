@@ -75,7 +75,7 @@ class Metadata(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, Metadata, name)
     __repr__ = _swig_repr
-    def __init__(self, *args):
+    def __init__(self, *args): 
         this = _oboe_ext.new_Metadata(*args)
         try: self.this.append(this)
         except: self.this = this
@@ -106,7 +106,7 @@ class Context(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, Context, name)
     __repr__ = _swig_repr
-    def __init__(self, *args):
+    def __init__(self, *args): 
         this = _oboe_ext.new_Context(*args)
         try: self.this.append(this)
         except: self.this = this
@@ -272,7 +272,7 @@ class Reporter(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, Reporter, name)
     __repr__ = _swig_repr
-    def __init__(self, *args):
+    def __init__(self, *args): 
         this = _oboe_ext.new_Reporter(*args)
         try: self.this.append(this)
         except: self.this = this
@@ -288,7 +288,7 @@ class UdpReporter(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, UdpReporter, name)
     __repr__ = _swig_repr
-    def __init__(self, *args):
+    def __init__(self, *args): 
         this = _oboe_ext.new_UdpReporter(*args)
         try: self.this.append(this)
         except: self.this = this
@@ -304,7 +304,7 @@ class FileReporter(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, FileReporter, name)
     __repr__ = _swig_repr
-    def __init__(self, *args):
+    def __init__(self, *args): 
         this = _oboe_ext.new_FileReporter(*args)
         try: self.this.append(this)
         except: self.this = this
@@ -355,7 +355,7 @@ class DebugLog(_object):
     if _newclass:removeDebugLogger = staticmethod(_oboe_ext.DebugLog_removeDebugLogger)
     __swig_getmethods__["logMessage"] = lambda x: _oboe_ext.DebugLog_logMessage
     if _newclass:logMessage = staticmethod(_oboe_ext.DebugLog_logMessage)
-    def __init__(self):
+    def __init__(self): 
         this = _oboe_ext.new_DebugLog()
         try: self.this.append(this)
         except: self.this = this
@@ -412,7 +412,7 @@ class Config(_object):
     if _newclass:getVersion = staticmethod(_oboe_ext.Config_getVersion)
     __swig_getmethods__["getRevision"] = lambda x: _oboe_ext.Config_getRevision
     if _newclass:getRevision = staticmethod(_oboe_ext.Config_getRevision)
-    def __init__(self):
+    def __init__(self): 
         this = _oboe_ext.new_Config()
         try: self.this.append(this)
         except: self.this = this
@@ -434,3 +434,5 @@ def Config_getRevision():
 Config_getRevision = _oboe_ext.Config_getRevision
 
 # This file is compatible with both classic and new-style classes.
+
+

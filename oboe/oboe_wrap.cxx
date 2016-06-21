@@ -2947,9 +2947,8 @@ SWIG_Python_NonDynamicSetAttr(PyObject *obj, PyObject *name, PyObject *value) {
 #define SWIGTYPE_p_UdpReporter swig_types[9]
 #define SWIGTYPE_p_char swig_types[10]
 #define SWIGTYPE_p_oboe_metadata_t swig_types[11]
-#define SWIGTYPE_p_std__string swig_types[12]
-static swig_type_info *swig_types[14];
-static swig_module_info swig_module = {swig_types, 13, 0, 0, 0, 0};
+static swig_type_info *swig_types[13];
+static swig_module_info swig_module = {swig_types, 12, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -3046,10 +3045,164 @@ namespace swig {
 }
 
 
+#include "oboe.hpp"
+
+
+#include <string>
+
+
+SWIGINTERN swig_type_info*
+SWIG_pchar_descriptor(void)
+{
+  static int init = 0;
+  static swig_type_info* info = 0;
+  if (!init) {
+    info = SWIG_TypeQuery("_p_char");
+    init = 1;
+  }
+  return info;
+}
+
+
+SWIGINTERN int
+SWIG_AsCharPtrAndSize(PyObject *obj, char** cptr, size_t* psize, int *alloc)
+{
+#if PY_VERSION_HEX>=0x03000000
+  if (PyUnicode_Check(obj))
+#else
+  if (PyString_Check(obj))
+#endif
+  {
+    char *cstr; Py_ssize_t len;
+#if PY_VERSION_HEX>=0x03000000
+    if (!alloc && cptr) {
+        /* We can't allow converting without allocation, since the internal
+           representation of string in Python 3 is UCS-2/UCS-4 but we require
+           a UTF-8 representation.
+           TODO(bhy) More detailed explanation */
+        return SWIG_RuntimeError;
+    }
+    obj = PyUnicode_AsUTF8String(obj);
+    PyBytes_AsStringAndSize(obj, &cstr, &len);
+    if(alloc) *alloc = SWIG_NEWOBJ;
+#else
+    PyString_AsStringAndSize(obj, &cstr, &len);
+#endif
+    if (cptr) {
+      if (alloc) {
+	/*
+	   In python the user should not be able to modify the inner
+	   string representation. To warranty that, if you define
+	   SWIG_PYTHON_SAFE_CSTRINGS, a new/copy of the python string
+	   buffer is always returned.
+
+	   The default behavior is just to return the pointer value,
+	   so, be careful.
+	*/
+#if defined(SWIG_PYTHON_SAFE_CSTRINGS)
+	if (*alloc != SWIG_OLDOBJ)
+#else
+	if (*alloc == SWIG_NEWOBJ)
+#endif
+	  {
+	    *cptr = reinterpret_cast< char* >(memcpy((new char[len + 1]), cstr, sizeof(char)*(len + 1)));
+	    *alloc = SWIG_NEWOBJ;
+	  }
+	else {
+	  *cptr = cstr;
+	  *alloc = SWIG_OLDOBJ;
+	}
+      } else {
+        #if PY_VERSION_HEX>=0x03000000
+        assert(0); /* Should never reach here in Python 3 */
+        #endif
+	*cptr = SWIG_Python_str_AsChar(obj);
+      }
+    }
+    if (psize) *psize = len + 1;
+#if PY_VERSION_HEX>=0x03000000
+    Py_XDECREF(obj);
+#endif
+    return SWIG_OK;
+  } else {
+    swig_type_info* pchar_descriptor = SWIG_pchar_descriptor();
+    if (pchar_descriptor) {
+      void* vptr = 0;
+      if (SWIG_ConvertPtr(obj, &vptr, pchar_descriptor, 0) == SWIG_OK) {
+	if (cptr) *cptr = (char *) vptr;
+	if (psize) *psize = vptr ? (strlen((char *)vptr) + 1) : 0;
+	if (alloc) *alloc = SWIG_OLDOBJ;
+	return SWIG_OK;
+      }
+    }
+  }
+  return SWIG_TypeError;
+}
+
+
+SWIGINTERN int
+SWIG_AsPtr_std_string (PyObject * obj, std::string **val)
+{
+  char* buf = 0 ; size_t size = 0; int alloc = SWIG_OLDOBJ;
+  if (SWIG_IsOK((SWIG_AsCharPtrAndSize(obj, &buf, &size, &alloc)))) {
+    if (buf) {
+      if (val) *val = new std::string(buf, size - 1);
+      if (alloc == SWIG_NEWOBJ) delete[] buf;
+      return SWIG_NEWOBJ;
+    } else {
+      if (val) *val = 0;
+      return SWIG_OLDOBJ;
+    }
+  } else {
+    static int init = 0;
+    static swig_type_info* descriptor = 0;
+    if (!init) {
+      descriptor = SWIG_TypeQuery("std::string" " *");
+      init = 1;
+    }
+    if (descriptor) {
+      std::string *vptr;
+      int res = SWIG_ConvertPtr(obj, (void**)&vptr, descriptor, 0);
+      if (SWIG_IsOK(res) && val) *val = vptr;
+      return res;
+    }
+  }
+  return SWIG_ERROR;
+}
+
+
 SWIGINTERNINLINE PyObject*
   SWIG_From_bool  (bool value)
 {
   return PyBool_FromLong(value ? 1 : 0);
+}
+
+
+SWIGINTERNINLINE PyObject *
+SWIG_FromCharPtrAndSize(const char* carray, size_t size)
+{
+  if (carray) {
+    if (size > INT_MAX) {
+      swig_type_info* pchar_descriptor = SWIG_pchar_descriptor();
+      return pchar_descriptor ?
+	SWIG_InternalNewPointerObj(const_cast< char * >(carray), pchar_descriptor, 0) : SWIG_Py_Void();
+    } else {
+#if PY_VERSION_HEX >= 0x03000000
+      return PyUnicode_FromStringAndSize(carray, static_cast< int >(size));
+#else
+      return PyString_FromStringAndSize(carray, static_cast< int >(size));
+#endif
+    }
+  } else {
+    return SWIG_Py_Void();
+  }
+}
+
+
+SWIGINTERNINLINE PyObject *
+SWIG_From_std_string  (const std::string& s)
+{
+  return SWIG_FromCharPtrAndSize(s.data(), s.size());
 }
 
 
@@ -3205,95 +3358,6 @@ SWIGINTERNINLINE PyObject*
 }
 
 
-SWIGINTERN swig_type_info*
-SWIG_pchar_descriptor(void)
-{
-  static int init = 0;
-  static swig_type_info* info = 0;
-  if (!init) {
-    info = SWIG_TypeQuery("_p_char");
-    init = 1;
-  }
-  return info;
-}
-
-
-SWIGINTERN int
-SWIG_AsCharPtrAndSize(PyObject *obj, char** cptr, size_t* psize, int *alloc)
-{
-#if PY_VERSION_HEX>=0x03000000
-  if (PyUnicode_Check(obj))
-#else
-  if (PyString_Check(obj))
-#endif
-  {
-    char *cstr; Py_ssize_t len;
-#if PY_VERSION_HEX>=0x03000000
-    if (!alloc && cptr) {
-        /* We can't allow converting without allocation, since the internal
-           representation of string in Python 3 is UCS-2/UCS-4 but we require
-           a UTF-8 representation.
-           TODO(bhy) More detailed explanation */
-        return SWIG_RuntimeError;
-    }
-    obj = PyUnicode_AsUTF8String(obj);
-    PyBytes_AsStringAndSize(obj, &cstr, &len);
-    if(alloc) *alloc = SWIG_NEWOBJ;
-#else
-    PyString_AsStringAndSize(obj, &cstr, &len);
-#endif
-    if (cptr) {
-      if (alloc) {
-	/*
-	   In python the user should not be able to modify the inner
-	   string representation. To warranty that, if you define
-	   SWIG_PYTHON_SAFE_CSTRINGS, a new/copy of the python string
-	   buffer is always returned.
-
-	   The default behavior is just to return the pointer value,
-	   so, be careful.
-	*/
-#if defined(SWIG_PYTHON_SAFE_CSTRINGS)
-	if (*alloc != SWIG_OLDOBJ)
-#else
-	if (*alloc == SWIG_NEWOBJ)
-#endif
-	  {
-	    *cptr = reinterpret_cast< char* >(memcpy((new char[len + 1]), cstr, sizeof(char)*(len + 1)));
-	    *alloc = SWIG_NEWOBJ;
-	  }
-	else {
-	  *cptr = cstr;
-	  *alloc = SWIG_OLDOBJ;
-	}
-      } else {
-        #if PY_VERSION_HEX>=0x03000000
-        assert(0); /* Should never reach here in Python 3 */
-        #endif
-	*cptr = SWIG_Python_str_AsChar(obj);
-      }
-    }
-    if (psize) *psize = len + 1;
-#if PY_VERSION_HEX>=0x03000000
-    Py_XDECREF(obj);
-#endif
-    return SWIG_OK;
-  } else {
-    swig_type_info* pchar_descriptor = SWIG_pchar_descriptor();
-    if (pchar_descriptor) {
-      void* vptr = 0;
-      if (SWIG_ConvertPtr(obj, &vptr, pchar_descriptor, 0) == SWIG_OK) {
-	if (cptr) *cptr = (char *) vptr;
-	if (psize) *psize = vptr ? (strlen((char *)vptr) + 1) : 0;
-	if (alloc) *alloc = SWIG_OLDOBJ;
-	return SWIG_OK;
-      }
-    }
-  }
-  return SWIG_TypeError;
-}
-
-
 
 
 
@@ -3414,27 +3478,21 @@ fail:
 SWIGINTERN PyObject *_wrap_Metadata_fromString(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   std::string arg1 ;
-  void *argp1 ;
-  int res1 = 0 ;
   PyObject * obj0 = 0 ;
   Metadata *result = 0 ;
 
   if (!PyArg_ParseTuple(args,(char *)"O:Metadata_fromString",&obj0)) SWIG_fail;
   {
-    res1 = SWIG_ConvertPtr(obj0, &argp1, SWIGTYPE_p_std__string,  0  | 0);
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Metadata_fromString" "', argument " "1"" of type '" "std::string""'");
+    std::string *ptr = (std::string *)0;
+    int res = SWIG_AsPtr_std_string(obj0, &ptr);
+    if (!SWIG_IsOK(res) || !ptr) {
+      SWIG_exception_fail(SWIG_ArgError((ptr ? res : SWIG_TypeError)), "in method '" "Metadata_fromString" "', argument " "1"" of type '" "std::string""'");
     }
-    if (!argp1) {
-      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "Metadata_fromString" "', argument " "1"" of type '" "std::string""'");
-    } else {
-      std::string * temp = reinterpret_cast< std::string * >(argp1);
-      arg1 = *temp;
-      if (SWIG_IsNewObj(res1)) delete temp;
-    }
+    arg1 = *ptr;
+    if (SWIG_IsNewObj(res)) delete ptr;
   }
   result = (Metadata *)Metadata::fromString(arg1);
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Metadata, 0 |  0 );
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Metadata, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
   return NULL;
@@ -3456,7 +3514,7 @@ SWIGINTERN PyObject *_wrap_Metadata_createEvent(PyObject *SWIGUNUSEDPARM(self), 
   }
   arg1 = reinterpret_cast< Metadata * >(argp1);
   result = (Event *)(arg1)->createEvent();
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Event, 0 |  0 );
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Event, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
   return NULL;
@@ -3469,7 +3527,7 @@ SWIGINTERN PyObject *_wrap_Metadata_makeRandom(PyObject *SWIGUNUSEDPARM(self), P
 
   if (!PyArg_ParseTuple(args,(char *)":Metadata_makeRandom")) SWIG_fail;
   result = (Metadata *)Metadata::makeRandom();
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Metadata, 0 |  0 );
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Metadata, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
   return NULL;
@@ -3491,7 +3549,7 @@ SWIGINTERN PyObject *_wrap_Metadata_copy(PyObject *SWIGUNUSEDPARM(self), PyObjec
   }
   arg1 = reinterpret_cast< Metadata * >(argp1);
   result = (Metadata *)(arg1)->copy();
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Metadata, 0 |  0 );
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Metadata, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
   return NULL;
@@ -3535,7 +3593,7 @@ SWIGINTERN PyObject *_wrap_Metadata_toString(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   arg1 = reinterpret_cast< Metadata * >(argp1);
   result = (arg1)->toString();
-  resultobj = SWIG_NewPointerObj((new std::string(static_cast< const std::string& >(result))), SWIGTYPE_p_std__string, SWIG_POINTER_OWN |  0 );
+  resultobj = SWIG_From_std_string(static_cast< std::string >(result));
   return resultobj;
 fail:
   return NULL;
@@ -3555,10 +3613,8 @@ SWIGINTERN PyObject *_wrap_new_Context(PyObject *SWIGUNUSEDPARM(self), PyObject 
   std::string *arg2 = 0 ;
   int arg3 ;
   int arg4 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  void *argp2 = 0 ;
-  int res2 = 0 ;
+  int res1 = SWIG_OLDOBJ ;
+  int res2 = SWIG_OLDOBJ ;
   int val3 ;
   int ecode3 = 0 ;
   int val4 ;
@@ -3570,22 +3626,28 @@ SWIGINTERN PyObject *_wrap_new_Context(PyObject *SWIGUNUSEDPARM(self), PyObject 
   Context *result = 0 ;
 
   if (!PyArg_ParseTuple(args,(char *)"OOOO:new_Context",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1, SWIGTYPE_p_std__string,  0  | 0);
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "new_Context" "', argument " "1"" of type '" "std::string const &""'");
+  {
+    std::string *ptr = (std::string *)0;
+    res1 = SWIG_AsPtr_std_string(obj0, &ptr);
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "new_Context" "', argument " "1"" of type '" "std::string const &""'");
+    }
+    if (!ptr) {
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_Context" "', argument " "1"" of type '" "std::string const &""'");
+    }
+    arg1 = ptr;
   }
-  if (!argp1) {
-    SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_Context" "', argument " "1"" of type '" "std::string const &""'");
+  {
+    std::string *ptr = (std::string *)0;
+    res2 = SWIG_AsPtr_std_string(obj1, &ptr);
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "new_Context" "', argument " "2"" of type '" "std::string const &""'");
+    }
+    if (!ptr) {
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_Context" "', argument " "2"" of type '" "std::string const &""'");
+    }
+    arg2 = ptr;
   }
-  arg1 = reinterpret_cast< std::string * >(argp1);
-  res2 = SWIG_ConvertPtr(obj1, &argp2, SWIGTYPE_p_std__string,  0  | 0);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "new_Context" "', argument " "2"" of type '" "std::string const &""'");
-  }
-  if (!argp2) {
-    SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_Context" "', argument " "2"" of type '" "std::string const &""'");
-  }
-  arg2 = reinterpret_cast< std::string * >(argp2);
   ecode3 = SWIG_AsVal_int(obj2, &val3);
   if (!SWIG_IsOK(ecode3)) {
     SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "new_Context" "', argument " "3"" of type '" "int""'");
@@ -3598,8 +3660,12 @@ SWIGINTERN PyObject *_wrap_new_Context(PyObject *SWIGUNUSEDPARM(self), PyObject 
   arg4 = static_cast< int >(val4);
   result = (Context *)new Context((std::string const &)*arg1,(std::string const &)*arg2,arg3,arg4);
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Context, SWIG_POINTER_NEW |  0 );
+  if (SWIG_IsNewObj(res1)) delete arg1;
+  if (SWIG_IsNewObj(res2)) delete arg2;
   return resultobj;
 fail:
+  if (SWIG_IsNewObj(res1)) delete arg1;
+  if (SWIG_IsNewObj(res2)) delete arg2;
   return NULL;
 }
 
@@ -3633,12 +3699,9 @@ SWIGINTERN PyObject *_wrap_Context_should_trace(PyObject *SWIGUNUSEDPARM(self), 
   std::string *arg4 = 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
-  void *argp2 = 0 ;
-  int res2 = 0 ;
-  void *argp3 = 0 ;
-  int res3 = 0 ;
-  void *argp4 = 0 ;
-  int res4 = 0 ;
+  int res2 = SWIG_OLDOBJ ;
+  int res3 = SWIG_OLDOBJ ;
+  int res4 = SWIG_OLDOBJ ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
@@ -3651,34 +3714,49 @@ SWIGINTERN PyObject *_wrap_Context_should_trace(PyObject *SWIGUNUSEDPARM(self), 
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Context_should_trace" "', argument " "1"" of type '" "Context *""'");
   }
   arg1 = reinterpret_cast< Context * >(argp1);
-  res2 = SWIG_ConvertPtr(obj1, &argp2, SWIGTYPE_p_std__string,  0  | 0);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Context_should_trace" "', argument " "2"" of type '" "std::string const &""'");
+  {
+    std::string *ptr = (std::string *)0;
+    res2 = SWIG_AsPtr_std_string(obj1, &ptr);
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Context_should_trace" "', argument " "2"" of type '" "std::string const &""'");
+    }
+    if (!ptr) {
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "Context_should_trace" "', argument " "2"" of type '" "std::string const &""'");
+    }
+    arg2 = ptr;
   }
-  if (!argp2) {
-    SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "Context_should_trace" "', argument " "2"" of type '" "std::string const &""'");
+  {
+    std::string *ptr = (std::string *)0;
+    res3 = SWIG_AsPtr_std_string(obj2, &ptr);
+    if (!SWIG_IsOK(res3)) {
+      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "Context_should_trace" "', argument " "3"" of type '" "std::string const &""'");
+    }
+    if (!ptr) {
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "Context_should_trace" "', argument " "3"" of type '" "std::string const &""'");
+    }
+    arg3 = ptr;
   }
-  arg2 = reinterpret_cast< std::string * >(argp2);
-  res3 = SWIG_ConvertPtr(obj2, &argp3, SWIGTYPE_p_std__string,  0  | 0);
-  if (!SWIG_IsOK(res3)) {
-    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "Context_should_trace" "', argument " "3"" of type '" "std::string const &""'");
+  {
+    std::string *ptr = (std::string *)0;
+    res4 = SWIG_AsPtr_std_string(obj3, &ptr);
+    if (!SWIG_IsOK(res4)) {
+      SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "Context_should_trace" "', argument " "4"" of type '" "std::string const &""'");
+    }
+    if (!ptr) {
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "Context_should_trace" "', argument " "4"" of type '" "std::string const &""'");
+    }
+    arg4 = ptr;
   }
-  if (!argp3) {
-    SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "Context_should_trace" "', argument " "3"" of type '" "std::string const &""'");
-  }
-  arg3 = reinterpret_cast< std::string * >(argp3);
-  res4 = SWIG_ConvertPtr(obj3, &argp4, SWIGTYPE_p_std__string,  0  | 0);
-  if (!SWIG_IsOK(res4)) {
-    SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "Context_should_trace" "', argument " "4"" of type '" "std::string const &""'");
-  }
-  if (!argp4) {
-    SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "Context_should_trace" "', argument " "4"" of type '" "std::string const &""'");
-  }
-  arg4 = reinterpret_cast< std::string * >(argp4);
   result = (arg1)->should_trace((std::string const &)*arg2,(std::string const &)*arg3,(std::string const &)*arg4);
-  resultobj = SWIG_NewPointerObj((new std::string(static_cast< const std::string& >(result))), SWIGTYPE_p_std__string, SWIG_POINTER_OWN |  0 );
+  resultobj = SWIG_From_std_string(static_cast< std::string >(result));
+  if (SWIG_IsNewObj(res2)) delete arg2;
+  if (SWIG_IsNewObj(res3)) delete arg3;
+  if (SWIG_IsNewObj(res4)) delete arg4;
   return resultobj;
 fail:
+  if (SWIG_IsNewObj(res2)) delete arg2;
+  if (SWIG_IsNewObj(res3)) delete arg3;
+  if (SWIG_IsNewObj(res4)) delete arg4;
   return NULL;
 }
 
@@ -3689,7 +3767,7 @@ SWIGINTERN PyObject *_wrap_Context_get_apptoken(PyObject *SWIGUNUSEDPARM(self), 
 
   if (!PyArg_ParseTuple(args,(char *)":Context_get_apptoken")) SWIG_fail;
   result = Context::get_apptoken();
-  resultobj = SWIG_NewPointerObj((new std::string(static_cast< const std::string& >(result))), SWIGTYPE_p_std__string, SWIG_POINTER_OWN |  0 );
+  resultobj = SWIG_From_std_string(static_cast< std::string >(result));
   return resultobj;
 fail:
   return NULL;
@@ -3702,7 +3780,7 @@ SWIGINTERN PyObject *_wrap_Context_get_apptoken_settings_value(PyObject *SWIGUNU
 
   if (!PyArg_ParseTuple(args,(char *)":Context_get_apptoken_settings_value")) SWIG_fail;
   result = Context::get_apptoken_settings_value();
-  resultobj = SWIG_NewPointerObj((new std::string(static_cast< const std::string& >(result))), SWIGTYPE_p_std__string, SWIG_POINTER_OWN |  0 );
+  resultobj = SWIG_From_std_string(static_cast< std::string >(result));
   return resultobj;
 fail:
   return NULL;
@@ -3715,7 +3793,7 @@ SWIGINTERN PyObject *_wrap_Context_get_apptoken_counters_value(PyObject *SWIGUNU
 
   if (!PyArg_ParseTuple(args,(char *)":Context_get_apptoken_counters_value")) SWIG_fail;
   result = Context::get_apptoken_counters_value();
-  resultobj = SWIG_NewPointerObj((new std::string(static_cast< const std::string& >(result))), SWIGTYPE_p_std__string, SWIG_POINTER_OWN |  0 );
+  resultobj = SWIG_From_std_string(static_cast< std::string >(result));
   return resultobj;
 fail:
   return NULL;
@@ -3728,7 +3806,7 @@ SWIGINTERN PyObject *_wrap_Context_get_apptoken_value(PyObject *SWIGUNUSEDPARM(s
 
   if (!PyArg_ParseTuple(args,(char *)":Context_get_apptoken_value")) SWIG_fail;
   result = Context::get_apptoken_value();
-  resultobj = SWIG_NewPointerObj((new std::string(static_cast< const std::string& >(result))), SWIGTYPE_p_std__string, SWIG_POINTER_OWN |  0 );
+  resultobj = SWIG_From_std_string(static_cast< std::string >(result));
   return resultobj;
 fail:
   return NULL;
@@ -3782,12 +3860,6 @@ SWIGINTERN PyObject *_wrap_Context_sampleRequest(PyObject *SWIGUNUSEDPARM(self),
   std::string arg1 ;
   std::string arg2 ;
   std::string arg3 ;
-  void *argp1 ;
-  int res1 = 0 ;
-  void *argp2 ;
-  int res2 = 0 ;
-  void *argp3 ;
-  int res3 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
@@ -3795,43 +3867,31 @@ SWIGINTERN PyObject *_wrap_Context_sampleRequest(PyObject *SWIGUNUSEDPARM(self),
 
   if (!PyArg_ParseTuple(args,(char *)"OOO:Context_sampleRequest",&obj0,&obj1,&obj2)) SWIG_fail;
   {
-    res1 = SWIG_ConvertPtr(obj0, &argp1, SWIGTYPE_p_std__string,  0  | 0);
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Context_sampleRequest" "', argument " "1"" of type '" "std::string""'");
+    std::string *ptr = (std::string *)0;
+    int res = SWIG_AsPtr_std_string(obj0, &ptr);
+    if (!SWIG_IsOK(res) || !ptr) {
+      SWIG_exception_fail(SWIG_ArgError((ptr ? res : SWIG_TypeError)), "in method '" "Context_sampleRequest" "', argument " "1"" of type '" "std::string""'");
     }
-    if (!argp1) {
-      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "Context_sampleRequest" "', argument " "1"" of type '" "std::string""'");
-    } else {
-      std::string * temp = reinterpret_cast< std::string * >(argp1);
-      arg1 = *temp;
-      if (SWIG_IsNewObj(res1)) delete temp;
-    }
+    arg1 = *ptr;
+    if (SWIG_IsNewObj(res)) delete ptr;
   }
   {
-    res2 = SWIG_ConvertPtr(obj1, &argp2, SWIGTYPE_p_std__string,  0  | 0);
-    if (!SWIG_IsOK(res2)) {
-      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Context_sampleRequest" "', argument " "2"" of type '" "std::string""'");
+    std::string *ptr = (std::string *)0;
+    int res = SWIG_AsPtr_std_string(obj1, &ptr);
+    if (!SWIG_IsOK(res) || !ptr) {
+      SWIG_exception_fail(SWIG_ArgError((ptr ? res : SWIG_TypeError)), "in method '" "Context_sampleRequest" "', argument " "2"" of type '" "std::string""'");
     }
-    if (!argp2) {
-      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "Context_sampleRequest" "', argument " "2"" of type '" "std::string""'");
-    } else {
-      std::string * temp = reinterpret_cast< std::string * >(argp2);
-      arg2 = *temp;
-      if (SWIG_IsNewObj(res2)) delete temp;
-    }
+    arg2 = *ptr;
+    if (SWIG_IsNewObj(res)) delete ptr;
   }
   {
-    res3 = SWIG_ConvertPtr(obj2, &argp3, SWIGTYPE_p_std__string,  0  | 0);
-    if (!SWIG_IsOK(res3)) {
-      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "Context_sampleRequest" "', argument " "3"" of type '" "std::string""'");
+    std::string *ptr = (std::string *)0;
+    int res = SWIG_AsPtr_std_string(obj2, &ptr);
+    if (!SWIG_IsOK(res) || !ptr) {
+      SWIG_exception_fail(SWIG_ArgError((ptr ? res : SWIG_TypeError)), "in method '" "Context_sampleRequest" "', argument " "3"" of type '" "std::string""'");
     }
-    if (!argp3) {
-      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "Context_sampleRequest" "', argument " "3"" of type '" "std::string""'");
-    } else {
-      std::string * temp = reinterpret_cast< std::string * >(argp3);
-      arg3 = *temp;
-      if (SWIG_IsNewObj(res3)) delete temp;
-    }
+    arg3 = *ptr;
+    if (SWIG_IsNewObj(res)) delete ptr;
   }
   result = (int)Context::sampleRequest(arg1,arg2,arg3);
   resultobj = SWIG_From_int(static_cast< int >(result));
@@ -3860,7 +3920,7 @@ SWIGINTERN PyObject *_wrap_Context_toString(PyObject *SWIGUNUSEDPARM(self), PyOb
 
   if (!PyArg_ParseTuple(args,(char *)":Context_toString")) SWIG_fail;
   result = Context::toString();
-  resultobj = SWIG_NewPointerObj((new std::string(static_cast< const std::string& >(result))), SWIGTYPE_p_std__string, SWIG_POINTER_OWN |  0 );
+  resultobj = SWIG_From_std_string(static_cast< std::string >(result));
   return resultobj;
 fail:
   return NULL;
@@ -3891,23 +3951,17 @@ fail:
 SWIGINTERN PyObject *_wrap_Context_fromString(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   std::string arg1 ;
-  void *argp1 ;
-  int res1 = 0 ;
   PyObject * obj0 = 0 ;
 
   if (!PyArg_ParseTuple(args,(char *)"O:Context_fromString",&obj0)) SWIG_fail;
   {
-    res1 = SWIG_ConvertPtr(obj0, &argp1, SWIGTYPE_p_std__string,  0  | 0);
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Context_fromString" "', argument " "1"" of type '" "std::string""'");
+    std::string *ptr = (std::string *)0;
+    int res = SWIG_AsPtr_std_string(obj0, &ptr);
+    if (!SWIG_IsOK(res) || !ptr) {
+      SWIG_exception_fail(SWIG_ArgError((ptr ? res : SWIG_TypeError)), "in method '" "Context_fromString" "', argument " "1"" of type '" "std::string""'");
     }
-    if (!argp1) {
-      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "Context_fromString" "', argument " "1"" of type '" "std::string""'");
-    } else {
-      std::string * temp = reinterpret_cast< std::string * >(argp1);
-      arg1 = *temp;
-      if (SWIG_IsNewObj(res1)) delete temp;
-    }
+    arg1 = *ptr;
+    if (SWIG_IsNewObj(res)) delete ptr;
   }
   Context::fromString(arg1);
   resultobj = SWIG_Py_Void();
@@ -3923,7 +3977,7 @@ SWIGINTERN PyObject *_wrap_Context_copy(PyObject *SWIGUNUSEDPARM(self), PyObject
 
   if (!PyArg_ParseTuple(args,(char *)":Context_copy")) SWIG_fail;
   result = (Metadata *)Context::copy();
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Metadata, 0 |  0 );
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Metadata, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
   return NULL;
@@ -4061,7 +4115,7 @@ SWIGINTERN PyObject *_wrap_Context_createEvent(PyObject *SWIGUNUSEDPARM(self), P
 
   if (!PyArg_ParseTuple(args,(char *)":Context_createEvent")) SWIG_fail;
   result = (Event *)Context::createEvent();
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Event, 0 |  0 );
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Event, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
   return NULL;
@@ -4074,7 +4128,7 @@ SWIGINTERN PyObject *_wrap_Context_startTrace(PyObject *SWIGUNUSEDPARM(self), Py
 
   if (!PyArg_ParseTuple(args,(char *)":Context_startTrace")) SWIG_fail;
   result = (Event *)Context::startTrace();
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Event, 0 |  0 );
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Event, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
   return NULL;
@@ -4160,8 +4214,7 @@ SWIGINTERN PyObject *_wrap_Event_addInfo__SWIG_1(PyObject *SWIGUNUSEDPARM(self),
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
-  void *argp3 = 0 ;
-  int res3 = 0 ;
+  int res3 = SWIG_OLDOBJ ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
@@ -4178,20 +4231,26 @@ SWIGINTERN PyObject *_wrap_Event_addInfo__SWIG_1(PyObject *SWIGUNUSEDPARM(self),
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Event_addInfo" "', argument " "2"" of type '" "char *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
-  res3 = SWIG_ConvertPtr(obj2, &argp3, SWIGTYPE_p_std__string,  0  | 0);
-  if (!SWIG_IsOK(res3)) {
-    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "Event_addInfo" "', argument " "3"" of type '" "std::string const &""'");
+  {
+    std::string *ptr = (std::string *)0;
+    res3 = SWIG_AsPtr_std_string(obj2, &ptr);
+    printf("data is %s\n", ptr->c_str());
+    if (!SWIG_IsOK(res3)) {
+      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "Event_addInfo" "', argument " "3"" of type '" "std::string const &""'");
+    }
+    if (!ptr) {
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "Event_addInfo" "', argument " "3"" of type '" "std::string const &""'");
+    }
+    arg3 = ptr;
   }
-  if (!argp3) {
-    SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "Event_addInfo" "', argument " "3"" of type '" "std::string const &""'");
-  }
-  arg3 = reinterpret_cast< std::string * >(argp3);
   result = (bool)(arg1)->addInfo(arg2,(std::string const &)*arg3);
   resultobj = SWIG_From_bool(static_cast< bool >(result));
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  if (SWIG_IsNewObj(res3)) delete arg3;
   return resultobj;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  if (SWIG_IsNewObj(res3)) delete arg3;
   return NULL;
 }
 
@@ -4301,23 +4360,6 @@ SWIGINTERN PyObject *_wrap_Event_addInfo(PyObject *self, PyObject *args) {
       int res = SWIG_AsCharPtrAndSize(argv[1], 0, NULL, 0);
       _v = SWIG_CheckState(res);
       if (_v) {
-        int res = SWIG_ConvertPtr(argv[2], 0, SWIGTYPE_p_std__string, 0);
-        _v = SWIG_CheckState(res);
-        if (_v) {
-          return _wrap_Event_addInfo__SWIG_1(self, args);
-        }
-      }
-    }
-  }
-  if (argc == 3) {
-    int _v;
-    void *vptr = 0;
-    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_Event, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      int res = SWIG_AsCharPtrAndSize(argv[1], 0, NULL, 0);
-      _v = SWIG_CheckState(res);
-      if (_v) {
         void *ptr = 0;
         int res = SWIG_ConvertPtr(argv[2], &ptr, 0, 0);
         _v = SWIG_CheckState(res);
@@ -4361,6 +4403,23 @@ SWIGINTERN PyObject *_wrap_Event_addInfo(PyObject *self, PyObject *args) {
         }
         if (_v) {
           return _wrap_Event_addInfo__SWIG_3(self, args);
+        }
+      }
+    }
+  }
+  if (argc == 3) {
+    int _v;
+    void *vptr = 0;
+    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_Event, 0);
+    _v = SWIG_CheckState(res);
+    if (_v) {
+      int res = SWIG_AsCharPtrAndSize(argv[1], 0, NULL, 0);
+      _v = SWIG_CheckState(res);
+      if (_v) {
+        int res = SWIG_AsPtr_std_string(argv[2], (std::string**)(0));
+        _v = SWIG_CheckState(res);
+        if (_v) {
+          return _wrap_Event_addInfo__SWIG_1(self, args);
         }
       }
     }
@@ -4414,8 +4473,7 @@ SWIGINTERN PyObject *_wrap_Event_addEdgeStr(PyObject *SWIGUNUSEDPARM(self), PyOb
   std::string *arg2 = 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
-  void *argp2 = 0 ;
-  int res2 = 0 ;
+  int res2 = SWIG_OLDOBJ ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   bool result;
@@ -4426,18 +4484,23 @@ SWIGINTERN PyObject *_wrap_Event_addEdgeStr(PyObject *SWIGUNUSEDPARM(self), PyOb
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Event_addEdgeStr" "', argument " "1"" of type '" "Event *""'");
   }
   arg1 = reinterpret_cast< Event * >(argp1);
-  res2 = SWIG_ConvertPtr(obj1, &argp2, SWIGTYPE_p_std__string,  0  | 0);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Event_addEdgeStr" "', argument " "2"" of type '" "std::string const &""'");
+  {
+    std::string *ptr = (std::string *)0;
+    res2 = SWIG_AsPtr_std_string(obj1, &ptr);
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Event_addEdgeStr" "', argument " "2"" of type '" "std::string const &""'");
+    }
+    if (!ptr) {
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "Event_addEdgeStr" "', argument " "2"" of type '" "std::string const &""'");
+    }
+    arg2 = ptr;
   }
-  if (!argp2) {
-    SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "Event_addEdgeStr" "', argument " "2"" of type '" "std::string const &""'");
-  }
-  arg2 = reinterpret_cast< std::string * >(argp2);
   result = (bool)(arg1)->addEdgeStr((std::string const &)*arg2);
   resultobj = SWIG_From_bool(static_cast< bool >(result));
+  if (SWIG_IsNewObj(res2)) delete arg2;
   return resultobj;
 fail:
+  if (SWIG_IsNewObj(res2)) delete arg2;
   return NULL;
 }
 
@@ -4457,7 +4520,7 @@ SWIGINTERN PyObject *_wrap_Event_getMetadata(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   arg1 = reinterpret_cast< Event * >(argp1);
   result = (Metadata *)(arg1)->getMetadata();
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Metadata, 0 |  0 );
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Metadata, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
   return NULL;
@@ -4479,7 +4542,7 @@ SWIGINTERN PyObject *_wrap_Event_metadataString(PyObject *SWIGUNUSEDPARM(self), 
   }
   arg1 = reinterpret_cast< Event * >(argp1);
   result = (arg1)->metadataString();
-  resultobj = SWIG_NewPointerObj((new std::string(static_cast< const std::string& >(result))), SWIGTYPE_p_std__string, SWIG_POINTER_OWN |  0 );
+  resultobj = SWIG_From_std_string(static_cast< std::string >(result));
   return resultobj;
 fail:
   return NULL;
@@ -4523,7 +4586,7 @@ SWIGINTERN PyObject *_wrap_Event_startTrace(PyObject *SWIGUNUSEDPARM(self), PyOb
   }
   arg1 = reinterpret_cast< oboe_metadata_t * >(argp1);
   result = (Event *)Event::startTrace((oboe_metadata_t const *)arg1);
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Event, 0 |  0 );
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Event, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
   return NULL;
@@ -5342,7 +5405,7 @@ SWIGINTERN PyObject *_wrap_DebugLog_getLevelName(PyObject *SWIGUNUSEDPARM(self),
   }
   arg1 = static_cast< int >(val1);
   result = DebugLog::getLevelName(arg1);
-  resultobj = SWIG_NewPointerObj((new std::string(static_cast< const std::string& >(result))), SWIGTYPE_p_std__string, SWIG_POINTER_OWN |  0 );
+  resultobj = SWIG_From_std_string(static_cast< std::string >(result));
   return resultobj;
 fail:
   return NULL;
@@ -5364,7 +5427,7 @@ SWIGINTERN PyObject *_wrap_DebugLog_getModuleName(PyObject *SWIGUNUSEDPARM(self)
   }
   arg1 = static_cast< int >(val1);
   result = DebugLog::getModuleName(arg1);
-  resultobj = SWIG_NewPointerObj((new std::string(static_cast< const std::string& >(result))), SWIGTYPE_p_std__string, SWIG_POINTER_OWN |  0 );
+  resultobj = SWIG_From_std_string(static_cast< std::string >(result));
   return resultobj;
 fail:
   return NULL;
@@ -5825,7 +5888,6 @@ static swig_type_info _swigt__p_Reporter = {"_p_Reporter", "Reporter *", 0, 0, (
 static swig_type_info _swigt__p_UdpReporter = {"_p_UdpReporter", "UdpReporter *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_char = {"_p_char", "char *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_oboe_metadata_t = {"_p_oboe_metadata_t", "oboe_metadata_t *", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_std__string = {"_p_std__string", "std::string *", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
   &_swigt__p_Config,
@@ -5840,7 +5902,6 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_UdpReporter,
   &_swigt__p_char,
   &_swigt__p_oboe_metadata_t,
-  &_swigt__p_std__string,
 };
 
 static swig_cast_info _swigc__p_Config[] = {  {&_swigt__p_Config, 0, 0, 0},{0, 0, 0, 0}};
@@ -5855,7 +5916,6 @@ static swig_cast_info _swigc__p_Reporter[] = {  {&_swigt__p_Reporter, 0, 0, 0},{
 static swig_cast_info _swigc__p_UdpReporter[] = {  {&_swigt__p_UdpReporter, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_char[] = {  {&_swigt__p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_oboe_metadata_t[] = {  {&_swigt__p_Metadata, _p_MetadataTo_p_oboe_metadata_t, 0, 0},  {&_swigt__p_oboe_metadata_t, 0, 0, 0},{0, 0, 0, 0}};
-static swig_cast_info _swigc__p_std__string[] = {  {&_swigt__p_std__string, 0, 0, 0},{0, 0, 0, 0}};
 
 static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_Config,
@@ -5870,7 +5930,6 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_UdpReporter,
   _swigc__p_char,
   _swigc__p_oboe_metadata_t,
-  _swigc__p_std__string,
 };
 
 
