@@ -8,6 +8,8 @@ import oboe
 import sys
 import copy
 
+from oboe.oboe_ext import Context
+
 def report_layer_init(layer="wsgi"):
     """ Send a fake trace showing the initialization and version of this layer's
         instrumentation. """
@@ -17,6 +19,12 @@ def report_layer_init(layer="wsgi"):
     ver_keys["Force"] = True
     ver_keys["Python.Version"] = sys.version
     ver_keys["Python.Oboe.Version"] = oboe.__version__
+
+    config = oboe.config
+
+    ver_keys["App"] = Context.get_apptoken()
+    if config["app_token"]:
+        ver_keys["AApp"] = config["app_token"]
 
     if 'tornado' in sys.modules:
         ver_keys["Python.Tornado.Version"] = sys.modules['tornado'].version
@@ -30,4 +38,3 @@ def report_layer_init(layer="wsgi"):
 
     oboe.start_trace(layer, store_backtrace=False, keys=ver_keys)
     oboe.end_trace(layer)
-

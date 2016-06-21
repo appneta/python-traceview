@@ -19,7 +19,7 @@ echo mysql-server mysql-server/root_password_again select | sudo debconf-set-sel
 sudo DEBIAN_FRONTEND=noninteractive apt-get -y install \
   build-essential swig git software-properties-common \
   python-dev python-pip python-tox python-software-properties \
-  libmysqlclient-dev libmemcached-dev libpq-dev libkrb5-dev \
+  libmysqlclient-dev libmemcached-dev libpq-dev libkrb5-dev libsqlite3-dev \
   mongodb-org mysql-server-5.6 postgresql postgresql-contrib \
   memcached redis-server
 
