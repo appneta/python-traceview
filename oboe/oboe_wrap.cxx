@@ -4234,7 +4234,6 @@ SWIGINTERN PyObject *_wrap_Event_addInfo__SWIG_1(PyObject *SWIGUNUSEDPARM(self),
   {
     std::string *ptr = (std::string *)0;
     res3 = SWIG_AsPtr_std_string(obj2, &ptr);
-    printf("data is %s\n", ptr->c_str());
     if (!SWIG_IsOK(res3)) {
       SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "Event_addInfo" "', argument " "3"" of type '" "std::string const &""'");
     }

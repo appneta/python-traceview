@@ -34,5 +34,5 @@ setup(name = 'oboe',
       ext_modules = ext_modules,
       packages = ['oboe', 'oboeware'],
       license = 'LICENSE.txt',
-      install_requires = ['decorator'],
+      install_requires = ['decorator']
       )

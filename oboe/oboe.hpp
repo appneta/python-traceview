@@ -110,7 +110,7 @@ public:
      * Context destructor.
      */
     virtual ~Context() {
-        (void)::oboe_settings_ctx_destroy(_settings_ctx);
+        // (void)::oboe_settings_ctx_destroy(_settings_ctx);
     }
 
     /**

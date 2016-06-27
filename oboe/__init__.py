@@ -237,8 +237,7 @@ class Context(object):
             # Continuing a trace from another, external, layer
             md = Metadata.fromString(xtr)
 
-        sample_rate = None
-
+        sp = None
         if xtr and md:
             evt = md.createEvent()
         elif sample_request(layer, xtr or '', avw or '') or force:
@@ -865,13 +864,11 @@ def sample_request(layer, xtr, avw, url=None):
     ctxs = config['trace_contexts']
     if not layer in ctxs.keys():
         flags = trace_flags[config['tracing_mode']]
-        ctxs[layer] = SwigContext(layer, config['app_token'], flags, -1)
-        print(ctxs[layer])
+        ctxs[layer] = SwigContext(layer, config['app_token'] or '', flags, -1)
 
     context = ctxs[layer]
 
     data = context.should_trace(xtr or '', url or '', avw or '')
-    print(data)
     if not len(data):
         return False
 
