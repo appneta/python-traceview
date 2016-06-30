@@ -240,8 +240,9 @@ class Context(object):
         sp = None
         if xtr and md:
             evt = md.createEvent()
-        elif sample_request(layer, xtr or '', avw or '') or force:
+        elif force or sample_request(layer, xtr or '', avw or ''):
             sp = config['_SP']
+            del config['_SP']
             if not md:
                 md = Metadata.makeRandom()
             evt = SwigEvent.startTrace(md)
