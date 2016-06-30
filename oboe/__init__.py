@@ -240,6 +240,8 @@ class Context(object):
         sp = None
         if xtr and md:
             evt = md.createEvent()
+
+        # The force flag allows __Init events to always create a layer
         elif force or sample_request(layer, xtr or '', avw or ''):
             sp = config['_SP']
             del config['_SP']
