@@ -293,7 +293,7 @@ class Context(object):
         return self.__class__(self._md.toString())
 
     def __str__(self):
-        return self._md.toString()
+        return self._md.toString() if self._md else None
 
 class Event(object):
     """An Event is a key/value bag that will be reported to the Tracelyzer."""
