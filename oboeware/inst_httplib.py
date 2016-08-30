@@ -69,7 +69,6 @@ def wrap(module):
     except Exception, e:
         print >> sys.stderr, "Oboe error:", str(e)
 
-
 try:
     import httplib
     wrap(httplib)

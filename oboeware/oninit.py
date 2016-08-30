@@ -30,4 +30,3 @@ def report_layer_init(layer="wsgi"):
 
     oboe.start_trace(layer, store_backtrace=False, keys=ver_keys)
     oboe.end_trace(layer)
-

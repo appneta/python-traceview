@@ -59,7 +59,7 @@ else:
                    "and liboboe-dev installed, running in no-op mode.  Tracing disabled. "
                    "Contact traceviewsupport@appneta.com if this is unexpected.")
 
-__version__ = '1.5.10'
+__version__ = '2.0.0'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 
 import oboe.rum
@@ -75,7 +75,10 @@ class OboeConfig(object):
 
     def __init__(self, *args, **kwargs):
         self._config = kwargs
+        self._config['trace_contexts'] = {}           # trace context storage
+        self._config['app_token'] = None              # custom app token
         self._config['tracing_mode'] = 'through'      # always, through, never
+        self._config['_SP'] = ''                      # Blank sampling data
         self._config['sample_rate'] = 0.3             # out of 1.0
         self._config['sample_source'] = 2             # OBOE_SAMPLE_RATE_SOURCE_DEFAULT
         self._config['sanitize_sql'] = False          # Set to true to strip query literals
@@ -127,7 +130,7 @@ class OboeConfig(object):
             SwigContext.setDefaultSampleRate(int(v * 1e6))
             self._config['sample_source'] = 1 # OBOE_SAMPLE_RATE_SOURCE_FILE
 
-        elif k in ['sample_source', 'sanitize_sql', 'reporter_host', 'reporter_port', 'warn_deprecated']:
+        elif k in ['app_token', '_SP', 'sample_source', 'sanitize_sql', 'reporter_host', 'reporter_port', 'warn_deprecated']:
             self._config[k] = v
 
         else:
@@ -234,12 +237,14 @@ class Context(object):
             # Continuing a trace from another, external, layer
             md = Metadata.fromString(xtr)
 
-        sample_rate = None
-
+        sp = None
         if xtr and md:
             evt = md.createEvent()
-        elif sample_request(layer, xtr or '', avw or '') or force:
-            sample_rate = config['sample_rate']
+
+        # The force flag allows __Init events to always create a layer
+        elif force or sample_request(layer, xtr or '', avw or ''):
+            sp = config['_SP']
+            del config['_SP']
             if not md:
                 md = Metadata.makeRandom()
             evt = SwigEvent.startTrace(md)
@@ -248,12 +253,16 @@ class Context(object):
 
         if evt:
             event = Event(evt, 'entry', layer)
-            if sample_rate:
-                event.add_info('SampleSource', config["sample_source"])
-                event.add_info('SampleRate', int(sample_rate * 1e6))
+            if sp:
+                event.add_info('_SP', sp)
             if avw:
                 event.add_info('X-TV-Meta', avw)
             event.add_info('Language', 'Python') # in case we have an unclear layer name
+
+            # Set App and AApp fields
+            event.add_info('App', SwigContext.get_apptoken())
+            if config['app_token']:
+                event.add_info('AApp', config['app_token'])
         else:
             event = NullEvent()
 
@@ -850,20 +859,25 @@ def _Event_addInfo_safe(func):
                     return func(args[0], args[1], repr(args[2]))
     return wrapped
 
-def sample_request(layer, xtr, avw):
-        
-    rv = SwigContext.sampleRequest(layer, xtr or '', avw or '')
-    
-    # For older binding to liboboe that returns true/false, just return that.
-    if rv.__class__ == bool or (rv == 0):
-      return rv
+trace_flags = defaultdict(lambda: 0) # OBOE_TRACE_NEVER
+trace_flags['always'] = 52 # OBOE_SETTINGS_FLAG_SAMPLE_START | OBOE_SETTINGS_FLAG_SAMPLE_THROUGH_ALWAYS | OBOE_SETTINGS_FLAG_SAMPLE_AVW_ALWAYS
+trace_flags['through'] = 16 # OBOE_SETTINGS_FLAG_SAMPLE_THROUGH_ALWAYS
 
-    # Newer binding to liboboe returns a bit masked integer with SampleRate and
-    # Source embedded
-    config['sample_rate']   = ((rv & SAMPLE_RATE_MASK) / 1e6)
-    config['sample_source'] = (rv & SAMPLE_SOURCE_MASK) >> 24
+def sample_request(layer, xtr, avw, url=None):
+    ctxs = config['trace_contexts']
+    if not layer in ctxs.keys():
+        flags = trace_flags[config['tracing_mode']]
+        ctxs[layer] = SwigContext(layer, config['app_token'] or '', flags, -1)
 
-    return rv
+    context = ctxs[layer]
+
+    data = context.should_trace(xtr or '', url or '', avw or '')
+    if not len(data):
+        return False
+
+    config['_SP'] = data
+
+    return True
 
 ###############################################################################
 # Backwards compatability
@@ -959,4 +973,3 @@ setattr(Context, 'profile_block',    _old_context_profile_block)
 setattr(Context, 'toString',         types.MethodType(_old_context_to_string, Context))
 setattr(Context, 'fromString',       types.MethodType(_old_context_from_string, Context))
 setattr(Context, 'isValid',          types.MethodType(_old_context_is_valid, Context))
-

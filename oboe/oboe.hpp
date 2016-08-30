@@ -1,3 +1,9 @@
+/**
+ * @file oboe.hpp - C++ liboboe wrapper primarily for generating SWIG interfaces
+ *
+ * This API should follow https://github.com/tracelytics/tracelons/wiki/Instrumentation-API
+ */
+
 #ifndef OBOE_HPP
 #define OBOE_HPP
 
@@ -6,8 +12,15 @@
 
 
 class Event;
+class Reporter;
+class Context;
 
+/**
+ * Metadata is the X-Trace identifier and the information needed to work with it.
+ */
 class Metadata : private oboe_metadata_t {
+    friend class Reporter;
+    friend class SslReporter;
     friend class UdpReporter;
     friend class FileReporter;
     friend class Context;
@@ -62,10 +75,123 @@ public:
 
 };
 
+/**
+ * The Context class manages the metadata and the settings configuration.
+ *
+ * The metadata includes the X-Trace identifier fields and the information work working with it.
+ * The metadata is needed before any trace messages can be sent and must either be generated for
+ * new traces or derived from the X-Trace header of an existing trace.
+ *
+ * The settings information is used primarily to determine when a new request should be traced.
+ * The information begins with configuration values for tracing_mode and sample_rate and then
+ * updates are received periodically from the collector to adjust the rate at which traces
+ * are generated.
+ */
 class Context {
 public:
     /**
-     * Set the tracing mode.
+     * Construct an optimized sampling context for the given parameters.
+     *
+     * This is intended to be stored and re-used for every sampling test
+     * for these parameters. Once created it will be considered immutable
+     * and therefore thread-safe.
+     *
+     * @param layer Layer name as used in oboe_settings_t.layer (may be NULL to use default settings)
+     * @param app App token string as configured. This string must be reported as "AApp" if the
+     *      request is traced.
+     * @param flags Bit-wise combination of OBOE_SETTINGS_FLAG_* values.
+     * @param sample_rate Local sample rate configuration or -1 to use smart sampling.
+     */
+    Context(const std::string& layer, const std::string& app, int flags, int sample_rate)
+        : _settings_ctx(const_cast<oboe_settings_ctx_t *>(::oboe_settings_ctx_create(layer.c_str(), app.c_str(), flags, sample_rate)))
+    {}
+
+    /**
+     * Context destructor.
+     */
+    virtual ~Context() {
+        // (void)::oboe_settings_ctx_destroy(_settings_ctx);
+    }
+
+    /**
+     * Check if a request or job should be traced.
+     *
+     * Checks sample rate settings for the specified layer and app, considers
+     * the mode and the context's parameters, and, if appropriate, rolls the
+     * virtual dice to decide if this request should be traced.
+     *
+     * This should be called for every request or job since it is updating
+     * throughput counters.
+     *
+     * @param mode Bit-wise combination of OBOE_MODE_FLAG_* values.
+     * @param xtrace The X-Trace header value if applicable, otherwise NULL.
+     * @param url String containing the URL of the request, or NULL if not applicable.
+     * @param kvs String of comma-delimited, key=value pairs.
+     *
+     * @return Binary encoded parameters used in the sampling decision.
+     */
+    std::string should_trace(const std::string &xtrace, const std::string &url, const std::string &kvs) {
+        char retbuf[OBOE_SAMPLE_PARAM_BUFFER_MAX];
+        int retbuflen = OBOE_SAMPLE_PARAM_BUFFER_MAX;
+        std::string retval;
+
+        if (oboe_should_trace(_settings_ctx, retbuf, &retbuflen, xtrace.c_str(), url.c_str(), kvs.c_str())) {
+            retval = std::string(retbuf, retbuflen);
+        }
+
+        return retval;
+    }
+
+    /**
+     * Get the host app token string as defined in /etc/appneta/traceview.cfg
+     *
+     * @return host app token string
+     */
+    static std::string get_apptoken() {
+        return std::string(oboe_get_apptoken());
+    }
+
+
+    /**
+     * Get the host app token value encoded for settings records from /etc/appneta/traceview.cfg
+     *
+     * The settings value for app tokens uses the UNASSIGNED value (ie. 000..001) for
+     * malformed app token strings.
+     *
+     * @return host app token as a binary encoded value (essentially a UUID)
+     */
+    static std::string get_apptoken_settings_value() {
+        // oboe_get_apptoken_settings_value() should never return NULL.
+        return std::string((const char *)oboe_get_apptoken_settings_value(), OBOE_SETTINGS_APP_TOKEN_SZ);
+    }
+
+    /**
+     * Get the host app token value encoded for counters records from /etc/appneta/traceview.cfg
+     *
+     * The counters value for app tokens uses a truncated form of the app token string for
+     * malformed app token strings.
+     *
+     * @return host app token as a binary encoded value (essentially a UUID)
+     */
+    static std::string get_apptoken_counters_value() {
+        // oboe_get_apptoken_counters_value() should never return NULL.
+        return std::string((const char *)oboe_get_apptoken_counters_value(), OBOE_SETTINGS_APP_TOKEN_SZ);
+    }
+
+    /**
+     * Get the host app token value encoded from /etc/appneta/traceview.cfg
+     *
+     * @return host app token as a binary encoded value (essentially a UUID)
+     */
+    static std::string get_apptoken_value() {
+        // oboe_get_apptoken_value() should never return NULL since it has
+        // a special value for invalid tokens.
+        return std::string((const char *)oboe_get_apptoken_settings_value(), OBOE_SETTINGS_APP_TOKEN_SZ);
+    }
+
+
+    /**
+     * Set the tracing mode. (DEPRECATED)
      *
      * @param newMode One of
      * - OBOE_TRACE_NEVER(0) to disable tracing,
@@ -77,7 +203,7 @@ public:
     }
 
     /**
-     * Set the default sample rate.
+     * Set the default sample rate. (DEPRECATED)
      *
      * This rate is used until overridden by the TraceView servers.  If not set then the
      * value 300,000 will be used (ie. 30%).
@@ -91,9 +217,9 @@ public:
     }
 
     /**
-     * Check if the current request should be traced based on the current settings.
+     * Check if the current request should be traced based on the current settings. (DEPRECATED)
      *
-     * If xtrace is empty, or if it is identified as a foreign (ie. cross customer)
+     * If in_xtrace is empty, or if it is identified as a foreign (ie. cross customer)
      * trace, then sampling will be considered as a new trace.
      * Otherwise sampling will be considered as adding to the current trace.
      * Different layers may have special rules.  Also special rules for AppView
@@ -101,11 +227,11 @@ public:
      *
      * This is designed to be called once per layer per request.
      *
-     * @param layer Name of the layer being considered for tracing
-     * @param in_xtrace Incoming X-Trace ID (NULL or empty string if not present)
-     * @param in_tv_meta AppView Web ID from X-TV-Meta HTTP header or higher layer (NULL or empty string if not present).
-     * @return Zero to not trace; otherwise return the sample rate used in the low order
-     *         bytes 0 to 2 and the sample source in the higher-order byte 3.
+     *  @param layer Name of the layer being considered for tracing
+     *  @param in_xtrace Incoming X-Trace ID (NULL or empty string if not present)
+     *  @param in_tv_meta AppView Web ID from X-TV-Meta HTTP header or higher layer (NULL or empty string if not present).
+     *  @return Zero to not trace; otherwise return the sample rate used in the low order
+     *          bytes 0 to 2 and the sample source in the higher-order byte 3.
      */
     static int sampleRequest(
         std::string layer,
@@ -119,11 +245,16 @@ public:
         return (rc == 0 ? 0 : (((sample_source & 0xFF) << 24) | (sample_rate & 0xFFFFFF)));
     }
 
-    // returns pointer to current context (from thread-local storage)
+    /**
+     * Get a pointer to the current context (from thread-local storage)
+     */
     static oboe_metadata_t *get() {
         return oboe_context_get();
     }
 
+    /**
+     * Get the current context as a printable string.
+     */
 #ifdef SWIGJAVA
     static std::string toStr() {
 #else
@@ -140,10 +271,16 @@ public:
         }
     }
 
+    /**
+     * Set the current context (this updates thread-local storage).
+     */
     static void set(oboe_metadata_t *md) {
         oboe_context_set(md);
     }
 
+    /**
+     * Set the current context from a string.
+     */
     static void fromString(std::string s) {
         oboe_context_set_fromstr(s.data(), s.size());
     }
@@ -161,16 +298,66 @@ public:
         return oboe_context_is_valid();
     }
 
+    /**
+     * Initialize the Oboe library.
+     */
     static void init() {
         oboe_init();
+    }
+
+    /**
+     * Send a raw message using the current reporter.
+     *
+     * Use oboe_event_send() unless you are handling all the details of constructing
+     * the messages for a valid trace.
+     *
+     * @param data A BSON-encoded event message.
+     * @param len The length of the message data in bytes.
+     * @return Length of message sent in bytes on success; otherwise -1.
+     */
+    static int raw_send(const char *data, size_t len) {
+        return oboe_raw_send(data, len);
+    }
+
+    /**
+     * Disconnect or shut down the Oboe reporter, but allow it to be reconnect()ed.
+     *
+     * We don't make this a Reporter method in case there is other housework to do.
+     *
+     * @param rep Pointer to the active reporter object.
+     */
+    static void disconnect(Reporter *rep);
+
+    /**
+     * Reconnect or restart the Oboe reporter.
+     *
+     * We don't make this a Reporter method in case there is other housework to do.
+     *
+     * @param rep Pointer to the active reporter object.
+     */
+    static void reconnect(Reporter *rep);
+
+    /**
+     * Shut down the Oboe library.
+     *
+     * This releases any resources held by the library which may include terminating
+     * child threads.
+     */
+    static void shutdown() {
+        oboe_shutdown();
     }
 
     // these new objects are managed by SWIG %newobject
     static Event *createEvent();
     static Event *startTrace();
+
+private:
+    struct oboe_settings_ctx_s *_settings_ctx;
 };
 
 class Event : private oboe_event_t {
+    friend class Reporter;
+    friend class SslReporter;
     friend class UdpReporter;
     friend class FileReporter;
     friend class Context;
@@ -245,6 +432,17 @@ public:
         }
     }
 
+    /**
+     * Report this event.
+     *
+     * This sends the event using the default reporter.
+     *
+     * @return True on success; otherwise an error message is logged.
+     */
+    bool send() {
+        return (oboe_event_send(this, Context::get()) >= 0);
+    }
+
     static Event* startTrace(const oboe_metadata_t *md);
 
 };
@@ -266,6 +464,53 @@ Event *Context::startTrace() {
 Event *Event::startTrace(const oboe_metadata_t *md) {
     return new Event(md, false);
 }
+
+class Reporter : private oboe_reporter_t {
+    friend class Context;   // Access to the private oboe_reporter_t base structure.
+public:
+    /**
+     * Initialize a reporter structure for use with the specified protocol.
+     *
+     * @param protocol One of  "file", "udp", or "ssl".
+     * @param args A configuration string for the specified protocol (protocol dependent syntax).
+     */
+    Reporter(const char *protocol, const char *args) {
+        oboe_reporter_init(this, protocol, args);
+    }
+
+    ~Reporter() {
+        oboe_reporter_destroy(this);
+    }
+
+    bool sendReport(Event *evt) {
+        return oboe_reporter_send(this, Context::get(), evt) >= 0;
+    }
+
+    bool sendReport(Event *evt, oboe_metadata_t *md) {
+        return oboe_reporter_send(this, md, evt) >= 0;
+    }
+};
+
+#if 0
+class SslReporter : private oboe_reporter_t {
+public:
+    SslReporter(const char *config) {
+        oboe_reporter_ssl_init(this, config);
+    }
+
+    ~SslReporter() {
+        oboe_reporter_destroy(this);
+    }
+
+    bool sendReport(Event *evt) {
+        return oboe_reporter_send(this, Context::get(), evt) >= 0;
+    }
+
+    bool sendReport(Event *evt, oboe_metadata_t *md) {
+        return oboe_reporter_send(this, md, evt) >= 0;
+    }
+};
+#endif
 
 class UdpReporter : private oboe_reporter_t {
 public:
@@ -309,6 +554,154 @@ public:
 };
 
 
+/**
+ * Base class for a diagnostic log message handler.
+ */
+class DebugLogger {
+public:
+    virtual void log(int module, int level, const char *source_name, int source_lineno, const char *msg) = 0;
+};
+
+/**
+ * "C" language wrapper for DebugLogger classes.
+ *
+ * A logging function that can be added to the logger chain using
+ * DebugLog::addDebugLogger().
+ *
+ * @param context The context pointer that was registered in the call to
+ *          DebugLog::addDebugLogger().  Use it to pass the pointer-to-self for
+ *          objects (ie. "this" in C++) or just a structure in C,  May be
+ *          NULL.
+ * @param module The module identifier as passed to oboe_debug_logger().
+ * @param level The diagnostic detail level as passed to oboe_debug_logger().
+ * @param source_name Name of the source file as passed to oboe_debug_logger().
+ * @param source_lineno Number of the line in the source file where message is
+ *          logged from as passed to oboe_debug_logger().
+ * @param msg The formatted message produced from the format string and its
+ *          arguments as passed to oboe_debug_logger().
+ */
+extern "C" void oboe_debug_log_handler(void *context, int module, int level, const char *source_name, int source_lineno, const char *msg) {
+    ((DebugLogger *)context)->log(module, level, source_name, source_lineno, msg);
+}
+
+class DebugLog {
+public:
+    /**
+     * Get a printable name for a diagnostics logging level.
+     *
+     * @param level A detail level in the range 0 to 6 (OBOE_DEBUG_FATAL to OBOE_DEBUG_HIGH).
+     */
+    static std::string getLevelName(int level) {
+        return std::string(oboe_debug_log_level_name(level));
+    }
+
+    /**
+     * Get a printable name for a diagnostics logging module identifier.
+     *
+     * @param module One of the OBOE_MODULE_* values.
+     */
+    static std::string getModuleName(int module) {
+        return std::string(oboe_debug_module_name(module));
+    }
+
+    /**
+     * Get the maximum logging detail level for a module or for all modules.
+     *
+     * This level applies to the default logger only.  Added loggers get all messages
+     * below their registed detail level and need to do their own module-specific
+     * filtering.
+     *
+     * @param module One of the OBOE_MODULE_* values.  Use OBOE_MODULE_ALL (-1) to
+     *          get the overall maximum detail level.
+     * @return Maximum detail level value for module (or overall) where zero is the
+     *          lowest and higher values generate more detailed log messages.
+     */
+    static int getLevel(int module) {
+        return oboe_debug_log_level_get(module);
+    }
+
+    /**
+     * Set the maximum logging detail level for a module or for all modules.
+     *
+     * This level applies to the default logger only.  Added loggers get all messages
+     * below their registered detail level and need to do their own module-specific
+     * filtering.
+     *
+     * @param module One of the OBOE_MODULE_* values.  Use OBOE_MODULE_ALL to set
+     *          the overall maximum detail level.
+     * @param newLevel Maximum detail level value where zero is the lowest and higher
+     *          values generate more detailed log messages.
+     */
+    static void setLevel(int module, int newLevel) {
+        oboe_debug_log_level_set(module, newLevel);
+    }
+
+    /**
+     * Set the output stream for the default logger.
+     *
+     * @param newStream A valid, open FILE* stream or NULL to disable the default logger.
+     * @return Zero on success; otherwise an error code (normally from errno).
+     */
+    static int setOutputStream(FILE *newStream) {
+        return oboe_debug_log_to_stream(newStream);
+    }
+
+    /**
+     * Set the default logger to write to the specified file.
+     *
+     * A NULL or empty path name will disable the default logger.
+     *
+     * If the file exists then it will be opened in append mode.
+     *
+     * @param pathname The path name of the
+     * @return Zero on success; otherwise an error code (normally from errno).
+     */
+    static int setOutputFile(const char *pathname) {
+        return oboe_debug_log_to_file(pathname);
+    }
+
+    /**
+     * Add a logger that takes messages up to a given logging detail level.
+     *
+     * This adds the logger to a chain in order of the logging level.  Log messages
+     * are passed to each logger down the chain until the remaining loggers only
+     * accept messages of a lower detail level.
+     *
+     * @return Zero on success, one if re-registered with the new logging level, and
+     *          otherwise a negative value to indicate an error.
+     */
+    static int addDebugLogger(DebugLogger *newLogger, int logLevel) {
+        return oboe_debug_log_add(oboe_debug_log_handler, newLogger, logLevel);
+    }
+
+    /**
+     * Remove a logger.
+     *
+     * Remove the logger from the message handling chain.
+     *
+     * @return Zero on success, one if it was not found, and otherwise a negative
+     *          value to indicate an error.
+     */
+    static int removeDebugLogger(DebugLogger *oldLogger) {
+        return oboe_debug_log_remove(oboe_debug_log_handler, oldLogger);
+    }
+
+    /**
+     * Low-level diagnostics logging function.
+     *
+     * Use this to pass
+     * @param module One of the numeric module identifiers defined in debug.h - used to control logging detail by module.
+     * @param level Diagnostic detail level of this message - used to control logging volume by detail level.
+     * @param source_name Name of the source file, if available, or another useful name, or NULL.
+     * @param source_lineno Number of the line in the source file where message is logged from, if available, or zero.
+     * @param format A C language printf format specification string.
+     * @param args A variable argument list in VA_ARG format containing arguments for each argument specifier in the format.
+     */
+    static void logMessage(int module, int level, const char *source_name, int source_lineno, const char *msg) {
+        oboe_debug_logger(module, level, source_name, source_lineno, "%s", msg);
+    }
+};
+
 class Config {
 public:
     /**
@@ -349,4 +742,14 @@ public:
     }
 };
 
-#endif
+
+void Context::disconnect(Reporter *rep) {
+    oboe_disconnect(rep);
+}
+
+void Context::reconnect(Reporter *rep) {
+    oboe_reconnect(rep);
+}
+
+
+#endif      // OBOE_HPP
