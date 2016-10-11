@@ -143,4 +143,4 @@ To see the code related to the C++ extension, take a look in `oboe`.
 
 Copyright (c) 2016 SolarWinds, LLC
 
-Released under the [Librato Open License](http://www.appneta.com/appneta-license), Version 1.0
+Released under the [Librato Open License](http://docs.traceview.solarwinds.com/Instrumentation/librato-open-license.html)
