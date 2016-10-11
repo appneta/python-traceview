@@ -1,6 +1,6 @@
 """ Tracelytics instrumentation API for Python.
 
-Copyright (C) 2012 by Tracelytics, Inc.
+Copyright (C) 2016 by SolarWinds, LLC.
 All rights reserved.
 """
 import logging
@@ -57,9 +57,9 @@ else:
         from oboe.oboe_noop import Context as SwigContext, Event as SwigEvent, UdpReporter, Metadata
         _log.error("Tracelytics Oboe warning: module not built on a platform with liboboe "
                    "and liboboe-dev installed, running in no-op mode.  Tracing disabled. "
-                   "Contact traceviewsupport@appneta.com if this is unexpected.")
+                   "Contact traceviewsupport@solarwinds.com if this is unexpected.")
 
-__version__ = '1.5.10'
+__version__ = '1.5.11'
 __all__ = ['config', 'Context', 'UdpReporter', 'Event']
 
 import oboe.rum
@@ -851,9 +851,9 @@ def _Event_addInfo_safe(func):
     return wrapped
 
 def sample_request(layer, xtr, avw):
-        
+
     rv = SwigContext.sampleRequest(layer, xtr or '', avw or '')
-    
+
     # For older binding to liboboe that returns true/false, just return that.
     if rv.__class__ == bool or (rv == 0):
       return rv
@@ -959,4 +959,3 @@ setattr(Context, 'profile_block',    _old_context_profile_block)
 setattr(Context, 'toString',         types.MethodType(_old_context_to_string, Context))
 setattr(Context, 'fromString',       types.MethodType(_old_context_from_string, Context))
 setattr(Context, 'isValid',          types.MethodType(_old_context_is_valid, Context))
-

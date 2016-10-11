@@ -1,6 +1,6 @@
 """ Handles JSON conversion for various object types that may be found in queries
 
-Copyright (C) 2012 by Tracelytics, Inc.
+Copyright (C) 2016 by SolarWinds, LLC.
 All rights reserved.
 """
 try:

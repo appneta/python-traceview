@@ -2,7 +2,7 @@
 
 Instrumentation is done in urllib3.
 
-Copyright (C) 2011 by Tracelytics, Inc.
+Copyright (C) 2016 by SolarWinds, LLC.
 All rights reserved.
 """
 import sys

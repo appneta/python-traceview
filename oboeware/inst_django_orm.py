@@ -1,6 +1,6 @@
 """ Tracelytics instrumentation for Django ORM.
 
-Copyright (C) 2011 by Tracelytics, Inc.
+Copyright (C) 2016 by SolarWinds, LLC.
 All rights reserved.
 """
 
