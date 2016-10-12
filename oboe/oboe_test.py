@@ -1,6 +1,6 @@
 """ Tracelytics instrumentation API for Python.
 
-Copyright (C) 2012 by Tracelytics, Inc.
+Copyright (C) 2016 by SolarWinds, LLC.
 All rights reserved.
 
 oboe_noop defines no-op/test mock classes for:

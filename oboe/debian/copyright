@@ -9,7 +9,7 @@ Upstream Author(s):
 
 Copyright:
 
-    Copyright (C) Tracelytics
+    Copyright (C) SolarWinds, LLC
 
 License:
 
@@ -17,5 +17,4 @@ License:
 
 The Debian packaging is:
 
-    Copyright (C) 2011 Tracelytics
-
+    Copyright (C) 2016 SolarWinds, LLC

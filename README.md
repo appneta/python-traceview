@@ -16,12 +16,11 @@ can get from pip by running:
 pip install oboe
 ```
 
-NOTE: Make sure you've first done the [base AppNeta install](https://docs.appneta.com/install-instrumentation)
-so the appropriate dependencies are available.
+NOTE: Make sure you've first done the [base TraceView install](http://docs.traceview.solarwinds.com/TraceView/install-instrumentation.html) so the appropriate dependencies are available.
 
 ## Configuring
 
-See our documentation on [configuring TraceView for python](https://docs.appneta.com/python#configuring-instrumentation).
+See our documentation on [configuring TraceView for python](http://docs.traceview.solarwinds.com/Instrumentation/python.html#configuring-instrumentation).
 
 # Upgrading
 
@@ -85,8 +84,7 @@ behaviors.
 ## Support
 
 If you find a bug or would like to request an enhancement, feel free to file
-an issue. For all other support requests, see our support portal or on
-IRC @ #appneta on Freenode.
+an issue. For all other support requests, see our [support portal](tracelytics.freshdesk.com).
 
 ## Contributing
 
@@ -102,20 +100,13 @@ make changes after the fact.
 
 ## Developer Resources
 
-We at AppNeta have made a large effort to expose as much technical information
+We have made a large effort to expose as much technical information
 as possible to assist developers wishing to contribute to the traceview module.
 Below are the three major sources for information and help for developers:
 
-* The [TraceView blog](http://www.appneta.com/blog) has a constant stream of
-great technical articles.  (See [A Gentle X-Trace Introduction](http://www.appneta.com/blog/x-trace-introduction/)
-for details on the basic methodology that TraceView uses to gather structured
-performance data across hosts and stacks.)
-
-* The [TraceView Knowledge Base](https://support.appneta.com/cloud/traceview)
+* The [TraceView Knowledge Base](http://docs.traceview.solarwinds.com/)
 has a large collection of technical articles or, if needed, you can submit a
 support request directly to the team.
-
-* You can also reach the TraceView team on our IRC channel #appneta on freenode.
 
 If you have any questions or ideas, don't hesitate to contact us anytime.
 
@@ -124,7 +115,7 @@ If you have any questions or ideas, don't hesitate to contact us anytime.
 This module utilizes a C++ extension to interface with the system `liboboe.so`
 library.  This system library is installed with the TraceView host packages
 (tracelyzer, liboboe0, liboboe-dev) and is used to report
-[host](http://www.appneta.com/blog/app-host-metrics/) and performance metrics
+host and performance metrics
 from multiple sources (nodejs, nginx, python etc.) back to TraceView servers.
 
 Note: Make sure you have the development package `liboboe0-dev` installed
@@ -132,19 +123,17 @@ before attempting to compile the C extension.
 
 ```bash
 >$ dpkg -l | grep liboboe
-ii  liboboe-dev  1.2.1-trusty1  AppNeta TraceView common library -- development files
-ii  liboboe0     1.2.1-trusty1  AppNeta Traceview common library
+ii  liboboe-dev  1.2.1-trusty1  TraceView common library -- development files
+ii  liboboe0     1.2.1-trusty1  Traceview common library
 ```
 
-See [Installing Base Packages on Debian and Ubuntu](https://docs.appneta.com/install-instrumentation)
-in the Knowledge Base for details.  Our hacker extraordinaire
-[Rob Salmond](https://github.com/rsalmond) from the support team has even
-gotten these packages to [run on Gentoo](http://www.appneta.com/blog/unsupported-doesnt-work/)!
+See [Installing Base Packages on Debian and Ubuntu](http://docs.traceview.solarwinds.com/TraceView/install-instrumentation.html#debian-and-ubuntu)
+in the Knowledge Base for details.
 
 To see the code related to the C++ extension, take a look in `oboe`.
 
 ## License
 
-Copyright (c) 2014 Appneta
+Copyright (c) 2016 SolarWinds, LLC
 
-Released under the [AppNeta Open License](http://www.appneta.com/appneta-license), Version 1.0
+Released under the [Librato Open License](http://docs.traceview.solarwinds.com/Instrumentation/librato-open-license.html)

@@ -1,6 +1,6 @@
 """ Tracelytics instrumentation for redis client module.
 
-Copyright (C) 2011 by Tracelytics, Inc.
+Copyright (C) 2016 by SolarWinds, LLC.
 All rights reserved.
 """
 from functools import partial, wraps

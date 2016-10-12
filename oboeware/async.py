@@ -1,5 +1,5 @@
 """ useful code for instrumenting asynchronous Python programs
-# (c) 2012 Tracelytics, Inc.
+# (c) 2016 SolarWinds, LLC.
 """
 import oboe
 
