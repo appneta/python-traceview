@@ -1,6 +1,6 @@
 """ Tracelytics instrumentation for Django's template system
 
-Copyright (C) 2014 AppNeta, Inc.
+Copyright (C) 2016 SolarWinds, LLC.
 All rights reserved.
 """
 import sys

@@ -3,7 +3,7 @@
 Checks oboe.config['inst_enabled'] and imports as requested. used by middleware
 and djangoware.
 
-Copyright (C) 2012 by Tracelytics, Inc.
+Copyright (C) 2016 by SolarWinds, LLC.
 All rights reserved.
 """
 import oboe

@@ -7,8 +7,8 @@ from . import base, trace_filters as filters
 TEST_DSNS = (
     'sqlite://',
     'postgresql+psycopg2://postgres@127.0.0.1/?host=127.0.0.1?port=5432',
-    'mysql+mysqldb://127.0.0.1/?host=127.0.0.1?port=3306',
-    'mysql+pymysql://127.0.0.1/?host=127.0.0.1?port=3306',
+    'mysql+mysqldb://root@127.0.0.1/?host=127.0.0.1?port=3306',
+    'mysql+pymysql://root@127.0.0.1/?host=127.0.0.1?port=3306',
 )
 
 
@@ -41,12 +41,8 @@ class TestQueryAndArgs(SqlAlchemyTest):
             exit = self.assertSaneTrace()
             self.assertEqual(query, exit.props.get('Query'))
 
-            if flavor == 'postgresql':
-                args_s = '{}'
-            else:
-                args_s = '()'
-
-            self.assertEqual(args_s, exit.props.get('QueryArgs'))
+            # Either case is valid, don't expect a specific one, it may change
+            self.assertIn(exit.props.get('QueryArgs'), ['{}','()'])
 
 
     def test_args(self):

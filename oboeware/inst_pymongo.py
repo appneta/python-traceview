@@ -1,6 +1,6 @@
 """ Tracelytics instrumentation for pymongo (MongoDB client).
 
-Copyright (C) 2012 by Tracelytics, Inc.
+Copyright (C) 2016 by SolarWinds, LLC.
 All rights reserved.
 """
 import sys

@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 """
- Copyright (C) 2011 by Tracelytics, Inc.
+ Copyright (C) 2016 by SolarWinds, LLC.
  All rights reserved.
 """
 
 import distutils.ccompiler
 from setuptools import setup, Extension
 
-version = '1.5.10'
+version = '1.5.11'
 
 # conditionally build extensions if liboboe and liboboe-dev are available on this platform
 # otherwise, will function in no-op mode: no tracing, but all API endpoints available
@@ -23,14 +23,14 @@ else:
 
 setup(name = 'oboe',
       version = version,
-      author = 'AppNeta',
-      author_email = 'traceviewsupport@appneta.com',
-      url = 'http://dev.appneta.com',
+      author = 'SolarWinds, LLC',
+      author_email = 'traceviewsupport@solarwinds.com',
+      url = 'https://traceview.solarwinds.com/TraceView/Python',
       download_url = 'https://pypi.python.org/pypi/oboe',
-      description  = 'AppNeta TraceView Oboe libraries, instrumentation, and web middleware components '
+      description  = 'TraceView Oboe libraries, instrumentation, and web middleware components '
       'for WSGI, Django, and Tornado.',
-      long_description = open('README.txt').read(),
-      keywords='appneta traceview tracelytics oboe liboboe instrumentation performance wsgi middleware django',
+      long_description = open('README.md').read(),
+      keywords='traceview tracelytics oboe liboboe instrumentation performance wsgi middleware django',
       ext_modules = ext_modules,
       packages = ['oboe', 'oboeware'],
       license = 'LICENSE.txt',

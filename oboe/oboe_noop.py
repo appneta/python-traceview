@@ -1,6 +1,6 @@
 """ Tracelytics instrumentation API for Python.
 
-Copyright (C) 2012 by Tracelytics, Inc.
+Copyright (C) 2016 by SolarWinds, LLC.
 All rights reserved.
 
 oboe_noop defines no-op classes for platforms we don't support building the c extension on
