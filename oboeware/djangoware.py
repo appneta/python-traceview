@@ -131,17 +131,20 @@ def on_load_middleware():
     load_middleware_lock = None         # mark global as "init done"
 
     try:
-        # middleware hooks
         from django.conf import settings
-        for i in settings.MIDDLEWARE_CLASSES:
-            if i.startswith('oboe'):
-                continue
-            dot = i.rfind('.')
-            if dot < 0 or dot+1 == len(i):
-                continue
-            objname = i[dot+1:]
-            imports.whenImported(i[:dot],
-                                 functools.partial(middleware_hooks, objname=objname))  # XXX Not Python2.4-friendly
+
+        # middleware hooks
+        if oboe.config['inst_enabled']['django_middleware']:
+            for i in settings.MIDDLEWARE_CLASSES:
+                if i.startswith('oboe'):
+                    continue
+                dot = i.rfind('.')
+                if dot < 0 or dot+1 == len(i):
+                    continue
+                objname = i[dot+1:]
+                # XXX Not Python2.4-friendly
+                imports.whenImported(i[:dot],
+                                     functools.partial(middleware_hooks, objname=objname))
 
         # ORM
         if oboe.config['inst_enabled']['django_orm']:
