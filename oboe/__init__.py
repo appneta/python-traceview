@@ -96,6 +96,9 @@ class OboeConfig(object):
         self._config['inst']['memcache'] = defaultdict(lambda: True)
         self._config['inst']['memcache']['collect_backtraces'] = False
 
+        self._config['inst']['mysqldb'] = defaultdict(lambda: True)
+        self._config['inst']['mysqldb']['collect_backtraces'] = True
+
         self._config['inst']['pymongo'] = defaultdict(lambda: True)
         self._config['inst']['pymongo']['collect_backtraces'] = True
 
